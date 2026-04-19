@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>🐾 Dashboard — Loja 3 Banho &amp; Tosa</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#06080E;--s1:#0B0F1A;--s2:#0F1520;--border:#151E2E;
+  --gold:#F5A623;--gold2:#FFD17A;--teal:#00D4AA;--rose:#FF4D6D;
+  --blue:#4D9EFF;--purple:#9B7FFF;--green:#2ECC80;--orange:#FF8B3D;
+  --cyan:#00C5D4;--pink:#FF6EB4;--lime:#A3E635;
+  --text:#D8E6F3;--muted:#3D5470;--muted2:#1E2D42;
+  --font:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--font);overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(245,166,35,.025)1px,transparent 1px),
+  linear-gradient(90deg,rgba(245,166,35,.025)1px,transparent 1px);
+  background-size:52px 52px;pointer-events:none;z-index:0}
+.wrap{position:relative;z-index:1;max-width:1540px;margin:0 auto;padding:22px 26px}
+
+header{display:flex;align-items:center;justify-content:space-between;
+  padding:22px 30px;background:linear-gradient(135deg,#0A1525,#0E1B2B);
+  border:1px solid var(--border);border-radius:18px;margin-bottom:18px;
+  position:relative;overflow:hidden}
+header::before{content:'';position:absolute;top:-80px;right:-80px;width:300px;height:300px;
+  background:radial-gradient(circle,rgba(245,166,35,.07),transparent 70%)}
+header::after{content:'';position:absolute;bottom:-50px;left:60px;width:180px;height:180px;
+  background:radial-gradient(circle,rgba(0,212,170,.04),transparent 70%)}
+.hrow{display:flex;align-items:center;gap:18px;position:relative;z-index:1}
+.paw{width:58px;height:58px;background:linear-gradient(135deg,var(--gold),var(--gold2));
+  border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:30px;
+  box-shadow:0 0 32px rgba(245,166,35,.3),0 4px 16px rgba(0,0,0,.4);flex-shrink:0}
+.htitle h1{font-size:23px;font-weight:700;letter-spacing:-.5px;
+  background:linear-gradient(135deg,#fff,var(--gold2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.htitle p{font-size:13px;color:var(--muted);margin-top:4px}
+.badge{background:rgba(0,212,170,.08);border:1px solid rgba(0,212,170,.2);color:var(--teal);
+  padding:8px 18px;border-radius:20px;font-size:12px;font-family:var(--mono);
+  position:relative;z-index:1}
+
+.fbar{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;align-items:center}
+.flabel{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);
+  font-weight:700;white-space:nowrap}
+.fgrp{display:flex;gap:5px;flex-wrap:wrap}
+.bf{padding:7px 16px;border-radius:8px;border:1px solid var(--border);background:var(--s1);
+  color:var(--muted);font-family:var(--font);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s}
+.bf:hover{border-color:var(--gold);color:var(--gold);background:rgba(245,166,35,.04)}
+.bf.active{background:rgba(245,166,35,.1);border-color:var(--gold);color:var(--gold);
+  box-shadow:0 0 18px rgba(245,166,35,.12)}
+.bf.month.active{background:rgba(0,212,170,.1);border-color:var(--teal);color:var(--teal);
+  box-shadow:0 0 18px rgba(0,212,170,.12)}
+.sep{width:1px;height:32px;background:var(--border);margin:0 4px;flex-shrink:0}
+.bclr{padding:7px 14px;border-radius:8px;border:1px solid rgba(255,77,109,.2);
+  background:rgba(255,77,109,.04);color:var(--rose);font-family:var(--font);font-size:12px;
+  cursor:pointer;transition:all .15s}
+.bclr:hover{background:rgba(255,77,109,.1);border-color:var(--rose)}
+.plabel{margin-left:auto;padding:6px 14px;background:rgba(245,166,35,.07);
+  border:1px solid rgba(245,166,35,.15);border-radius:8px;font-size:12px;
+  color:var(--gold);font-weight:600;white-space:nowrap}
+
+.sec{font-size:10px;text-transform:uppercase;letter-spacing:3px;color:var(--muted);
+  font-weight:700;margin:22px 0 12px;display:flex;align-items:center;gap:10px}
+.sec::after{content:'';flex:1;height:1px;background:var(--border)}
+.sec em{font-style:normal;margin-right:2px}
+
+/* KPI GRID */
+.kg6{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:10px}
+.kg5{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:10px}
+.kg4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px}
+@media(max-width:1300px){.kg6,.kg5,.kg4{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:700px){.kg6,.kg5,.kg4{grid-template-columns:repeat(2,1fr)}}
+
+.kc{background:var(--s1);border:1px solid var(--border);border-radius:14px;
+  padding:16px 18px;position:relative;overflow:hidden;
+  transition:transform .2s,box-shadow .2s;animation:fadeUp .4s ease both;cursor:default}
+.kc:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,.5)}
+.kc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:2px 2px 0 0}
+.kc::after{content:'';position:absolute;top:-30px;right:-30px;width:80px;height:80px;
+  border-radius:50%;opacity:.05}
+.kc.gd::before{background:linear-gradient(90deg,var(--gold),transparent)}.kc.gd::after{background:var(--gold)}
+.kc.tl::before{background:linear-gradient(90deg,var(--teal),transparent)}.kc.tl::after{background:var(--teal)}
+.kc.rs::before{background:linear-gradient(90deg,var(--rose),transparent)}.kc.rs::after{background:var(--rose)}
+.kc.bl::before{background:linear-gradient(90deg,var(--blue),transparent)}.kc.bl::after{background:var(--blue)}
+.kc.pp::before{background:linear-gradient(90deg,var(--purple),transparent)}.kc.pp::after{background:var(--purple)}
+.kc.or::before{background:linear-gradient(90deg,var(--orange),transparent)}.kc.or::after{background:var(--orange)}
+.kc.gr::before{background:linear-gradient(90deg,var(--green),transparent)}.kc.gr::after{background:var(--green)}
+.kc.cy::before{background:linear-gradient(90deg,var(--cyan),transparent)}.kc.cy::after{background:var(--cyan)}
+.kc.pk::before{background:linear-gradient(90deg,var(--pink),transparent)}.kc.pk::after{background:var(--pink)}
+.kc.lm::before{background:linear-gradient(90deg,var(--lime),transparent)}.kc.lm::after{background:var(--lime)}
+.kc:nth-child(1){animation-delay:.04s}.kc:nth-child(2){animation-delay:.08s}
+.kc:nth-child(3){animation-delay:.12s}.kc:nth-child(4){animation-delay:.16s}
+.kc:nth-child(5){animation-delay:.20s}.kc:nth-child(6){animation-delay:.24s}
+.kc:nth-child(7){animation-delay:.28s}.kc:nth-child(8){animation-delay:.32s}
+.kc:nth-child(9){animation-delay:.36s}.kc:nth-child(10){animation-delay:.40s}
+.kicon{font-size:20px;margin-bottom:10px}
+.klabel{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);
+  font-weight:600;margin-bottom:6px;line-height:1.4}
+.kval{font-size:21px;font-weight:700;font-family:var(--mono);letter-spacing:-1px;line-height:1}
+.kdesc{font-size:10px;color:var(--muted);margin-top:7px;line-height:1.5}
+.kc.gd .kval{color:var(--gold)} .kc.tl .kval{color:var(--teal)} .kc.rs .kval{color:var(--rose)}
+.kc.bl .kval{color:var(--blue)} .kc.pp .kval{color:var(--purple)} .kc.or .kval{color:var(--orange)}
+.kc.gr .kval{color:var(--green)} .kc.cy .kval{color:var(--cyan)} .kc.pk .kval{color:var(--pink)}
+.kc.lm .kval{color:var(--lime)}
+
+/* CHARTS */
+.r2{display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:12px}
+.r3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px}
+.r2e{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.r12{display:grid;grid-template-columns:1fr 2fr;gap:12px;margin-bottom:12px}
+@media(max-width:1050px){.r2,.r3,.r2e,.r12{grid-template-columns:1fr}}
+.cc{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:20px}
+.ctitle{font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px}
+.csub{font-size:11px;color:var(--muted);margin-bottom:14px}
+.insight{font-size:11px;color:var(--muted);margin-top:10px;padding-top:10px;
+  border-top:1px solid var(--border)}
+.insight b{color:var(--gold)}
+
+/* FUNIL */
+.funnel{padding:8px 0}
+.fstep{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.flbl{width:100px;font-size:11px;color:var(--muted);text-align:right;flex-shrink:0}
+.fbg{flex:1;background:var(--muted2);border-radius:8px;height:38px;overflow:hidden;position:relative}
+.ffill{height:100%;border-radius:8px;display:flex;align-items:center;
+  padding-left:12px;font-size:12px;font-weight:600;font-family:var(--mono);
+  color:#fff;transition:width 1s ease;white-space:nowrap;min-width:60px}
+.frate{width:60px;font-size:10px;font-family:var(--mono);text-align:right;flex-shrink:0}
+.frate.dn{color:var(--rose)} .frate.up{color:var(--green)}
+
+/* HEATMAP */
+.hmap{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.hcell{border-radius:12px;padding:12px 8px;text-align:center;
+  transition:transform .15s,box-shadow .15s;cursor:default}
+.hcell:hover{transform:scale(1.05);box-shadow:0 8px 20px rgba(0,0,0,.4)}
+.hday{font-size:9px;font-weight:700;text-transform:uppercase;
+  letter-spacing:1.5px;color:rgba(255,255,255,.55);margin-bottom:6px}
+.hrec{font-size:15px;font-weight:700;font-family:var(--mono);color:#fff;margin-bottom:3px}
+.hsub{font-size:10px;color:rgba(255,255,255,.55)}
+
+/* TABELA */
+.tcard{background:var(--s1);border:1px solid var(--border);border-radius:14px;
+  padding:20px;margin-bottom:14px;overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:right;padding:10px 11px;font-size:9px;text-transform:uppercase;
+  letter-spacing:1px;color:var(--muted);font-weight:700;border-bottom:1px solid var(--border);white-space:nowrap}
+th:first-child{text-align:left}
+td{padding:9px 11px;text-align:right;border-bottom:1px solid rgba(21,30,46,.9);
+  font-family:var(--mono);white-space:nowrap;font-size:12px}
+td:first-child{text-align:left;font-family:var(--font);font-weight:500;font-size:13px;color:var(--text)}
+tr:hover td{background:rgba(245,166,35,.03)}
+.cg{color:var(--gold)} .ct{color:var(--teal)} .cr{color:var(--rose)} .cb{color:var(--blue)}
+.cp{color:var(--purple)} .co{color:var(--orange)} .cgr{color:var(--green)}
+.cm{color:var(--muted)} .clm{color:var(--lime)} .cpk{color:var(--pink)}
+.bwrap{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+.mbar{width:46px;height:3px;background:var(--muted2);border-radius:2px;overflow:hidden}
+.mfill{height:100%;border-radius:2px}
+
+/* COMPARATIVO */
+.xgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:22px}
+.xcard{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:18px}
+.xyear{font-size:10px;text-transform:uppercase;letter-spacing:2px;font-weight:700;margin-bottom:14px}
+.xrow{display:flex;justify-content:space-between;align-items:center;
+  padding:6px 0;border-bottom:1px solid rgba(21,30,46,.9)}
+.xrow:last-child{border-bottom:none}
+.xkey{font-size:11px;color:var(--muted)} .xval{font-size:12px;font-weight:600;font-family:var(--mono)}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--s1)}
+::-webkit-scrollbar-thumb{background:var(--muted2);border-radius:3px}
+
+/* ════ PROJEÇÃO ════ */
+.proj-wrap{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+@media(max-width:800px){.proj-wrap{grid-template-columns:1fr}}
+.proj-card{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:22px;position:relative;overflow:hidden}
+.proj-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--purple),transparent)}
+.proj-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:2px;
+  color:var(--purple);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.proj-row{display:flex;justify-content:space-between;align-items:center;
+  padding:8px 0;border-bottom:1px solid var(--border)}
+.proj-row:last-child{border-bottom:none;padding-top:14px;margin-top:6px}
+.proj-lbl{font-size:12px;color:var(--muted)}
+.proj-val{font-size:14px;font-weight:700;font-family:var(--mono)}
+.proj-val.up{color:var(--green)} .proj-val.dn{color:var(--rose)} .proj-val.nt{color:var(--gold)}
+.proj-val.pp{color:var(--purple)}
+
+/* barra de progresso do mês */
+.prog-wrap{margin-bottom:18px}
+.prog-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.prog-lbl{font-size:11px;color:var(--muted)}
+.prog-pct{font-size:12px;font-family:var(--mono);color:var(--gold)}
+.prog-bg{height:8px;background:var(--muted2);border-radius:4px;overflow:hidden}
+.prog-fill{height:100%;border-radius:4px;transition:width 1s ease}
+
+/* alerta de ritmo */
+.ritmo-badge{display:inline-flex;align-items:center;gap:6px;
+  padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;margin-top:12px}
+.ritmo-badge.ok{background:rgba(46,204,128,.12);border:1px solid rgba(46,204,128,.3);color:var(--green)}
+.ritmo-badge.warn{background:rgba(245,166,35,.1);border:1px solid rgba(245,166,35,.25);color:var(--gold)}
+.ritmo-badge.bad{background:rgba(255,77,109,.1);border:1px solid rgba(255,77,109,.25);color:var(--rose)}
+
+/* input de meta */
+.meta-input-wrap{display:flex;gap:8px;align-items:center;margin-bottom:14px}
+.meta-input-wrap label{font-size:11px;color:var(--muted);white-space:nowrap;font-weight:600}
+.meta-inp{flex:1;background:#0A0D15;border:1.5px solid var(--border);border-radius:10px;
+  padding:10px 14px;color:var(--gold);font-family:var(--mono);font-size:15px;font-weight:700;
+  outline:none;transition:border-color .15s;text-align:right}
+.meta-inp:focus{border-color:var(--gold)}
+.meta-btn{padding:10px 16px;border-radius:10px;border:1px solid var(--gold);
+  background:rgba(245,166,35,.08);color:var(--gold);font-size:13px;font-weight:700;
+  cursor:pointer;transition:all .15s;font-family:var(--font)}
+.meta-btn:hover{background:rgba(245,166,35,.15)}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+<body><div class="wrap">
+
+<header>
+  <div class="hrow">
+    <div class="paw">🐾</div>
+    <div class="htitle">
+      <h1>LOJA 3 — BANHO &amp; TOSA</h1>
+      <p>Dashboard de Gestão Completo · 2026</p>
+    </div>
+  </div>
+  <div class="badge" id="supaBadge" style="background:rgba(90,106,138,.08);border:1px solid rgba(90,106,138,.25);color:var(--muted);font-size:11px;margin-right:8px">☁️ Supabase</div>
+<div class="badge" style="display:flex;gap:8px;align-items:center">⟳ Atualizado em 17/04/2026</div>
+</header>
+
+<div class="fbar">
+  <span class="flabel">Ano</span>
+  <div class="fgrp" id="yF">
+    <button class="bf active" onclick="tY('Todos')">Todos</button><button class="bf" onclick="tY('2026')">2026</button>
+  </div>
+  <div class="sep"></div>
+  <span class="flabel">Mês</span>
+  <div class="fgrp" id="mF">
+    <button class="bf month active" onclick="tM('Todos')">Todos</button>
+    <button class="bf month" onclick="tM('Janeiro')">Jan</button>
+    <button class="bf month" onclick="tM('Fevereiro')">Fev</button>
+    <button class="bf month" onclick="tM('Março')">Mar</button>
+    <button class="bf month" onclick="tM('Abril')">Abr</button>
+    <button class="bf month" onclick="tM('Maio')">Mai</button>
+    <button class="bf month" onclick="tM('Junho')">Jun</button>
+    <button class="bf month" onclick="tM('Julho')">Jul</button>
+    <button class="bf month" onclick="tM('Agosto')">Ago</button>
+    <button class="bf month" onclick="tM('Setembro')">Set</button>
+    <button class="bf month" onclick="tM('Outubro')">Out</button>
+    <button class="bf month" onclick="tM('Novembro')">Nov</button>
+    <button class="bf month" onclick="tM('Dezembro')">Dez</button>
+  </div>
+  <button class="bclr" onclick="clr()">✕ Limpar</button>
+  <div class="plabel" id="pLbl">📅 Todos os períodos</div>
+</div>
+
+<!-- ════ FINANCEIRO ════ -->
+<div class="sec"><em>💰</em> Financeiro</div>
+<div class="kg6" style="grid-template-columns:repeat(auto-fill,minmax(155px,1fr))">
+  <div class="kc gd"><div class="kicon">💰</div><div class="klabel">Receita Bruta</div><div class="kval" id="k_rec">—</div><div class="kdesc">Faturamento antes da taxa</div></div>
+  <div class="kc rs" style="border-top:3px solid var(--rose)"><div class="kicon">💳</div><div class="klabel">Taxa Máquina (5%)</div><div class="kval" id="k_taxa" style="color:var(--rose)">—</div><div class="kdesc">⚠ Sai do caixa em 30 dias</div></div>
+  <div class="kc tl" style="border-top:3px solid var(--teal)"><div class="kicon">💎</div><div class="klabel">Receita Líquida</div><div class="kval" id="k_rec_liq" style="color:var(--teal)">—</div><div class="kdesc">Real disponível no caixa</div></div>
+  <div class="kc rs"><div class="kicon">💸</div><div class="klabel">Despesas</div><div class="kval" id="k_des">—</div><div class="kdesc">Contas pagas no período</div></div>
+  <div class="kc tl"><div class="kicon">📈</div><div class="klabel">Lucro Real</div><div class="kval" id="k_luc">—</div><div class="kdesc">Líquida − Despesas</div></div>
+  <div class="kc pp"><div class="kicon">📊</div><div class="klabel">Margem Real %</div><div class="kval" id="k_marg">—</div><div class="kdesc">Lucro ÷ Rec. Líquida</div></div>
+  <div class="kc cy"><div class="kicon">☀️</div><div class="klabel">Receita Líq/Dia</div><div class="kval" id="k_dia">—</div><div class="kdesc">Média por dia trabalhado</div></div>
+  <div class="kc or"><div class="kicon">📦</div><div class="klabel">Pacotes</div><div class="kval" id="k_pac">—</div><div class="kdesc">Receita de pacotes</div></div>
+</div>
+<div class="kg4">
+  <div class="kc pp"><div class="kicon">💳</div><div class="klabel">Cartão (c.d)</div><div class="kval" id="k_cart">—</div><div class="kdesc" id="k_cart_p">% do total</div></div>
+  <div class="kc cy"><div class="kicon">💵</div><div class="klabel">Dinheiro</div><div class="kval" id="k_din">—</div><div class="kdesc" id="k_din_p">% do total</div></div>
+  <div class="kc pk"><div class="kicon">🏥</div><div class="klabel">Veterinário</div><div class="kval" id="k_vet">—</div><div class="kdesc">Receita serviço vet</div></div>
+  <div class="kc gr"><div class="kicon">🔧</div><div class="klabel">Custo por Cão</div><div class="kval" id="k_cpc">—</div><div class="kdesc">Despesa ÷ cães atendidos</div></div>
+</div>
+
+<!-- ════ OPERACIONAL ════ -->
+<div class="sec"><em>🐾</em> Operacional</div>
+<div class="kg6">
+  <div class="kc bl"><div class="kicon">🐾</div><div class="klabel">Cães Atendidos</div><div class="kval" id="k_caes">—</div><div class="kdesc">Total de atendimentos</div></div>
+  <div class="kc gr"><div class="kicon">🆕</div><div class="klabel">Cães Novos</div><div class="kval" id="k_cnv">—</div><div class="kdesc">caes.(nv) captados</div></div>
+  <div class="kc gd"><div class="kicon">🎫</div><div class="klabel">Ticket Médio</div><div class="kval" id="k_tick">—</div><div class="kdesc">Receita ÷ total cães</div></div>
+  <div class="kc cy"><div class="kicon">📊</div><div class="klabel">Taxa de Novos</div><div class="kval" id="k_txn">—</div><div class="kdesc">Novos ÷ total atendidos</div></div>
+  <div class="kc pk"><div class="kicon">📅</div><div class="klabel">Dias Trabalhados</div><div class="kval" id="k_dtrab">—</div><div class="kdesc">Dias com atendimento</div></div>
+  <div class="kc or"><div class="kicon">⭐</div><div class="klabel">Melhor Dia</div><div class="kval" id="k_bestday">—</div><div class="kdesc" id="k_bestday_d">Maior receita média</div></div>
+</div>
+
+<!-- ════ CAPTAÇÃO ADS ════ -->
+<div class="sec"><em>📱</em> Captação &amp; Google Ads</div>
+<div class="kg5">
+  <div class="kc or"><div class="kicon">📣</div><div class="klabel">Investimento ADS</div><div class="kval" id="k_inv">—</div><div class="kdesc">Valor investido em anúncios</div></div>
+  <div class="kc bl"><div class="kicon">🔄</div><div class="klabel">Conversões</div><div class="kval" id="k_conv">—</div><div class="kdesc">Clientes captados via ADS</div></div>
+  <div class="kc tl"><div class="kicon">✨</div><div class="klabel">Clinte (1ª visita)</div><div class="kval" id="k_cli">—</div><div class="kdesc">R$ gerado nas 1ªs visitas</div></div>
+  <div class="kc pp"><div class="kicon">🔁</div><div class="klabel">Retorno (2ª+)</div><div class="kval" id="k_ret">—</div><div class="kdesc">R$ dos que já voltaram</div></div>
+  <div class="kc gr"><div class="kicon">💹</div><div class="klabel">ROI Total ADS</div><div class="kval" id="k_roi">—</div><div class="kdesc">Clinte + Retorno</div></div>
+</div>
+<div class="kg4">
+  <div class="kc or"><div class="kicon">🎯</div><div class="klabel">Custo / Conversão</div><div class="kval" id="k_cconv">—</div><div class="kdesc">Investimento ÷ conversões</div></div>
+  <div class="kc tl"><div class="kicon">🏆</div><div class="klabel">Ticket Médio ADS</div><div class="kval" id="k_tads">—</div><div class="kdesc">ROI Total ÷ conversões</div></div>
+  <div class="kc pp"><div class="kicon">♻️</div><div class="klabel">Taxa Retorno ADS</div><div class="kval" id="k_txret">—</div><div class="kdesc">% do ROI veio de retornos</div></div>
+  <div class="kc lm"><div class="kicon">💎</div><div class="klabel">LTV Estimado</div><div class="kval" id="k_ltv">—</div><div class="kdesc">Valor de vida (×3 visitas)</div></div>
+</div>
+
+<!-- ════ GRÁFICOS ════ -->
+<div class="sec"><em>📊</em> Análise Visual</div>
+
+<div class="r2">
+  <div class="cc">
+    <div class="ctitle">📈 Receita vs Despesa</div>
+    <div class="csub">Área preenchida — o espaço entre as linhas é o lucro</div>
+    <div style="position:relative;height:280px"><canvas id="cL"></canvas></div>
+  </div>
+  <div class="cc">
+    <div class="ctitle">💳 Formas de Pagamento</div>
+    <div class="csub">Cartão vs Dinheiro com % no tooltip</div>
+    <div style="position:relative;height:280px"><canvas id="cP"></canvas></div>
+  </div>
+</div>
+
+<div class="r3">
+  <div class="cc">
+    <div class="ctitle">🐾 Cães — Existentes vs Novos (área empilhada)</div>
+    <div class="csub">Novos representados como fatia crescendo sobre o total</div>
+    <div style="position:relative;height:240px"><canvas id="cC"></canvas></div>
+  </div>
+  <div class="cc">
+    <div class="ctitle">✨ Clinte vs 🔁 Retorno + linha ROI</div>
+    <div class="csub">Barras empilhadas + linha de ROI total mostrando composição</div>
+    <div style="position:relative;height:240px"><canvas id="cADS"></canvas></div>
+  </div>
+  <div class="cc">
+    <div class="ctitle">🎫 Ticket Médio + linha de meta</div>
+    <div class="csub">Linha pontilhada = média do período (sua meta de referência)</div>
+    <div style="position:relative;height:240px"><canvas id="cT"></canvas></div>
+  </div>
+</div>
+
+<div class="r2e">
+  <div class="cc">
+    <div class="ctitle">💹 ADS — Investimento vs ROI Total</div>
+    <div class="csub">Linha vermelha = break-even. Acima = lucro do ADS</div>
+    <div style="position:relative;height:240px"><canvas id="cROI"></canvas></div>
+    <div class="insight" id="ins_roi">—</div>
+  </div>
+  <div class="cc">
+    <div class="ctitle">🔄 Conversões pelo ADS por período</div>
+    <div class="csub">Intensidade da cor proporcional ao volume de conversões</div>
+    <div style="position:relative;height:240px"><canvas id="cConv"></canvas></div>
+  </div>
+</div>
+
+<div class="r12">
+  <div class="cc">
+    <div class="ctitle">🌡️ Funil de Captação ADS</div>
+    <div class="csub">Do contato ao retorno — onde estão as perdas</div>
+    <div class="funnel" id="funnel"></div>
+  </div>
+  <div class="cc">
+    <div class="ctitle">📅 Heatmap — Receita por Dia da Semana</div>
+    <div class="csub">Cor mais intensa = dia mais rentável</div>
+    <div class="hmap" id="hmap" style="margin-top:8px"></div>
+    <div class="insight" id="ins_hmap">—</div>
+  </div>
+</div>
+
+<!-- ════ TABELA ════ -->
+<div class="sec"><em>📋</em> Detalhamento Mensal Completo</div>
+<div class="tcard">
+<table>
+<thead><tr>
+  <th>Período</th>
+  <th>Rec.Bruta</th><th style="color:var(--rose)">Taxa 5%</th><th style="color:var(--teal)">Rec.Líquida</th><th>Despesa</th><th>Lucro</th><th>Margem</th><th>R$/Dia</th>
+  <th>Cães</th><th title="caes.(nv)">Novos</th><th>Ticket</th><th>Custo/Cão</th>
+  <th>Cartão</th><th>Dinheiro</th>
+  <th title="conversão">Conv.</th>
+  <th title="clinte — 1ª visita">Clinte</th>
+  <th title="retorno — 2ª+ visita">Retorno</th>
+  <th title="Retorno (ROI) = clinte+retorno">ROI ADS</th>
+  <th>Invest.</th>
+  <th title="Custo por conversão">CPL</th>
+  <th title="Ticket médio ADS">Tick.ADS</th>
+  <th title="LTV estimado × 3">LTV</th>
+</tr></thead>
+<tbody id="tBody"></tbody>
+</table>
+</div>
+
+<!-- ════ PROJEÇÃO ════ -->
+<div class="sec"><em>🔮</em> Projeção — Próximo Mês</div>
+<div id="projWrap"></div>
+
+<!-- ════ COMPARATIVO ════ -->
+<div class="sec"><em>📅</em> Comparativo por Ano</div>
+<div class="xgrid" id="xGrid"></div>
+
+</div>
+<script>
+const D    = {"2026": {"Março": {"receita": 5620.0, "taxa_maquina": 184.0, "receita_liq": 5436.0, "cartao": 3680.0, "dinheiro": 1940.0, "pacotes": 970.0, "btosa": 5620.0, "vet": 0.0, "caes": 53.0, "caes_novos": 12.0, "ticket": 106.04, "conversao": 12.0, "clinte": 1800.0, "retorno": 2570.0, "roi_total": 4370.0, "investimento": 350.0, "roi_x": 12.49, "contato": 0.0, "despesa": 12060.0, "diversos": 195.0, "lucro": -6440.0, "dias_trab": 5, "margem": -1.1459, "rec_dia": 1124.0, "cpc": 227.55, "cpl": 29.17, "tick_ads": 364.17, "tx_ret_ads": 0.5881, "ltv": 1092.5}}};
+const DOW  = {"2026": {"Março": {"qua": {"rec": 1220.0, "caes": 11.0, "nov": 3.0, "conv": 3.0, "dias": 1}, "qui": {"rec": 1200.0, "caes": 14.0, "nov": 2.0, "conv": 2.0, "dias": 1}, "seg": {"rec": 1000.0, "caes": 9.0, "nov": 2.0, "conv": 2.0, "dias": 1}, "sex": {"rec": 1500.0, "caes": 12.0, "nov": 4.0, "conv": 4.0, "dias": 1}, "ter": {"rec": 700.0, "caes": 7.0, "nov": 1.0, "conv": 1.0, "dias": 1}}}};
+const TODAY_DAY   = 17;
+const TODAY_MONTH = 4;
+const TODAY_YEAR  = 2026;
+
+// ── Supabase: carrega dados em tempo real ──────────────────────────────────
+const _SB = supabase.createClient("https://wyibsreqdvnllzuzjvgr.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind5aWJzcmVxZHZubGx6dXpqdmdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1NTc5MzEsImV4cCI6MjA5MjEzMzkzMX0.AbK_8f8NKvwHbDgvDJthibFKrUW8fFJmR2YGnjq7ovs");
+
+async function carregarDoSupabase(){
+  const badge = document.getElementById('supaBadge');
+  if(badge) badge.textContent = '⏳ carregando…';
+  try {
+    // Busca movimento
+    const {data:movs, error:e1} = await _SB.from('movimento').select('*').order('data');
+    if(e1) throw e1;
+
+    // Busca gastos
+    const {data:gsts, error:e2} = await _SB.from('gastos').select('*').order('data');
+    if(e2) throw e2;
+
+    if(!movs || !movs.length){
+      if(badge) badge.textContent = '☁️ sem dados';
+      return;
+    }
+
+    // Reconstrói D (objeto de dados mensais) a partir do Supabase
+    const D2 = {};
+    movs.forEach(r => {
+      const ano = String(r.ano);
+      const mes = MO[r.mes - 1];
+      if(!mes) return;
+      if(!D2[ano]) D2[ano] = {};
+      if(!D2[ano][mes]) D2[ano][mes] = {
+        receita:0,taxa_maquina:0,receita_liq:0,cartao:0,dinheiro:0,
+        pacotes:0,btosa:0,vet:0,despesa:0,lucro:0,margem:0,
+        caes:0,caes_novos:0,ticket:0,conversao:0,clinte:0,retorno:0,
+        roi_total:0,investimento:0,diversos:0,dias_trab:0,
+        rec_dia:0,cpc:0,cpl:0,tick_ads:0,tx_ret_ads:0,ltv:0,
+        caes_nv:0,contato:0,
+      };
+      const m = D2[ano][mes];
+      m.receita      += r.receita     || 0;
+      m.taxa_maquina += r.taxa_maquina|| 0;
+      m.receita_liq  += r.receita_liq || 0;
+      m.cartao       += r.cartao      || 0;
+      m.dinheiro     += r.dinheiro    || 0;
+      m.pacotes      += r.pacotes     || 0;
+      m.vet          += r.vet         || 0;
+      m.caes         += r.caes        || 0;
+      m.caes_novos   += r.caes_nv     || 0;
+      m.conversao    += r.conversao   || 0;
+      m.clinte       += r.clinte      || 0;
+      m.retorno      += r.retorno     || 0;
+      m.roi_total    += r.roi         || 0;
+      m.investimento += r.invest      || 0;
+      m.diversos     += r.diversos    || 0;
+      m.dias_trab    += 1;
+    });
+
+    // Agrega gastos por mês
+    gsts.forEach(g => {
+      const ano = String(g.ano);
+      const mes = MO[g.mes - 1];
+      if(!mes || !D2[ano] || !D2[ano][mes]) return;
+      D2[ano][mes].despesa = (D2[ano][mes].despesa || 0) + (g.val || 0);
+    });
+
+    // Recalcula métricas derivadas por mês
+    Object.values(D2).forEach(meses => {
+      Object.values(meses).forEach(m => {
+        m.lucro    = m.receita_liq - m.despesa;
+        m.margem   = m.receita_liq > 0 ? m.lucro / m.receita_liq : 0;
+        m.rec_dia  = m.dias_trab  > 0 ? m.receita_liq / m.dias_trab : 0;
+        m.ticket   = m.caes       > 0 ? m.receita_liq / m.caes : 0;
+        m.cpc      = m.caes       > 0 ? m.despesa / m.caes : 0;
+        m.cpl      = m.conversao  > 0 && m.investimento > 0 ? m.investimento / m.conversao : 0;
+        m.tick_ads = m.conversao  > 0 ? m.roi_total / m.conversao : 0;
+        m.tx_ret_ads = m.roi_total > 0 ? m.retorno / m.roi_total : 0;
+        m.ltv      = m.conversao  > 0 ? m.roi_total / m.conversao * 3 : 0;
+        m.receita_liq = m.receita_liq || m.receita;
+      });
+    });
+
+    // Sobrescreve D com dados do Supabase e re-renderiza
+    Object.assign(D, D2);
+    // Limpa anos do JSON estático que não estão no Supabase
+    Object.keys(D).forEach(k => { if(!D2[k]) delete D[k]; });
+
+    up();
+    buildProjecao();
+    if(badge){ badge.textContent = '✅ Supabase'; badge.style.color='var(--green)'; badge.style.borderColor='rgba(29,185,84,.4)'; }
+    console.log('Dashboard carregado do Supabase:', Object.keys(D2));
+  } catch(err) {
+    console.error('Supabase erro:', err);
+    if(badge){ badge.textContent = '⚠ offline'; badge.style.color='var(--gold)'; }
+    // Mantém dados estáticos do JSON como fallback
+  }
+}
+
+const MO   = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const MS   = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const DIAS_MES = [0,31,28,31,30,31,30,31,31,30,31,30,31];
+const DOW_K     = ['seg','ter','qua','qui','sex','sáb'];
+const DOW_LABEL = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+let sY='Todos', sM='Todos', CH={};
+
+function tY(y){ sY=y; document.querySelectorAll('#yF .bf').forEach(b=>b.classList.toggle('active',b.textContent.trim()===y)); up(); }
+function tM(m){ sM=m; const l=m==='Todos'?'Todos':(MS[MO.indexOf(m)]||m); document.querySelectorAll('#mF .bf').forEach(b=>{ const t=b.textContent.trim(); b.classList.toggle('active',t===l||(m==='Todos'&&t==='Todos')); }); up(); }
+function clr(){ sY='Todos'; sM='Todos'; document.querySelectorAll('#yF .bf').forEach(b=>b.classList.toggle('active',b.textContent.trim()==='Todos')); document.querySelectorAll('#mF .bf').forEach(b=>b.classList.toggle('active',b.textContent.trim()==='Todos')); up(); }
+
+function rows(){ const ys=sY==='Todos'?Object.keys(D):[sY],ms=sM==='Todos'?MO:[sM],r=[]; ys.forEach(y=>{ if(!D[y])return; ms.forEach(m=>{ if(D[y][m])r.push({year:y,month:m,...D[y][m]}); }); }); return r; }
+function sm(r,f){ return r.reduce((a,x)=>a+(x[f]||0),0); }
+function ag(r){
+  const rec=sm(r,'receita'),des=sm(r,'despesa'),caes=sm(r,'caes');
+  const inv=sm(r,'investimento'),roi=sm(r,'roi_total');
+  const conv=sm(r,'conversao'),cli=sm(r,'clinte'),ret=sm(r,'retorno');
+  const dias=sm(r,'dias_trab')||r.length;
+  return {
+    receita:rec,despesa:des,lucro:rec-des,
+    margem:rec>0?(rec-des)/rec:0,
+    rec_dia:dias>0?rec/dias:0,
+    cartao:sm(r,'cartao'),dinheiro:sm(r,'dinheiro'),
+    pacotes:sm(r,'pacotes'),vet:sm(r,'vet'),
+    caes,caes_novos:sm(r,'caes_novos'),
+    ticket:caes>0?rec/caes:0,
+    tx_novos:caes>0?sm(r,'caes_novos')/caes:0,
+    cpc:caes>0&&des>0?des/caes:0,
+    conversao:conv,clinte:cli,retorno:ret,
+    roi_total:roi,investimento:inv,
+    cpl:conv>0&&inv>0?inv/conv:0,
+    tick_ads:conv>0?roi/conv:0,
+    tx_ret:roi>0?ret/roi:0,
+    ltv:conv>0?roi/conv*3:0,
+    dias,
+  };
+}
+
+const fK=v=>v>=1000?'R$\u00a0'+(v/1000).toFixed(1)+'k':'R$\u00a0'+v.toFixed(0);
+const fF=v=>'R$\u00a0'+v.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0});
+const fP=v=>(v*100).toFixed(1)+'%';
+
+const CO={
+  responsive:true,maintainAspectRatio:false,
+  plugins:{
+    legend:{labels:{color:'#3D5470',font:{family:'DM Sans',size:11},boxWidth:10}},
+    tooltip:{backgroundColor:'#0B0F1A',borderColor:'#151E2E',borderWidth:1,titleColor:'#D8E6F3',bodyColor:'#3D5470',callbacks:{footer:items=>items.some(i=>i.dataset.label?.includes('quida'))?['','⚠ Já descontado 5% da maquininha (cobrado em 30 dias)']:undefined}}
+  },
+  scales:{
+    x:{grid:{color:'rgba(21,30,46,.8)'},ticks:{color:'#3D5470',font:{family:'DM Sans',size:10}}},
+    y:{grid:{color:'rgba(21,30,46,.8)'},ticks:{color:'#3D5470',font:{family:'DM Sans',size:10},callback:v=>fK(v)}}
+  }
+};
+function mk(id,type,data,opts){ const c=document.getElementById(id).getContext('2d'); if(CH[id])CH[id].destroy(); CH[id]=new Chart(c,{type,data,options:opts}); }
+
+// ══ HEATMAP ══
+function buildHeatmap(){
+  const ys=sY==='Todos'?Object.keys(DOW):[sY];
+  const ms=sM==='Todos'?MO:[sM];
+  const agg={};
+  DOW_K.forEach(d=>agg[d]={rec:0,caes:0,n:0,dias:0});
+  ys.forEach(y=>{ if(!DOW[y])return; ms.forEach(m=>{ if(!DOW[y][m])return;
+    Object.entries(DOW[y][m]).forEach(([d,v])=>{
+      const k=d==='sáb'?'sáb':d;
+      if(agg[k]!==undefined){ agg[k].rec+=v.rec; agg[k].caes+=v.caes; agg[k].n+=v.nov; agg[k].dias+=v.dias; }
+    });
+  }); });
+
+  const vals=DOW_K.map(d=>agg[d].rec);
+  const maxV=Math.max(...vals,1);
+  // azul escuro→cyan: intensidade proporcional
+  const toColor=(v,mx)=>{ const t=mx>0?v/mx:0; const r=Math.round(10+t*10),g=Math.round(28+t*160),b=Math.round(80+t*100); return `rgb(${r},${g},${b})`; };
+
+  document.getElementById('hmap').innerHTML=DOW_K.map((d,i)=>{
+    const v=agg[d];
+    const avg=v.dias>0?v.rec/v.dias:0;
+    const col=toColor(v.rec,maxV);
+    return `<div class="hcell" style="background:${col}">
+      <div class="hday">${DOW_LABEL[i]}</div>
+      <div class="hrec">${fK(v.rec)}</div>
+      <div class="hsub">${Math.round(v.caes)} cães</div>
+      <div class="hsub">~${fK(avg)}/vez</div>
+    </div>`;
+  }).join('');
+
+  const best=DOW_K[vals.indexOf(Math.max(...vals))];
+  const worst=DOW_K[vals.filter(v=>v>0).length>0?vals.indexOf(Math.min(...vals.filter(v=>v>0))):0];
+  const bestLbl=DOW_LABEL[DOW_K.indexOf(best)];
+  const worstLbl=DOW_LABEL[DOW_K.indexOf(worst)];
+  document.getElementById('ins_hmap').innerHTML=
+    `<b>${bestLbl}</b> é o dia mais forte. <b>${worstLbl}</b> tem menor volume — considere ações de captação neste dia.`;
+}
+
+// ══ FUNIL ══
+function buildFunnel(a){
+  const steps=[
+    {lbl:'Conversões',  val:a.conversao,  col:'#4D9EFF', fmt:v=>Math.round(v)+''},
+    {lbl:'Clinte (R$)', val:a.clinte,     col:'#00D4AA', fmt:fF},
+    {lbl:'Retorno (R$)',val:a.retorno,    col:'#9B7FFF', fmt:fF},
+    {lbl:'ROI Total',   val:a.roi_total,  col:'#2ECC80', fmt:fF},
+  ];
+  const maxV=Math.max(...steps.map(s=>s.val),1);
+  document.getElementById('funnel').innerHTML=steps.map((s,i)=>{
+    const pct=Math.round(s.val/maxV*100);
+    const prev=i>0?steps[i-1].val:null;
+    const rate=prev&&prev>0?Math.round(s.val/prev*100):null;
+    const rateStr=rate!==null?`<span class="frate ${rate>=50?'up':'dn'}">${rate}%</span>`:'<span class="frate">—</span>';
+    return `<div class="fstep">
+      <div class="flbl">${s.lbl}</div>
+      <div class="fbg"><div class="ffill" style="width:${pct}%;background:${s.col}">${s.fmt(s.val)}</div></div>
+      ${rateStr}
+    </div>`;
+  }).join('');
+}
+
+function up(){
+  const r=rows(), a=ag(r);
+
+  // ── Financeiro ──
+  document.getElementById('k_rec').textContent=fF(a.receita);
+  const taxaEl=document.getElementById('k_taxa');
+  if(taxaEl){taxaEl.textContent=a.taxa_maquina>0?'−'+fF(a.taxa_maquina):'—';}
+  const liqEl=document.getElementById('k_rec_liq');
+  if(liqEl){liqEl.textContent=fF(a.receita_liq||a.receita);}
+  document.getElementById('k_des').textContent=fF(a.despesa);
+  const lEl=document.getElementById('k_luc');
+  lEl.textContent=fF(a.lucro); lEl.style.color=a.lucro>=0?'var(--teal)':'var(--rose)';
+  const mEl=document.getElementById('k_marg');
+  mEl.textContent=fP(a.margem);
+  mEl.style.color=a.margem>.4?'var(--green)':a.margem>.2?'var(--teal)':'var(--rose)';
+  document.getElementById('k_dia').textContent=a.rec_dia>0?fF(a.rec_dia):'—';
+  document.getElementById('k_pac').textContent=a.pacotes>0?fF(a.pacotes):'—';
+  document.getElementById('k_cart').textContent=fF(a.cartao);
+  document.getElementById('k_cart_p').textContent=a.receita>0?fP(a.cartao/a.receita)+' do total':'';
+  document.getElementById('k_din').textContent=fF(a.dinheiro);
+  document.getElementById('k_din_p').textContent=a.receita>0?fP(a.dinheiro/a.receita)+' do total':'';
+  document.getElementById('k_vet').textContent=a.vet>0?fF(a.vet):'—';
+  document.getElementById('k_cpc').textContent=a.cpc>0?fF(a.cpc):'—';
+
+  // ── Operacional ──
+  document.getElementById('k_caes').textContent=Math.round(a.caes).toLocaleString('pt-BR');
+  document.getElementById('k_cnv').textContent=Math.round(a.caes_novos);
+  document.getElementById('k_tick').textContent='R$\u00a0'+a.ticket.toFixed(0);
+  document.getElementById('k_txn').textContent=fP(a.tx_novos);
+  document.getElementById('k_dtrab').textContent=a.dias+' dias';
+
+  // Melhor dia da semana
+  const ys2=sY==='Todos'?Object.keys(DOW):[sY];
+  const ms2=sM==='Todos'?MO:[sM];
+  let bestRec=0,bestLbl='—';
+  ys2.forEach(y=>{ if(!DOW[y])return; ms2.forEach(m=>{ if(!DOW[y][m])return;
+    Object.entries(DOW[y][m]).forEach(([d,v])=>{ if(v.rec>bestRec){ bestRec=v.rec; bestLbl=DOW_LABEL[DOW_K.indexOf(d)]||d; } }); }); });
+  document.getElementById('k_bestday').textContent=bestLbl;
+  document.getElementById('k_bestday_d').textContent=bestRec>0?fF(bestRec)+' no período':'—';
+
+  // ── ADS ──
+  document.getElementById('k_inv').textContent=a.investimento>0?fF(a.investimento):'—';
+  document.getElementById('k_conv').textContent=Math.round(a.conversao)||'—';
+  document.getElementById('k_cli').textContent=fF(a.clinte);
+  document.getElementById('k_ret').textContent=fF(a.retorno);
+  document.getElementById('k_roi').textContent=fF(a.roi_total);
+  document.getElementById('k_cconv').textContent=a.cpl>0?fF(a.cpl):'Sem invest.';
+  document.getElementById('k_tads').textContent=a.tick_ads>0?fF(a.tick_ads):'—';
+  const txEl=document.getElementById('k_txret');
+  txEl.textContent=fP(a.tx_ret);
+  txEl.style.color=a.tx_ret>.6?'var(--green)':a.tx_ret>.3?'var(--teal)':'var(--muted)';
+  document.getElementById('k_ltv').textContent=a.ltv>0?fF(a.ltv):'—';
+
+  // Período label
+  const lbl=sY!=='Todos'&&sM!=='Todos'?sM+' '+sY:sY!=='Todos'?'Ano '+sY:sM!=='Todos'?sM+' (todos)':'Todos os períodos';
+  document.getElementById('pLbl').textContent='📅 '+lbl;
+
+  // ══ GRÁFICOS ══
+
+  // G1 — Receita vs Despesa (área)
+  const bK={};
+  r.forEach(x=>{ const k=sY==='Todos'?x.month.slice(0,3)+" '"+x.year.slice(2):x.month.slice(0,3);
+    if(!bK[k])bK[k]={rec:0,des:0}; bK[k].rec+=x.receita; bK[k].des+=x.despesa; });
+  const L1=Object.keys(bK);
+  mk('cL','line',{labels:L1,datasets:[
+    {label:'Receita',data:L1.map(k=>bK[k].rec),borderColor:'#F5A623',
+     backgroundColor:'rgba(245,166,35,.15)',fill:true,tension:.4,
+     pointBackgroundColor:'#F5A623',pointRadius:5,pointHoverRadius:8},
+    {label:'Despesa',data:L1.map(k=>bK[k].des),borderColor:'#FF4D6D',
+     backgroundColor:'rgba(255,77,109,.1)',fill:true,tension:.4,
+     pointBackgroundColor:'#FF4D6D',pointRadius:5,pointHoverRadius:8}
+  ]},CO);
+
+  // G2 — Rosca pagamentos com % no tooltip
+  mk('cP','doughnut',{labels:['Cartão','Dinheiro'],datasets:[{
+    data:[a.cartao,a.dinheiro],
+    backgroundColor:['rgba(245,166,35,.85)','rgba(0,212,170,.85)'],
+    borderColor:['#F5A623','#00D4AA'],borderWidth:2,hoverOffset:10
+  }]},{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{
+    legend:{position:'bottom',labels:{color:'#3D5470',font:{family:'DM Sans',size:11},boxWidth:10,padding:14}},
+    tooltip:{backgroundColor:'#0B0F1A',borderColor:'#151E2E',borderWidth:1,
+      titleColor:'#D8E6F3',bodyColor:'#3D5470',
+      callbacks:{label:c=>' '+fF(c.raw)+' ('+fP(c.raw/a.receita)+')'}}
+  }});
+
+  // G3 — Cães área empilhada
+  const cK={};
+  r.forEach(x=>{ const k=sY==='Todos'?x.month.slice(0,3)+"'"+x.year.slice(2):x.month.slice(0,3);
+    if(!cK[k])cK[k]={t:0,n:0}; cK[k].t+=x.caes; cK[k].n+=x.caes_novos; });
+  const LC=Object.keys(cK);
+  mk('cC','line',{labels:LC,datasets:[
+    {label:'Cães Existentes',data:LC.map(k=>Math.max(0,cK[k].t-cK[k].n)),
+     borderColor:'#4D9EFF',backgroundColor:'rgba(77,158,255,.2)',
+     fill:true,tension:.4,pointRadius:4,pointBackgroundColor:'#4D9EFF'},
+    {label:'Cães Novos',data:LC.map(k=>cK[k].n),
+     borderColor:'#2ECC80',backgroundColor:'rgba(46,204,128,.35)',
+     fill:true,tension:.4,pointRadius:4,pointBackgroundColor:'#2ECC80'}
+  ]},{...CO,scales:{...CO.scales,y:{...CO.scales.y,stacked:true,
+    ticks:{...CO.scales.y.ticks,callback:v=>Math.round(v)}}}});
+
+  // G4 — Clinte+Retorno empilhados + linha ROI
+  const aK={};
+  r.filter(x=>x.clinte>0||x.retorno>0).forEach(x=>{
+    const k=x.month.slice(0,3)+(sY==='Todos'?"'"+x.year.slice(2):'');
+    if(!aK[k])aK[k]={cli:0,ret:0,roi:0};
+    aK[k].cli+=x.clinte; aK[k].ret+=x.retorno; aK[k].roi+=x.roi_total;
+  });
+  const LA=Object.keys(aK);
+  if(LA.length) mk('cADS','bar',{labels:LA,datasets:[
+    {label:'Clinte (1ª visita)',data:LA.map(k=>aK[k].cli),
+     backgroundColor:'rgba(0,212,170,.7)',borderColor:'#00D4AA',borderRadius:4,stack:'ads',order:2},
+    {label:'Retorno (2ª+)',data:LA.map(k=>aK[k].ret),
+     backgroundColor:'rgba(155,127,255,.7)',borderColor:'#9B7FFF',borderRadius:4,stack:'ads',order:2},
+    {label:'ROI Total',data:LA.map(k=>aK[k].roi),type:'line',
+     borderColor:'#F5A623',borderWidth:2.5,pointBackgroundColor:'#F5A623',
+     pointRadius:6,pointHoverRadius:9,tension:.3,fill:false,order:1}
+  ]},{...CO,scales:{...CO.scales,x:{...CO.scales.x,stacked:true},y:{...CO.scales.y,stacked:false}}});
+  else mk('cADS','bar',{labels:['Sem dados'],datasets:[{data:[0],backgroundColor:'rgba(21,30,46,.5)'}]},CO);
+
+  // G5 — Ticket + meta (média)
+  const tK={};
+  r.forEach(x=>{ const k=sY==='Todos'?x.month.slice(0,3)+"'"+x.year.slice(2):x.month.slice(0,3);
+    if(!tK[k])tK[k]={r:0,c:0}; tK[k].r+=x.receita; tK[k].c+=x.caes; });
+  const LT=Object.keys(tK), VT=LT.map(k=>tK[k].c>0?tK[k].r/tK[k].c:0);
+  const meta=VT.length>0?VT.reduce((a,b)=>a+b,0)/VT.length:0;
+  mk('cT','line',{labels:LT,datasets:[
+    {label:'Ticket Médio',data:VT,borderColor:'#F5A623',
+     backgroundColor:'rgba(245,166,35,.12)',fill:true,tension:.4,
+     pointBackgroundColor:'#F5A623',pointRadius:5,pointHoverRadius:8},
+    {label:'Meta (média período)',data:LT.map(()=>meta),
+     borderColor:'rgba(255,77,109,.6)',borderWidth:1.5,borderDash:[6,4],
+     pointRadius:0,fill:false,tension:0}
+  ]},{...CO,scales:{...CO.scales,y:{...CO.scales.y,ticks:{...CO.scales.y.ticks,callback:v=>'R$'+v.toFixed(0)}}}});
+
+  // G6 — ROI invest vs retorno + break-even
+  const rK={};
+  r.filter(x=>x.investimento>0||x.roi_total>0).forEach(x=>{
+    const k=x.month.slice(0,3)+(sY==='Todos'?"'"+x.year.slice(2):'');
+    if(!rK[k])rK[k]={inv:0,roi:0};
+    rK[k].inv+=x.investimento; rK[k].roi+=x.roi_total;
+  });
+  const LR=Object.keys(rK);
+  if(LR.length){
+    mk('cROI','bar',{labels:LR,datasets:[
+      {label:'Investimento',data:LR.map(k=>rK[k].inv),
+       backgroundColor:'rgba(255,139,61,.7)',borderColor:'#FF8B3D',borderRadius:5,order:2},
+      {label:'ROI Total (Clinte+Retorno)',data:LR.map(k=>rK[k].roi),
+       backgroundColor:'rgba(46,204,128,.7)',borderColor:'#2ECC80',borderRadius:5,order:2},
+      {label:'Break-even',data:LR.map(k=>rK[k].inv),type:'line',
+       borderColor:'rgba(255,77,109,.7)',borderWidth:2,borderDash:[6,4],
+       pointRadius:0,fill:false,order:1}
+    ]},CO);
+    const tI=LR.reduce((s,k)=>s+rK[k].inv,0), tR=LR.reduce((s,k)=>s+rK[k].roi,0);
+    document.getElementById('ins_roi').innerHTML=tI>0
+      ?`Cada <b>R$1</b> investido gerou <b>${(tR/tI).toFixed(1)}x</b>. Lucro líquido do ADS: <b>${fF(tR-tI)}</b>.`
+      :`ROI total sem investimento rastreado: <b>${fF(tR)}</b> gerado pelos clientes ADS.`;
+  } else {
+    mk('cROI','bar',{labels:['Sem dados ADS'],datasets:[{data:[0],backgroundColor:'rgba(21,30,46,.5)'}]},CO);
+    document.getElementById('ins_roi').textContent='Sem dados de investimento ADS neste período.';
+  }
+
+  // G7 — Conversões (intensidade de cor)
+  const vK={};
+  r.forEach(x=>{ const k=sY==='Todos'?x.month.slice(0,3)+"'"+x.year.slice(2):x.month.slice(0,3);
+    vK[k]=(vK[k]||0)+x.conversao; });
+  const LV=Object.keys(vK), VV=LV.map(k=>vK[k]), mxV=Math.max(...VV,1);
+  mk('cConv','bar',{labels:LV,datasets:[{label:'Conversões ADS',data:VV,
+    backgroundColor:VV.map(v=>`rgba(77,158,255,${(.3+.65*v/mxV).toFixed(2)})`),
+    borderColor:'#4D9EFF',borderRadius:6}]},
+    {...CO,scales:{...CO.scales,y:{...CO.scales.y,ticks:{...CO.scales.y.ticks,callback:v=>Math.round(v)}}}});
+
+  buildHeatmap();
+  buildFunnel(a);
+  buildProjecao();
+
+  // ══ TABELA ══
+  const MXR=Math.max(...r.map(x=>x.receita),1);
+  document.getElementById('tBody').innerHTML=r
+    .sort((a,b)=>parseInt(a.year)*100+MO.indexOf(a.month)-(parseInt(b.year)*100+MO.indexOf(b.month)))
+    .map(x=>{
+      const bw=Math.round(x.receita/MXR*100);
+      const lc=x.lucro>=0?'ct':'cr';
+      const rec_liq_x=x.receita_liq||x.receita;
+      const mg=rec_liq_x>0?x.lucro/rec_liq_x:0;
+      const mc=mg>.4?'cgr':mg>.2?'ct':'cr';
+      const dias_x=x.dias_trab||1;
+      const cpl=x.investimento>0&&x.conversao>0?fF(x.investimento/x.conversao):'—';
+      const tads=x.conversao>0?fF(x.roi_total/x.conversao):'—';
+      const ltv=x.conversao>0?fF(x.roi_total/x.conversao*3):'—';
+      return `<tr>
+        <td>${x.month} ${x.year}</td>
+        <td class="cg"><div class="bwrap"><span>${fF(x.receita)}</span><div class="mbar"><div class="mfill" style="width:${bw}%;background:var(--teal)"></div></div></div></td>
+        <td class="cr" style="font-size:11px">${x.taxa_maquina>0?'−'+fF(x.taxa_maquina):'—'}</td>
+        <td class="ct">${fF(rec_liq_x)}</td>
+        <td class="cr">${x.despesa>0?fF(x.despesa):'—'}</td>
+        <td class="${lc}">${fF(x.lucro)}</td>
+        <td class="${mc}">${fP(mg)}</td>
+        <td class="cm">${fF(x.receita/dias_x)}</td>
+        <td class="cb">${Math.round(x.caes)}</td>
+        <td class="cgr">${Math.round(x.caes_novos)||'—'}</td>
+        <td class="cm">${x.ticket>0?'R$\u00a0'+x.ticket.toFixed(0):'—'}</td>
+        <td class="cm">${x.cpc>0?fF(x.cpc):'—'}</td>
+        <td class="cm">${x.cartao>0?fF(x.cartao):'—'}</td>
+        <td class="cm">${x.dinheiro>0?fF(x.dinheiro):'—'}</td>
+        <td class="ct">${Math.round(x.conversao)||'—'}</td>
+        <td class="ct">${x.clinte>0?fF(x.clinte):'—'}</td>
+        <td class="cp">${x.retorno>0?fF(x.retorno):'—'}</td>
+        <td class="cgr">${x.roi_total>0?fF(x.roi_total):'—'}</td>
+        <td class="co">${x.investimento>0?fF(x.investimento):'—'}</td>
+        <td class="co">${cpl}</td>
+        <td class="tl">${tads}</td>
+        <td class="clm">${ltv}</td>
+      </tr>`;
+    }).join('');
+
+  // ══ COMPARATIVO ══
+  const YC={'2023':'#3D5470','2024':'#4D9EFF','2025':'#F5A623','2026':'#00D4AA','2027':'#9B7FFF'};
+  document.getElementById('xGrid').innerHTML=Object.keys(D).sort().map(y=>{
+    const ms2=sM==='Todos'?MO:[sM], rr=[];
+    ms2.forEach(m=>{ if(D[y][m])rr.push({year:y,month:m,...D[y][m]}); });
+    if(!rr.length)return'';
+    const a2=ag(rr), col=YC[y]||'#3D5470';
+    const mg2=(a2.receita_liq||a2.receita)>0?a2.lucro/(a2.receita_liq||a2.receita):0;
+    return `<div class="xcard" style="border-top:3px solid ${col}">
+      <div class="xyear" style="color:${col}">● ${y}</div>
+      <div class="xrow"><span class="xkey">💰 Rec.Bruta</span><span class="xval cg">${fF(a2.receita)}</span></div>
+      <div class="xrow"><span class="xkey">💳 Taxa(5%)</span><span class="xval cr">${a2.taxa_maquina>0?fF(a2.taxa_maquina):'—'}</span></div>
+      <div class="xrow"><span class="xkey">💎 Rec.Líquida</span><span class="xval ct">${fF(a2.receita_liq||a2.receita)}</span></div>
+      <div class="xrow"><span class="xkey">💸 Despesas</span><span class="xval cr">${a2.despesa>0?fF(a2.despesa):'—'}</span></div>
+      <div class="xrow"><span class="xkey">📈 Lucro</span><span class="xval ${a2.lucro>=0?'ct':'cr'}">${fF(a2.lucro)}</span></div>
+      <div class="xrow"><span class="xkey">📊 Margem</span><span class="xval ${mg2>.4?'cgr':mg2>.2?'ct':'cr'}">${fP(mg2)}</span></div>
+      <div class="xrow"><span class="xkey">☀️ R$/Dia</span><span class="xval cy">${a2.rec_dia>0?fF(a2.rec_dia):'—'}</span></div>
+      <div class="xrow"><span class="xkey">🔧 Custo/Cão</span><span class="xval cm">${a2.cpc>0?fF(a2.cpc):'—'}</span></div>
+      <div class="xrow"><span class="xkey">🐾 Cães</span><span class="xval cb">${Math.round(a2.caes)}</span></div>
+      <div class="xrow"><span class="xkey">🆕 Novos</span><span class="xval cgr">${Math.round(a2.caes_novos)}</span></div>
+      <div class="xrow"><span class="xkey">🎫 Ticket</span><span class="xval cg">${a2.ticket>0?'R$\u00a0'+a2.ticket.toFixed(0):'—'}</span></div>
+      <div class="xrow"><span class="xkey">🔄 Conversões</span><span class="xval ct">${Math.round(a2.conversao)}</span></div>
+      <div class="xrow"><span class="xkey">✨ Clinte</span><span class="xval ct">${a2.clinte>0?fF(a2.clinte):'—'}</span></div>
+      <div class="xrow"><span class="xkey">🔁 Retorno</span><span class="xval cp">${a2.retorno>0?fF(a2.retorno):'—'}</span></div>
+      <div class="xrow"><span class="xkey">💹 ROI Total</span><span class="xval cgr">${a2.roi_total>0?fF(a2.roi_total):'—'}</span></div>
+      <div class="xrow"><span class="xkey">🎯 CPL</span><span class="xval co">${a2.cpl>0?fF(a2.cpl):'—'}</span></div>
+      <div class="xrow"><span class="xkey">💎 LTV</span><span class="xval clm">${a2.ltv>0?fF(a2.ltv):'—'}</span></div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+// PROJEÇÃO — chamada independente, sempre mostra
+// ══════════════════════════════════════════════
+let metaUsuario = parseFloat(localStorage.getItem('meta_loja3')) || 0;
+
+function salvarMeta(){
+  const v = parseFloat(document.getElementById('metaInp').value);
+  if(v > 0){ metaUsuario = v; localStorage.setItem('meta_loja3', v); buildProjecao(); }
+}
+
+function buildProjecao(){
+  // Coleta todos os meses em ordem cronológica
+  const todos = [];
+  Object.keys(D).sort().forEach(y=>{
+    [1,2,3,4,5,6,7,8,9,10,11,12].forEach(mn=>{
+      const m = MO[mn-1];
+      if(D[y]&&D[y][m]) todos.push({y:parseInt(y),mn,m,...D[y][m]});
+    });
+  });
+
+  if(!todos.length){
+    document.getElementById('projWrap').innerHTML='<p style="color:var(--muted);padding:20px">Nenhum dado acumulado ainda.</p>';
+    return;
+  }
+
+  // Último mês disponível
+  const ult = todos[todos.length-1];
+  const recDia = ult.rec_dia || (ult.receita / (ult.dias_trab||16));
+
+  // Próximo mês
+  let proxMN = ult.mn + 1, proxY = ult.y;
+  if(proxMN > 12){ proxMN = 1; proxY++; }
+  const proxNome = MO[proxMN-1];
+  const diasProxMes = DIAS_MES[proxMN] + (proxMN===2&&proxY%4===0?1:0);
+  // Estima dias úteis (aprox 75% dos dias do mês)
+  const diasUteisProx = Math.round(diasProxMes * 0.75);
+
+  // Projeção A — tendência simples (média dos últimos meses)
+  const ultimos3 = todos.slice(-3);
+  const mediaRec = ultimos3.reduce((s,x)=>s+x.receita,0) / ultimos3.length;
+  // Crescimento médio mês a mês
+  let crescimento = 0;
+  if(todos.length >= 2){
+    const taxas = [];
+    for(let i=1;i<todos.length;i++){
+      if(todos[i-1].receita>0) taxas.push((todos[i].receita-todos[i-1].receita)/todos[i-1].receita);
+    }
+    if(taxas.length) crescimento = taxas.reduce((s,v)=>s+v,0)/taxas.length;
+  }
+  const projA = Math.round(mediaRec * (1 + crescimento));
+
+  // Projeção C — por ritmo diário × dias úteis do próximo mês
+  const projC = Math.round(recDia * diasUteisProx);
+
+  // Projeção final = média das duas
+  const projFinal = Math.round((projA + projC) / 2);
+
+  // Se a planilha atual é do mês em curso → progresso real
+  const mesAtual   = TODAY_MONTH, anoAtual = TODAY_YEAR;
+  const estesMes   = ult.mn === mesAtual && ult.y === anoAtual;
+  const diasDecor  = estesMes ? TODAY_DAY : (ult.dias_trab||16);
+  const diasTotais = DIAS_MES[ult.mn];
+  const recAtual   = ult.receita;
+  const ritmoNec   = metaUsuario > 0 ? (metaUsuario - recAtual) / Math.max(1, diasTotais - diasDecor) : 0;
+  const pctMes     = Math.min(100, Math.round(diasDecor / diasTotais * 100));
+  const pctMeta    = metaUsuario > 0 ? Math.min(100, Math.round(recAtual / metaUsuario * 100)) : 0;
+
+  // Ritmo atual vs necessário
+  const ritmoAtual = recDia;
+  let ritmoStatus = 'nt', ritmoTxt = 'Defina uma meta para ver o ritmo';
+  if(metaUsuario > 0){
+    const ratio = ritmoAtual / (metaUsuario / diasUteisProx);
+    if(ratio >= 1.05){ ritmoStatus='ok'; ritmoTxt=`✅ No ritmo — você chegará à meta`; }
+    else if(ratio >= 0.85){ ritmoStatus='warn'; ritmoTxt=`⚡ Ritmo leve abaixo — precisa de R$ ${fF(ritmoNec)}/dia nos dias restantes`; }
+    else { ritmoStatus='bad'; ritmoTxt=`🚨 Ritmo insuficiente — precisa de R$ ${fF(ritmoNec)}/dia para bater a meta`; }
+  }
+
+  // Lucro projetado
+  const despProj   = Math.round(ult.despesa * (projFinal / ult.receita));
+  const lucroProj  = projFinal - despProj;
+  const margemProj = projFinal > 0 ? lucroProj/projFinal : 0;
+
+  const metaVal = metaUsuario > 0 ? metaUsuario : projFinal;
+  const faltaMeta = Math.max(0, metaVal - recAtual);
+
+  document.getElementById('projWrap').innerHTML = `
+  <div class="proj-wrap">
+
+    <!-- CARD 1: Projeção próximo mês -->
+    <div class="proj-card">
+      <div class="proj-title">🔮 Projeção — ${proxNome} ${proxY}</div>
+      <div class="proj-row">
+        <span class="proj-lbl">Receita estimada</span>
+        <span class="proj-val pp">${fF(projFinal)}</span>
+      </div>
+      <div class="proj-row">
+        <span class="proj-lbl">Por tendência (últimos meses)</span>
+        <span class="proj-val nt">${fF(projA)}</span>
+      </div>
+      <div class="proj-row">
+        <span class="proj-lbl">Por ritmo diário × ${diasUteisProx} dias úteis</span>
+        <span class="proj-val nt">${fF(projC)}</span>
+      </div>
+      <div class="proj-row">
+        <span class="proj-lbl">Despesa estimada</span>
+        <span class="proj-val dn">${fF(despProj)}</span>
+      </div>
+      <div class="proj-row">
+        <span class="proj-lbl">Lucro estimado</span>
+        <span class="proj-val ${lucroProj>=0?'up':'dn'}">${fF(lucroProj)}</span>
+      </div>
+      <div class="proj-row">
+        <span class="proj-lbl">Margem estimada</span>
+        <span class="proj-val ${margemProj>.35?'up':margemProj>.15?'nt':'dn'}">${fP(margemProj)}</span>
+      </div>
+      ${crescimento!==0?`<div class="proj-row">
+        <span class="proj-lbl">Crescimento histórico médio</span>
+        <span class="proj-val ${crescimento>=0?'up':'dn'}">${crescimento>=0?'+':''}${fP(crescimento)}</span>
+      </div>`:''}
+    </div>
+
+    <!-- CARD 2: Meta e ritmo do mês atual -->
+    <div class="proj-card" style="--accent:var(--gold)">
+      <div class="proj-title" style="color:var(--gold)">🎯 Meta — ${ult.m} ${ult.y}</div>
+
+      <div class="meta-input-wrap">
+        <label>Meta mensal</label>
+        <input class="meta-inp" id="metaInp" type="number" step="100"
+          value="${metaUsuario > 0 ? metaUsuario : ''}" placeholder="${projFinal}">
+        <button class="meta-btn" onclick="salvarMeta()">Salvar</button>
+      </div>
+
+      ${metaUsuario > 0 ? `
+      <!-- progresso vs meta -->
+      <div class="prog-wrap">
+        <div class="prog-label">
+          <span class="prog-lbl">Atingido: ${fF(recAtual)} de ${fF(metaUsuario)}</span>
+          <span class="prog-pct">${pctMeta}%</span>
+        </div>
+        <div class="prog-bg">
+          <div class="prog-fill" style="width:${pctMeta}%;background:${pctMeta>=100?'var(--green)':pctMeta>=70?'var(--gold)':'var(--rose)'}"></div>
+        </div>
+      </div>` : ''}
+
+      <!-- progresso do mês -->
+      <div class="prog-wrap">
+        <div class="prog-label">
+          <span class="prog-lbl">Mês: dia ${diasDecor} de ${diasTotais}</span>
+          <span class="prog-pct">${pctMes}% do mês</span>
+        </div>
+        <div class="prog-bg">
+          <div class="prog-fill" style="width:${pctMes}%;background:var(--blue)"></div>
+        </div>
+      </div>
+
+      <div class="proj-row">
+        <span class="proj-lbl">Receita atual</span>
+        <span class="proj-val cg" style="color:var(--gold)">${fF(recAtual)}</span>
+      </div>
+      <div class="proj-row">
+        <span class="proj-lbl">R$/dia atual</span>
+        <span class="proj-val nt">${fF(ritmoAtual)}</span>
+      </div>
+      ${metaUsuario > 0 ? `
+      <div class="proj-row">
+        <span class="proj-lbl">Falta para a meta</span>
+        <span class="proj-val ${faltaMeta===0?'up':'dn'}">${faltaMeta===0?'✅ Meta batida!':fF(faltaMeta)}</span>
+      </div>
+      <div class="proj-row">
+        <span class="proj-lbl">R$/dia necessário agora</span>
+        <span class="proj-val ${ritmoNec<=ritmoAtual?'up':'dn'}">${ritmoNec>0?fF(ritmoNec):'—'}</span>
+      </div>` : ''}
+
+      <div><span class="ritmo-badge ${ritmoStatus}">${ritmoTxt}</span></div>
+    </div>
+
+  </div>
+  <!-- Gráfico de projeção -->
+  <div class="cc" style="margin-bottom:12px">
+    <div class="ctitle">📈 Histórico + Projeção do próximo mês</div>
+    <div class="csub">Linha sólida = real · Linha tracejada = projeção</div>
+    <div style="position:relative;height:220px"><canvas id="cProj"></canvas></div>
+  </div>`;
+
+  // Gráfico histórico + projeção
+  const labels = todos.map(x=>x.m.slice(0,3)+"'"+String(x.y).slice(2));
+  const recHist = todos.map(x=>x.receita);
+  const desHist = todos.map(x=>x.despesa);
+  // Adiciona ponto de projeção
+  labels.push(proxNome.slice(0,3)+"'"+String(proxY).slice(2));
+  const recProj = [...recHist, projFinal];
+  const desProj = [...desHist, despProj];
+  // Linha de meta
+  const metaLine = labels.map(()=>metaUsuario||null);
+
+  const datasets = [
+    {label:'Receita Real',data:recHist.concat([null]),borderColor:'#F5A623',
+     backgroundColor:'rgba(245,166,35,.1)',fill:true,tension:.4,
+     pointBackgroundColor:'#F5A623',pointRadius:5},
+    {label:'Projeção Receita',data:[...Array(recHist.length-1).fill(null), recHist[recHist.length-1], projFinal],
+     borderColor:'#F5A623',borderDash:[6,4],borderWidth:2,fill:false,tension:.4,
+     pointBackgroundColor:'#9B7FFF',pointRadius:[...Array(recHist.length).fill(0),7],pointHoverRadius:9},
+    {label:'Despesa Real',data:desHist.concat([null]),borderColor:'#FF4D6D',
+     backgroundColor:'rgba(255,77,109,.07)',fill:true,tension:.4,
+     pointBackgroundColor:'#FF4D6D',pointRadius:5},
+    {label:'Projeção Despesa',data:[...Array(desHist.length-1).fill(null), desHist[desHist.length-1], despProj],
+     borderColor:'#FF4D6D',borderDash:[6,4],borderWidth:2,fill:false,tension:.4,
+     pointBackgroundColor:'#9B7FFF',pointRadius:[...Array(desHist.length).fill(0),7],pointHoverRadius:9},
+  ];
+  if(metaUsuario > 0){
+    datasets.push({label:'Meta',data:metaLine,borderColor:'rgba(46,204,128,.6)',
+      borderDash:[4,4],borderWidth:1.5,pointRadius:0,fill:false});
+  }
+  setTimeout(()=>mk('cProj','line',{labels,datasets},CO), 50);
+}
+
+up();
+buildProjecao();
+// Carrega dados do Supabase (sobrescreve JSON estático)
+carregarDoSupabase();
+</script></body></html>
