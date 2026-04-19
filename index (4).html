@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Loja 3 — Banho e Tosa</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07080D;--s1:#0C0F16;--border:#1C2130;
+  --gold:#F9C224;--goldd:#C4901A;
+  --teal:#00E5B0;--rose:#FF2D55;
+  --text:#EEF2FF;--muted:#5A6A8A;
+  --title:'Bebas Neue',cursive;
+  --body:'DM Sans',sans-serif;
+  --mono:'DM Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:var(--body);overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 70% 40% at 50% -10%,rgba(249,194,36,.07),transparent),
+             radial-gradient(ellipse 50% 35% at 100% 80%,rgba(0,229,176,.04),transparent);z-index:0}
+
+.page{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;padding:32px 20px;gap:0}
+
+/* HEADER */
+.logo{font-family:var(--title);font-size:52px;letter-spacing:3px;line-height:1;
+  background:linear-gradient(135deg,#fff 20%,var(--gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px}
+.paw{font-size:40px;margin-bottom:16px;display:block;text-align:center}
+.sub{font-size:13px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;
+  font-weight:600;text-align:center;margin-bottom:48px}
+
+/* STATUS SUPABASE */
+.status{display:flex;align-items:center;gap:8px;
+  background:rgba(0,229,176,.06);border:1px solid rgba(0,229,176,.2);
+  border-radius:20px;padding:8px 16px;font-size:11px;font-family:var(--mono);
+  color:var(--muted);margin-bottom:40px}
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0;
+  transition:background .4s}
+.status-dot.on{background:var(--teal);box-shadow:0 0 8px rgba(0,229,176,.5)}
+.status-dot.err{background:var(--rose)}
+
+/* CARDS */
+.cards{display:flex;flex-direction:column;gap:14px;width:100%;max-width:360px}
+
+.card{display:flex;align-items:center;gap:18px;
+  background:var(--s1);border:1.5px solid var(--border);
+  border-radius:20px;padding:22px 24px;
+  text-decoration:none;color:var(--text);
+  transition:all .2s;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:3px 3px 0 0}
+.card.app::before{background:linear-gradient(90deg,var(--gold),transparent)}
+.card.dash::before{background:linear-gradient(90deg,var(--teal),transparent)}
+.card:active{transform:scale(.97)}
+.card:hover{border-color:var(--border);background:#10131C}
+
+.card-icon{font-size:36px;flex-shrink:0;width:52px;height:52px;
+  border-radius:14px;display:flex;align-items:center;justify-content:center}
+.card.app .card-icon{background:rgba(249,194,36,.12);border:1px solid rgba(249,194,36,.25)}
+.card.dash .card-icon{background:rgba(0,229,176,.08);border:1px solid rgba(0,229,176,.2)}
+
+.card-body{flex:1;min-width:0}
+.card-title{font-size:17px;font-weight:700;letter-spacing:-.3px;margin-bottom:4px}
+.card.app .card-title{color:var(--gold)}
+.card.dash .card-title{color:var(--teal)}
+.card-desc{font-size:12px;color:var(--muted);line-height:1.5}
+
+.card-arrow{font-size:20px;color:var(--muted);flex-shrink:0;transition:transform .2s}
+.card:hover .card-arrow{transform:translateX(3px);color:var(--text)}
+
+/* PILLS de feature */
+.pills{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.pill{font-size:9px;font-family:var(--mono);font-weight:600;letter-spacing:.8px;
+  text-transform:uppercase;padding:3px 8px;border-radius:8px;border:1px solid}
+.pill.gold{background:rgba(249,194,36,.08);border-color:rgba(249,194,36,.25);color:var(--gold)}
+.pill.teal{background:rgba(0,229,176,.06);border-color:rgba(0,229,176,.2);color:var(--teal)}
+.pill.gray{background:rgba(90,106,138,.08);border-color:rgba(90,106,138,.2);color:var(--muted)}
+
+/* FOOTER */
+.footer{margin-top:44px;font-size:11px;color:var(--muted);
+  text-align:center;font-family:var(--mono);letter-spacing:.5px;line-height:1.8}
+.footer span{color:var(--gold)}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <span class="paw">🐾</span>
+  <div class="logo">LOJA 3</div>
+  <div class="sub">Banho &amp; Tosa · Sistema Operacional</div>
+
+  <!-- Status Supabase -->
+  <div class="status">
+    <div class="status-dot" id="dot"></div>
+    <span id="statusTxt">Verificando conexão…</span>
+  </div>
+
+  <!-- Cards -->
+  <div class="cards">
+
+    <a class="card app" href="app_operacao.html">
+      <div class="card-icon">📋</div>
+      <div class="card-body">
+        <div class="card-title">App Operação</div>
+        <div class="card-desc">Lance movimento diário, gastos e sincronize com a nuvem</div>
+        <div class="pills">
+          <span class="pill gold">Movimento</span>
+          <span class="pill gold">Gastos</span>
+          <span class="pill gray">Offline</span>
+          <span class="pill gray">PWA</span>
+        </div>
+      </div>
+      <span class="card-arrow">›</span>
+    </a>
+
+    <a class="card dash" href="dashboard_loja3.html">
+      <div class="card-icon">📊</div>
+      <div class="card-body">
+        <div class="card-title">Dashboard</div>
+        <div class="card-desc">Métricas, gráficos e projeção em tempo real do Supabase</div>
+        <div class="pills">
+          <span class="pill teal">Tempo real</span>
+          <span class="pill teal">KPIs</span>
+          <span class="pill gray">Projeção</span>
+        </div>
+      </div>
+      <span class="card-arrow">›</span>
+    </a>
+
+  </div>
+
+  <div class="footer">
+    <div>Dados em <span>Supabase</span> · Hospedado no <span>GitHub Pages</span></div>
+    <div id="lastSync" style="margin-top:4px"></div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const SUPA_URL = "https://wyibsreqdvnllzuzjvgr.supabase.co";
+const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind5aWJzcmVxZHZubGx6dXpqdmdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1NTc5MzEsImV4cCI6MjA5MjEzMzkzMX0.AbK_8f8NKvwHbDgvDJthibFKrUW8fFJmR2YGnjq7ovs";
+
+(async () => {
+  const dot = document.getElementById('dot');
+  const txt = document.getElementById('statusTxt');
+  const syn = document.getElementById('lastSync');
+  try {
+    const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+    const { data, error } = await sb.from('movimento')
+      .select('data,atualizado_em')
+      .order('atualizado_em', { ascending: false })
+      .limit(1);
+    if (error) throw error;
+    dot.className = 'status-dot on';
+    if (data && data.length) {
+      const ult = new Date(data[0].atualizado_em);
+      txt.textContent = 'Supabase conectado';
+      syn.textContent = 'Último lançamento: ' + ult.toLocaleDateString('pt-BR') + ' às ' + ult.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    } else {
+      txt.textContent = 'Supabase conectado · sem dados ainda';
+    }
+  } catch(e) {
+    dot.className = 'status-dot err';
+    txt.textContent = 'Sem conexão · modo offline';
+    console.error(e);
+  }
+})();
+</script>
+</body>
+</html>
