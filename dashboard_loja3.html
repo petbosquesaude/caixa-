@@ -410,22 +410,25 @@ const _SB = supabase.createClient("https://wyibsreqdvnllzuzjvgr.supabase.co","ey
 
 async function carregarDoSupabase(){
   const badge = document.getElementById('supaBadge');
-  if(badge) badge.textContent = '⏳ carregando…';
+  if(badge){ badge.textContent='⏳ carregando…'; badge.style.color='var(--gold)'; }
   try {
-    // Busca movimento
-    const {data:movs, error:e1} = await _SB.from('movimento').select('*').order('data');
-    if(e1) throw e1;
+    // Busca movimento e gastos em paralelo
+    const [movRes, gstRes] = await Promise.all([
+      _SB.from('movimento').select('*').order('data'),
+      _SB.from('gastos').select('*').order('data'),
+    ]);
+    if(movRes.error) throw movRes.error;
+    if(gstRes.error) throw gstRes.error;
 
-    // Busca gastos
-    const {data:gsts, error:e2} = await _SB.from('gastos').select('*').order('data');
-    if(e2) throw e2;
+    const movs = movRes.data || [];
+    const gsts = gstRes.data || [];
 
-    if(!movs || !movs.length){
-      if(badge) badge.textContent = '☁️ sem dados';
+    if(!movs.length){
+      if(badge){ badge.textContent='☁️ sem dados'; badge.style.color='var(--muted)'; }
       return;
     }
 
-    // Reconstrói D (objeto de dados mensais) a partir do Supabase
+    // Constrói D2 a partir dos dados do Supabase
     const D2 = {};
     movs.forEach(r => {
       const ano = String(r.ano);
@@ -438,719 +441,74 @@ async function carregarDoSupabase(){
         caes:0,caes_novos:0,ticket:0,conversao:0,clinte:0,retorno:0,
         roi_total:0,investimento:0,diversos:0,dias_trab:0,
         rec_dia:0,cpc:0,cpl:0,tick_ads:0,tx_ret_ads:0,ltv:0,
-        caes_nv:0,contato:0,
       };
       const m = D2[ano][mes];
-      m.receita      += r.receita     || 0;
-      m.taxa_maquina += r.taxa_maquina|| 0;
-      m.receita_liq  += r.receita_liq || 0;
-      m.cartao       += r.cartao      || 0;
-      m.dinheiro     += r.dinheiro    || 0;
-      m.pacotes      += r.pacotes     || 0;
-      m.vet          += r.vet         || 0;
-      m.caes         += r.caes        || 0;
-      m.caes_novos   += r.caes_nv     || 0;
-      m.conversao    += r.conversao   || 0;
-      m.clinte       += r.clinte      || 0;
-      m.retorno      += r.retorno     || 0;
-      m.roi_total    += r.roi         || 0;
-      m.investimento += r.invest      || 0;
-      m.diversos     += r.diversos    || 0;
-      m.dias_trab    += 1;
+      m.receita       += Number(r.receita)      || 0;
+      m.taxa_maquina  += Number(r.taxa_maquina) || 0;
+      m.receita_liq   += Number(r.receita_liq)  || 0;
+      m.cartao        += Number(r.cartao)        || 0;
+      m.dinheiro      += Number(r.dinheiro)      || 0;
+      m.pacotes       += Number(r.pacotes)       || 0;
+      m.vet           += Number(r.vet)           || 0;
+      m.caes          += Number(r.caes)          || 0;
+      m.caes_novos    += Number(r.caes_nv)       || 0;
+      m.conversao     += Number(r.conversao)     || 0;
+      m.clinte        += Number(r.clinte)        || 0;
+      m.retorno       += Number(r.retorno)       || 0;
+      m.roi_total     += Number(r.roi)           || 0;
+      m.investimento  += Number(r.invest)        || 0;
+      m.diversos      += Number(r.diversos)      || 0;
+      m.dias_trab     += 1;
     });
 
     // Agrega gastos por mês
     gsts.forEach(g => {
       const ano = String(g.ano);
       const mes = MO[g.mes - 1];
-      if(!mes || !D2[ano] || !D2[ano][mes]) return;
-      D2[ano][mes].despesa = (D2[ano][mes].despesa || 0) + (g.val || 0);
+      if(!mes || !D2[ano]?.[mes]) return;
+      D2[ano][mes].despesa = (D2[ano][mes].despesa || 0) + (Number(g.val) || 0);
     });
 
-    // Recalcula métricas derivadas por mês
+    // Recalcula todas as métricas derivadas
     Object.values(D2).forEach(meses => {
       Object.values(meses).forEach(m => {
-        m.lucro    = m.receita_liq - m.despesa;
-        m.margem   = m.receita_liq > 0 ? m.lucro / m.receita_liq : 0;
-        m.rec_dia  = m.dias_trab  > 0 ? m.receita_liq / m.dias_trab : 0;
-        m.ticket   = m.caes       > 0 ? m.receita_liq / m.caes : 0;
-        m.cpc      = m.caes       > 0 ? m.despesa / m.caes : 0;
-        m.cpl      = m.conversao  > 0 && m.investimento > 0 ? m.investimento / m.conversao : 0;
-        m.tick_ads = m.conversao  > 0 ? m.roi_total / m.conversao : 0;
+        // receita_liq: usa campo do Supabase ou calcula
+        if(!m.receita_liq) m.receita_liq = m.receita - m.taxa_maquina;
+        const base = m.receita_liq || m.receita;
+        m.lucro      = base - m.despesa;
+        m.margem     = base > 0 ? m.lucro / base : 0;
+        m.rec_dia    = m.dias_trab > 0 ? base / m.dias_trab : 0;
+        m.ticket     = m.caes > 0 ? base / m.caes : 0;
+        m.cpc        = m.caes > 0 && m.despesa > 0 ? m.despesa / m.caes : 0;
+        m.cpl        = m.conversao > 0 && m.investimento > 0 ? m.investimento / m.conversao : 0;
+        m.tick_ads   = m.conversao > 0 ? m.roi_total / m.conversao : 0;
         m.tx_ret_ads = m.roi_total > 0 ? m.retorno / m.roi_total : 0;
-        m.ltv      = m.conversao  > 0 ? m.roi_total / m.conversao * 3 : 0;
-        m.receita_liq = m.receita_liq || m.receita;
+        m.ltv        = m.conversao > 0 ? m.roi_total / m.conversao * 3 : 0;
       });
     });
 
-    // Sobrescreve D com dados do Supabase e re-renderiza
-    Object.assign(D, D2);
-    // Limpa anos do JSON estático que não estão no Supabase
-    Object.keys(D).forEach(k => { if(!D2[k]) delete D[k]; });
+    // MERGE: Supabase tem prioridade, mantém dados do JSON que não estão no Supabase
+    Object.keys(D2).forEach(ano => {
+      if(!D[ano]) D[ano] = {};
+      Object.assign(D[ano], D2[ano]);
+    });
 
     up();
     buildProjecao();
-    if(badge){ badge.textContent = '✅ Supabase'; badge.style.color='var(--green)'; badge.style.borderColor='rgba(29,185,84,.4)'; }
-    console.log('Dashboard carregado do Supabase:', Object.keys(D2));
+
+    if(badge){
+      badge.textContent = '✅ Supabase';
+      badge.style.color = 'var(--teal)';
+      badge.style.borderColor = 'rgba(0,212,170,.3)';
+    }
+    console.log('Supabase carregado:', Object.keys(D2).map(a=>a+':'+Object.keys(D2[a]).join(',')));
   } catch(err) {
     console.error('Supabase erro:', err);
-    if(badge){ badge.textContent = '⚠ offline'; badge.style.color='var(--gold)'; }
-    // Mantém dados estáticos do JSON como fallback
+    if(badge){ badge.textContent='⚠ offline'; badge.style.color='var(--gold)'; }
+    // Mantém D estático como fallback — up() já rodou
   }
 }
 
-const MO   = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-const MS   = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-const DIAS_MES = [0,31,28,31,30,31,30,31,31,30,31,30,31];
-const DOW_K     = ['seg','ter','qua','qui','sex','sáb'];
-const DOW_LABEL = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
-let sY='Todos', sM='Todos', CH={};
-
-function tY(y){ sY=y; document.querySelectorAll('#yF .bf').forEach(b=>b.classList.toggle('active',b.textContent.trim()===y)); up(); }
-function tM(m){ sM=m; const l=m==='Todos'?'Todos':(MS[MO.indexOf(m)]||m); document.querySelectorAll('#mF .bf').forEach(b=>{ const t=b.textContent.trim(); b.classList.toggle('active',t===l||(m==='Todos'&&t==='Todos')); }); up(); }
-function clr(){ sY='Todos'; sM='Todos'; document.querySelectorAll('#yF .bf').forEach(b=>b.classList.toggle('active',b.textContent.trim()==='Todos')); document.querySelectorAll('#mF .bf').forEach(b=>b.classList.toggle('active',b.textContent.trim()==='Todos')); up(); }
-
-function rows(){ const ys=sY==='Todos'?Object.keys(D):[sY],ms=sM==='Todos'?MO:[sM],r=[]; ys.forEach(y=>{ if(!D[y])return; ms.forEach(m=>{ if(D[y][m])r.push({year:y,month:m,...D[y][m]}); }); }); return r; }
-function sm(r,f){ return r.reduce((a,x)=>a+(x[f]||0),0); }
-function ag(r){
-  const rec=sm(r,'receita'),des=sm(r,'despesa'),caes=sm(r,'caes');
-  const inv=sm(r,'investimento'),roi=sm(r,'roi_total');
-  const conv=sm(r,'conversao'),cli=sm(r,'clinte'),ret=sm(r,'retorno');
-  const dias=sm(r,'dias_trab')||r.length;
-  return {
-    receita:rec,despesa:des,lucro:rec-des,
-    margem:rec>0?(rec-des)/rec:0,
-    rec_dia:dias>0?rec/dias:0,
-    cartao:sm(r,'cartao'),dinheiro:sm(r,'dinheiro'),
-    pacotes:sm(r,'pacotes'),vet:sm(r,'vet'),
-    caes,caes_novos:sm(r,'caes_novos'),
-    ticket:caes>0?rec/caes:0,
-    tx_novos:caes>0?sm(r,'caes_novos')/caes:0,
-    cpc:caes>0&&des>0?des/caes:0,
-    conversao:conv,clinte:cli,retorno:ret,
-    roi_total:roi,investimento:inv,
-    cpl:conv>0&&inv>0?inv/conv:0,
-    tick_ads:conv>0?roi/conv:0,
-    tx_ret:roi>0?ret/roi:0,
-    ltv:conv>0?roi/conv*3:0,
-    dias,
-  };
-}
-
-const fK=v=>v>=1000?'R$\u00a0'+(v/1000).toFixed(1)+'k':'R$\u00a0'+v.toFixed(0);
-const fF=v=>'R$\u00a0'+v.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0});
-const fP=v=>(v*100).toFixed(1)+'%';
-
-const CO={
-  responsive:true,maintainAspectRatio:false,
-  plugins:{
-    legend:{labels:{color:'#3D5470',font:{family:'DM Sans',size:11},boxWidth:10}},
-    tooltip:{backgroundColor:'#0B0F1A',borderColor:'#151E2E',borderWidth:1,titleColor:'#D8E6F3',bodyColor:'#3D5470',callbacks:{footer:items=>items.some(i=>i.dataset.label?.includes('quida'))?['','⚠ Já descontado 5% da maquininha (cobrado em 30 dias)']:undefined}}
-  },
-  scales:{
-    x:{grid:{color:'rgba(21,30,46,.8)'},ticks:{color:'#3D5470',font:{family:'DM Sans',size:10}}},
-    y:{grid:{color:'rgba(21,30,46,.8)'},ticks:{color:'#3D5470',font:{family:'DM Sans',size:10},callback:v=>fK(v)}}
-  }
-};
-function mk(id,type,data,opts){ const c=document.getElementById(id).getContext('2d'); if(CH[id])CH[id].destroy(); CH[id]=new Chart(c,{type,data,options:opts}); }
-
-// ══ HEATMAP ══
-function buildHeatmap(){
-  const ys=sY==='Todos'?Object.keys(DOW):[sY];
-  const ms=sM==='Todos'?MO:[sM];
-  const agg={};
-  DOW_K.forEach(d=>agg[d]={rec:0,caes:0,n:0,dias:0});
-  ys.forEach(y=>{ if(!DOW[y])return; ms.forEach(m=>{ if(!DOW[y][m])return;
-    Object.entries(DOW[y][m]).forEach(([d,v])=>{
-      const k=d==='sáb'?'sáb':d;
-      if(agg[k]!==undefined){ agg[k].rec+=v.rec; agg[k].caes+=v.caes; agg[k].n+=v.nov; agg[k].dias+=v.dias; }
-    });
-  }); });
-
-  const vals=DOW_K.map(d=>agg[d].rec);
-  const maxV=Math.max(...vals,1);
-  // azul escuro→cyan: intensidade proporcional
-  const toColor=(v,mx)=>{ const t=mx>0?v/mx:0; const r=Math.round(10+t*10),g=Math.round(28+t*160),b=Math.round(80+t*100); return `rgb(${r},${g},${b})`; };
-
-  document.getElementById('hmap').innerHTML=DOW_K.map((d,i)=>{
-    const v=agg[d];
-    const avg=v.dias>0?v.rec/v.dias:0;
-    const col=toColor(v.rec,maxV);
-    return `<div class="hcell" style="background:${col}">
-      <div class="hday">${DOW_LABEL[i]}</div>
-      <div class="hrec">${fK(v.rec)}</div>
-      <div class="hsub">${Math.round(v.caes)} cães</div>
-      <div class="hsub">~${fK(avg)}/vez</div>
-    </div>`;
-  }).join('');
-
-  const best=DOW_K[vals.indexOf(Math.max(...vals))];
-  const worst=DOW_K[vals.filter(v=>v>0).length>0?vals.indexOf(Math.min(...vals.filter(v=>v>0))):0];
-  const bestLbl=DOW_LABEL[DOW_K.indexOf(best)];
-  const worstLbl=DOW_LABEL[DOW_K.indexOf(worst)];
-  document.getElementById('ins_hmap').innerHTML=
-    `<b>${bestLbl}</b> é o dia mais forte. <b>${worstLbl}</b> tem menor volume — considere ações de captação neste dia.`;
-}
-
-// ══ FUNIL ══
-function buildFunnel(a){
-  const steps=[
-    {lbl:'Conversões',  val:a.conversao,  col:'#4D9EFF', fmt:v=>Math.round(v)+''},
-    {lbl:'Clinte (R$)', val:a.clinte,     col:'#00D4AA', fmt:fF},
-    {lbl:'Retorno (R$)',val:a.retorno,    col:'#9B7FFF', fmt:fF},
-    {lbl:'ROI Total',   val:a.roi_total,  col:'#2ECC80', fmt:fF},
-  ];
-  const maxV=Math.max(...steps.map(s=>s.val),1);
-  document.getElementById('funnel').innerHTML=steps.map((s,i)=>{
-    const pct=Math.round(s.val/maxV*100);
-    const prev=i>0?steps[i-1].val:null;
-    const rate=prev&&prev>0?Math.round(s.val/prev*100):null;
-    const rateStr=rate!==null?`<span class="frate ${rate>=50?'up':'dn'}">${rate}%</span>`:'<span class="frate">—</span>';
-    return `<div class="fstep">
-      <div class="flbl">${s.lbl}</div>
-      <div class="fbg"><div class="ffill" style="width:${pct}%;background:${s.col}">${s.fmt(s.val)}</div></div>
-      ${rateStr}
-    </div>`;
-  }).join('');
-}
-
-function up(){
-  const r=rows(), a=ag(r);
-
-  // ── Financeiro ──
-  document.getElementById('k_rec').textContent=fF(a.receita);
-  const taxaEl=document.getElementById('k_taxa');
-  if(taxaEl){taxaEl.textContent=a.taxa_maquina>0?'−'+fF(a.taxa_maquina):'—';}
-  const liqEl=document.getElementById('k_rec_liq');
-  if(liqEl){liqEl.textContent=fF(a.receita_liq||a.receita);}
-  document.getElementById('k_des').textContent=fF(a.despesa);
-  const lEl=document.getElementById('k_luc');
-  lEl.textContent=fF(a.lucro); lEl.style.color=a.lucro>=0?'var(--teal)':'var(--rose)';
-  const mEl=document.getElementById('k_marg');
-  mEl.textContent=fP(a.margem);
-  mEl.style.color=a.margem>.4?'var(--green)':a.margem>.2?'var(--teal)':'var(--rose)';
-  document.getElementById('k_dia').textContent=a.rec_dia>0?fF(a.rec_dia):'—';
-  document.getElementById('k_pac').textContent=a.pacotes>0?fF(a.pacotes):'—';
-  document.getElementById('k_cart').textContent=fF(a.cartao);
-  document.getElementById('k_cart_p').textContent=a.receita>0?fP(a.cartao/a.receita)+' do total':'';
-  document.getElementById('k_din').textContent=fF(a.dinheiro);
-  document.getElementById('k_din_p').textContent=a.receita>0?fP(a.dinheiro/a.receita)+' do total':'';
-  document.getElementById('k_vet').textContent=a.vet>0?fF(a.vet):'—';
-  document.getElementById('k_cpc').textContent=a.cpc>0?fF(a.cpc):'—';
-
-  // ── Operacional ──
-  document.getElementById('k_caes').textContent=Math.round(a.caes).toLocaleString('pt-BR');
-  document.getElementById('k_cnv').textContent=Math.round(a.caes_novos);
-  document.getElementById('k_tick').textContent='R$\u00a0'+a.ticket.toFixed(0);
-  document.getElementById('k_txn').textContent=fP(a.tx_novos);
-  document.getElementById('k_dtrab').textContent=a.dias+' dias';
-
-  // Melhor dia da semana
-  const ys2=sY==='Todos'?Object.keys(DOW):[sY];
-  const ms2=sM==='Todos'?MO:[sM];
-  let bestRec=0,bestLbl='—';
-  ys2.forEach(y=>{ if(!DOW[y])return; ms2.forEach(m=>{ if(!DOW[y][m])return;
-    Object.entries(DOW[y][m]).forEach(([d,v])=>{ if(v.rec>bestRec){ bestRec=v.rec; bestLbl=DOW_LABEL[DOW_K.indexOf(d)]||d; } }); }); });
-  document.getElementById('k_bestday').textContent=bestLbl;
-  document.getElementById('k_bestday_d').textContent=bestRec>0?fF(bestRec)+' no período':'—';
-
-  // ── ADS ──
-  document.getElementById('k_inv').textContent=a.investimento>0?fF(a.investimento):'—';
-  document.getElementById('k_conv').textContent=Math.round(a.conversao)||'—';
-  document.getElementById('k_cli').textContent=fF(a.clinte);
-  document.getElementById('k_ret').textContent=fF(a.retorno);
-  document.getElementById('k_roi').textContent=fF(a.roi_total);
-  document.getElementById('k_cconv').textContent=a.cpl>0?fF(a.cpl):'Sem invest.';
-  document.getElementById('k_tads').textContent=a.tick_ads>0?fF(a.tick_ads):'—';
-  const txEl=document.getElementById('k_txret');
-  txEl.textContent=fP(a.tx_ret);
-  txEl.style.color=a.tx_ret>.6?'var(--green)':a.tx_ret>.3?'var(--teal)':'var(--muted)';
-  document.getElementById('k_ltv').textContent=a.ltv>0?fF(a.ltv):'—';
-
-  // Período label
-  const lbl=sY!=='Todos'&&sM!=='Todos'?sM+' '+sY:sY!=='Todos'?'Ano '+sY:sM!=='Todos'?sM+' (todos)':'Todos os períodos';
-  document.getElementById('pLbl').textContent='📅 '+lbl;
-
-  // ══ GRÁFICOS ══
-
-  // G1 — Receita vs Despesa (área)
-  const bK={};
-  r.forEach(x=>{ const k=sY==='Todos'?x.month.slice(0,3)+" '"+x.year.slice(2):x.month.slice(0,3);
-    if(!bK[k])bK[k]={rec:0,des:0}; bK[k].rec+=x.receita; bK[k].des+=x.despesa; });
-  const L1=Object.keys(bK);
-  mk('cL','line',{labels:L1,datasets:[
-    {label:'Receita',data:L1.map(k=>bK[k].rec),borderColor:'#F5A623',
-     backgroundColor:'rgba(245,166,35,.15)',fill:true,tension:.4,
-     pointBackgroundColor:'#F5A623',pointRadius:5,pointHoverRadius:8},
-    {label:'Despesa',data:L1.map(k=>bK[k].des),borderColor:'#FF4D6D',
-     backgroundColor:'rgba(255,77,109,.1)',fill:true,tension:.4,
-     pointBackgroundColor:'#FF4D6D',pointRadius:5,pointHoverRadius:8}
-  ]},CO);
-
-  // G2 — Rosca pagamentos com % no tooltip
-  mk('cP','doughnut',{labels:['Cartão','Dinheiro'],datasets:[{
-    data:[a.cartao,a.dinheiro],
-    backgroundColor:['rgba(245,166,35,.85)','rgba(0,212,170,.85)'],
-    borderColor:['#F5A623','#00D4AA'],borderWidth:2,hoverOffset:10
-  }]},{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{
-    legend:{position:'bottom',labels:{color:'#3D5470',font:{family:'DM Sans',size:11},boxWidth:10,padding:14}},
-    tooltip:{backgroundColor:'#0B0F1A',borderColor:'#151E2E',borderWidth:1,
-      titleColor:'#D8E6F3',bodyColor:'#3D5470',
-      callbacks:{label:c=>' '+fF(c.raw)+' ('+fP(c.raw/a.receita)+')'}}
-  }});
-
-  // G3 — Cães área empilhada
-  const cK={};
-  r.forEach(x=>{ const k=sY==='Todos'?x.month.slice(0,3)+"'"+x.year.slice(2):x.month.slice(0,3);
-    if(!cK[k])cK[k]={t:0,n:0}; cK[k].t+=x.caes; cK[k].n+=x.caes_novos; });
-  const LC=Object.keys(cK);
-  mk('cC','line',{labels:LC,datasets:[
-    {label:'Cães Existentes',data:LC.map(k=>Math.max(0,cK[k].t-cK[k].n)),
-     borderColor:'#4D9EFF',backgroundColor:'rgba(77,158,255,.2)',
-     fill:true,tension:.4,pointRadius:4,pointBackgroundColor:'#4D9EFF'},
-    {label:'Cães Novos',data:LC.map(k=>cK[k].n),
-     borderColor:'#2ECC80',backgroundColor:'rgba(46,204,128,.35)',
-     fill:true,tension:.4,pointRadius:4,pointBackgroundColor:'#2ECC80'}
-  ]},{...CO,scales:{...CO.scales,y:{...CO.scales.y,stacked:true,
-    ticks:{...CO.scales.y.ticks,callback:v=>Math.round(v)}}}});
-
-  // G4 — Clinte+Retorno empilhados + linha ROI
-  const aK={};
-  r.filter(x=>x.clinte>0||x.retorno>0).forEach(x=>{
-    const k=x.month.slice(0,3)+(sY==='Todos'?"'"+x.year.slice(2):'');
-    if(!aK[k])aK[k]={cli:0,ret:0,roi:0};
-    aK[k].cli+=x.clinte; aK[k].ret+=x.retorno; aK[k].roi+=x.roi_total;
-  });
-  const LA=Object.keys(aK);
-  if(LA.length) mk('cADS','bar',{labels:LA,datasets:[
-    {label:'Clinte (1ª visita)',data:LA.map(k=>aK[k].cli),
-     backgroundColor:'rgba(0,212,170,.7)',borderColor:'#00D4AA',borderRadius:4,stack:'ads',order:2},
-    {label:'Retorno (2ª+)',data:LA.map(k=>aK[k].ret),
-     backgroundColor:'rgba(155,127,255,.7)',borderColor:'#9B7FFF',borderRadius:4,stack:'ads',order:2},
-    {label:'ROI Total',data:LA.map(k=>aK[k].roi),type:'line',
-     borderColor:'#F5A623',borderWidth:2.5,pointBackgroundColor:'#F5A623',
-     pointRadius:6,pointHoverRadius:9,tension:.3,fill:false,order:1}
-  ]},{...CO,scales:{...CO.scales,x:{...CO.scales.x,stacked:true},y:{...CO.scales.y,stacked:false}}});
-  else mk('cADS','bar',{labels:['Sem dados'],datasets:[{data:[0],backgroundColor:'rgba(21,30,46,.5)'}]},CO);
-
-  // G5 — Ticket + meta (média)
-  const tK={};
-  r.forEach(x=>{ const k=sY==='Todos'?x.month.slice(0,3)+"'"+x.year.slice(2):x.month.slice(0,3);
-    if(!tK[k])tK[k]={r:0,c:0}; tK[k].r+=x.receita; tK[k].c+=x.caes; });
-  const LT=Object.keys(tK), VT=LT.map(k=>tK[k].c>0?tK[k].r/tK[k].c:0);
-  const meta=VT.length>0?VT.reduce((a,b)=>a+b,0)/VT.length:0;
-  mk('cT','line',{labels:LT,datasets:[
-    {label:'Ticket Médio',data:VT,borderColor:'#F5A623',
-     backgroundColor:'rgba(245,166,35,.12)',fill:true,tension:.4,
-     pointBackgroundColor:'#F5A623',pointRadius:5,pointHoverRadius:8},
-    {label:'Meta (média período)',data:LT.map(()=>meta),
-     borderColor:'rgba(255,77,109,.6)',borderWidth:1.5,borderDash:[6,4],
-     pointRadius:0,fill:false,tension:0}
-  ]},{...CO,scales:{...CO.scales,y:{...CO.scales.y,ticks:{...CO.scales.y.ticks,callback:v=>'R$'+v.toFixed(0)}}}});
-
-  // G6 — ROI invest vs retorno + break-even
-  const rK={};
-  r.filter(x=>x.investimento>0||x.roi_total>0).forEach(x=>{
-    const k=x.month.slice(0,3)+(sY==='Todos'?"'"+x.year.slice(2):'');
-    if(!rK[k])rK[k]={inv:0,roi:0};
-    rK[k].inv+=x.investimento; rK[k].roi+=x.roi_total;
-  });
-  const LR=Object.keys(rK);
-  if(LR.length){
-    mk('cROI','bar',{labels:LR,datasets:[
-      {label:'Investimento',data:LR.map(k=>rK[k].inv),
-       backgroundColor:'rgba(255,139,61,.7)',borderColor:'#FF8B3D',borderRadius:5,order:2},
-      {label:'ROI Total (Clinte+Retorno)',data:LR.map(k=>rK[k].roi),
-       backgroundColor:'rgba(46,204,128,.7)',borderColor:'#2ECC80',borderRadius:5,order:2},
-      {label:'Break-even',data:LR.map(k=>rK[k].inv),type:'line',
-       borderColor:'rgba(255,77,109,.7)',borderWidth:2,borderDash:[6,4],
-       pointRadius:0,fill:false,order:1}
-    ]},CO);
-    const tI=LR.reduce((s,k)=>s+rK[k].inv,0), tR=LR.reduce((s,k)=>s+rK[k].roi,0);
-    document.getElementById('ins_roi').innerHTML=tI>0
-      ?`Cada <b>R$1</b> investido gerou <b>${(tR/tI).toFixed(1)}x</b>. Lucro líquido do ADS: <b>${fF(tR-tI)}</b>.`
-      :`ROI total sem investimento rastreado: <b>${fF(tR)}</b> gerado pelos clientes ADS.`;
-  } else {
-    mk('cROI','bar',{labels:['Sem dados ADS'],datasets:[{data:[0],backgroundColor:'rgba(21,30,46,.5)'}]},CO);
-    document.getElementById('ins_roi').textContent='Sem dados de investimento ADS neste período.';
-  }
-
-  // G7 — Conversões (intensidade de cor)
-  const vK={};
-  r.forEach(x=>{ const k=sY==='Todos'?x.month.slice(0,3)+"'"+x.year.slice(2):x.month.slice(0,3);
-    vK[k]=(vK[k]||0)+x.conversao; });
-  const LV=Object.keys(vK), VV=LV.map(k=>vK[k]), mxV=Math.max(...VV,1);
-  mk('cConv','bar',{labels:LV,datasets:[{label:'Conversões ADS',data:VV,
-    backgroundColor:VV.map(v=>`rgba(77,158,255,${(.3+.65*v/mxV).toFixed(2)})`),
-    borderColor:'#4D9EFF',borderRadius:6}]},
-    {...CO,scales:{...CO.scales,y:{...CO.scales.y,ticks:{...CO.scales.y.ticks,callback:v=>Math.round(v)}}}});
-
-  buildHeatmap();
-  buildFunnel(a);
-  buildProjecao();
-
-  // ══ TABELA ══
-  const MXR=Math.max(...r.map(x=>x.receita),1);
-  document.getElementById('tBody').innerHTML=r
-    .sort((a,b)=>parseInt(a.year)*100+MO.indexOf(a.month)-(parseInt(b.year)*100+MO.indexOf(b.month)))
-    .map(x=>{
-      const bw=Math.round(x.receita/MXR*100);
-      const lc=x.lucro>=0?'ct':'cr';
-      const rec_liq_x=x.receita_liq||x.receita;
-      const mg=rec_liq_x>0?x.lucro/rec_liq_x:0;
-      const mc=mg>.4?'cgr':mg>.2?'ct':'cr';
-      const dias_x=x.dias_trab||1;
-      const cpl=x.investimento>0&&x.conversao>0?fF(x.investimento/x.conversao):'—';
-      const tads=x.conversao>0?fF(x.roi_total/x.conversao):'—';
-      const ltv=x.conversao>0?fF(x.roi_total/x.conversao*3):'—';
-      return `<tr>
-        <td>${x.month} ${x.year}</td>
-        <td class="cg"><div class="bwrap"><span>${fF(x.receita)}</span><div class="mbar"><div class="mfill" style="width:${bw}%;background:var(--teal)"></div></div></div></td>
-        <td class="cr" style="font-size:11px">${x.taxa_maquina>0?'−'+fF(x.taxa_maquina):'—'}</td>
-        <td class="ct">${fF(rec_liq_x)}</td>
-        <td class="cr">${x.despesa>0?fF(x.despesa):'—'}</td>
-        <td class="${lc}">${fF(x.lucro)}</td>
-        <td class="${mc}">${fP(mg)}</td>
-        <td class="cm">${fF(x.receita/dias_x)}</td>
-        <td class="cb">${Math.round(x.caes)}</td>
-        <td class="cgr">${Math.round(x.caes_novos)||'—'}</td>
-        <td class="cm">${x.ticket>0?'R$\u00a0'+x.ticket.toFixed(0):'—'}</td>
-        <td class="cm">${x.cpc>0?fF(x.cpc):'—'}</td>
-        <td class="cm">${x.cartao>0?fF(x.cartao):'—'}</td>
-        <td class="cm">${x.dinheiro>0?fF(x.dinheiro):'—'}</td>
-        <td class="ct">${Math.round(x.conversao)||'—'}</td>
-        <td class="ct">${x.clinte>0?fF(x.clinte):'—'}</td>
-        <td class="cp">${x.retorno>0?fF(x.retorno):'—'}</td>
-        <td class="cgr">${x.roi_total>0?fF(x.roi_total):'—'}</td>
-        <td class="co">${x.investimento>0?fF(x.investimento):'—'}</td>
-        <td class="co">${cpl}</td>
-        <td class="tl">${tads}</td>
-        <td class="clm">${ltv}</td>
-      </tr>`;
-    }).join('');
-
-  // ══ COMPARATIVO ══
-  const YC={'2023':'#3D5470','2024':'#4D9EFF','2025':'#F5A623','2026':'#00D4AA','2027':'#9B7FFF'};
-  document.getElementById('xGrid').innerHTML=Object.keys(D).sort().map(y=>{
-    const ms2=sM==='Todos'?MO:[sM], rr=[];
-    ms2.forEach(m=>{ if(D[y][m])rr.push({year:y,month:m,...D[y][m]}); });
-    if(!rr.length)return'';
-    const a2=ag(rr), col=YC[y]||'#3D5470';
-    const mg2=(a2.receita_liq||a2.receita)>0?a2.lucro/(a2.receita_liq||a2.receita):0;
-    return `<div class="xcard" style="border-top:3px solid ${col}">
-      <div class="xyear" style="color:${col}">● ${y}</div>
-      <div class="xrow"><span class="xkey">💰 Rec.Bruta</span><span class="xval cg">${fF(a2.receita)}</span></div>
-      <div class="xrow"><span class="xkey">💳 Taxa(5%)</span><span class="xval cr">${a2.taxa_maquina>0?fF(a2.taxa_maquina):'—'}</span></div>
-      <div class="xrow"><span class="xkey">💎 Rec.Líquida</span><span class="xval ct">${fF(a2.receita_liq||a2.receita)}</span></div>
-      <div class="xrow"><span class="xkey">💸 Despesas</span><span class="xval cr">${a2.despesa>0?fF(a2.despesa):'—'}</span></div>
-      <div class="xrow"><span class="xkey">📈 Lucro</span><span class="xval ${a2.lucro>=0?'ct':'cr'}">${fF(a2.lucro)}</span></div>
-      <div class="xrow"><span class="xkey">📊 Margem</span><span class="xval ${mg2>.4?'cgr':mg2>.2?'ct':'cr'}">${fP(mg2)}</span></div>
-      <div class="xrow"><span class="xkey">☀️ R$/Dia</span><span class="xval cy">${a2.rec_dia>0?fF(a2.rec_dia):'—'}</span></div>
-      <div class="xrow"><span class="xkey">🔧 Custo/Cão</span><span class="xval cm">${a2.cpc>0?fF(a2.cpc):'—'}</span></div>
-      <div class="xrow"><span class="xkey">🐾 Cães</span><span class="xval cb">${Math.round(a2.caes)}</span></div>
-      <div class="xrow"><span class="xkey">🆕 Novos</span><span class="xval cgr">${Math.round(a2.caes_novos)}</span></div>
-      <div class="xrow"><span class="xkey">🎫 Ticket</span><span class="xval cg">${a2.ticket>0?'R$\u00a0'+a2.ticket.toFixed(0):'—'}</span></div>
-      <div class="xrow"><span class="xkey">🔄 Conversões</span><span class="xval ct">${Math.round(a2.conversao)}</span></div>
-      <div class="xrow"><span class="xkey">✨ Clinte</span><span class="xval ct">${a2.clinte>0?fF(a2.clinte):'—'}</span></div>
-      <div class="xrow"><span class="xkey">🔁 Retorno</span><span class="xval cp">${a2.retorno>0?fF(a2.retorno):'—'}</span></div>
-      <div class="xrow"><span class="xkey">💹 ROI Total</span><span class="xval cgr">${a2.roi_total>0?fF(a2.roi_total):'—'}</span></div>
-      <div class="xrow"><span class="xkey">🎯 CPL</span><span class="xval co">${a2.cpl>0?fF(a2.cpl):'—'}</span></div>
-      <div class="xrow"><span class="xkey">💎 LTV</span><span class="xval clm">${a2.ltv>0?fF(a2.ltv):'—'}</span></div>
-    </div>`;
-  }).join('');
-}
-
-// ══════════════════════════════════════════════
-// PROJEÇÃO — chamada independente, sempre mostra
-// ══════════════════════════════════════════════
-let metaUsuario = parseFloat(localStorage.getItem('meta_loja3')) || 0;
-
-function salvarMeta(){
-  const v = parseFloat(document.getElementById('metaInp').value);
-  if(v > 0){ metaUsuario = v; localStorage.setItem('meta_loja3', v); buildProjecao(); }
-}
-
-function buildProjecao(){
-  // Coleta todos os meses em ordem cronológica
-  const todos = [];
-  Object.keys(D).sort().forEach(y=>{
-    [1,2,3,4,5,6,7,8,9,10,11,12].forEach(mn=>{
-      const m = MO[mn-1];
-      if(D[y]&&D[y][m]) todos.push({y:parseInt(y),mn,m,...D[y][m]});
-    });
-  });
-
-  if(!todos.length){
-    document.getElementById('projWrap').innerHTML='<p style="color:var(--muted);padding:20px">Nenhum dado acumulado ainda.</p>';
-    return;
-  }
-
-  // Último mês disponível
-  const ult = todos[todos.length-1];
-  const recDia = ult.rec_dia || (ult.receita / (ult.dias_trab||16));
-
-  // Próximo mês
-  let proxMN = ult.mn + 1, proxY = ult.y;
-  if(proxMN > 12){ proxMN = 1; proxY++; }
-  const proxNome = MO[proxMN-1];
-  const diasProxMes = DIAS_MES[proxMN] + (proxMN===2&&proxY%4===0?1:0);
-  // Estima dias úteis (aprox 75% dos dias do mês)
-  const diasUteisProx = Math.round(diasProxMes * 0.75);
-
-  // Projeção A — tendência simples (média dos últimos meses)
-  const ultimos3 = todos.slice(-3);
-  const mediaRec = ultimos3.reduce((s,x)=>s+x.receita,0) / ultimos3.length;
-  // Crescimento médio mês a mês
-  let crescimento = 0;
-  if(todos.length >= 2){
-    const taxas = [];
-    for(let i=1;i<todos.length;i++){
-      if(todos[i-1].receita>0) taxas.push((todos[i].receita-todos[i-1].receita)/todos[i-1].receita);
-    }
-    if(taxas.length) crescimento = taxas.reduce((s,v)=>s+v,0)/taxas.length;
-  }
-  const projA = Math.round(mediaRec * (1 + crescimento));
-
-  // Projeção C — por ritmo diário × dias úteis do próximo mês
-  const projC = Math.round(recDia * diasUteisProx);
-
-  // Projeção final = média das duas
-  const projFinal = Math.round((projA + projC) / 2);
-
-  // Se a planilha atual é do mês em curso → progresso real
-  const mesAtual   = TODAY_MONTH, anoAtual = TODAY_YEAR;
-  const estesMes   = ult.mn === mesAtual && ult.y === anoAtual;
-  const diasDecor  = estesMes ? TODAY_DAY : (ult.dias_trab||16);
-  const diasTotais = DIAS_MES[ult.mn];
-  const recAtual   = ult.receita;
-  const ritmoNec   = metaUsuario > 0 ? (metaUsuario - recAtual) / Math.max(1, diasTotais - diasDecor) : 0;
-  const pctMes     = Math.min(100, Math.round(diasDecor / diasTotais * 100));
-  const pctMeta    = metaUsuario > 0 ? Math.min(100, Math.round(recAtual / metaUsuario * 100)) : 0;
-
-  // Ritmo atual vs necessário
-  const ritmoAtual = recDia;
-  let ritmoStatus = 'nt', ritmoTxt = 'Defina uma meta para ver o ritmo';
-  if(metaUsuario > 0){
-    const ratio = ritmoAtual / (metaUsuario / diasUteisProx);
-    if(ratio >= 1.05){ ritmoStatus='ok'; ritmoTxt=`✅ No ritmo — você chegará à meta`; }
-    else if(ratio >= 0.85){ ritmoStatus='warn'; ritmoTxt=`⚡ Ritmo leve abaixo — precisa de R$ ${fF(ritmoNec)}/dia nos dias restantes`; }
-    else { ritmoStatus='bad'; ritmoTxt=`🚨 Ritmo insuficiente — precisa de R$ ${fF(ritmoNec)}/dia para bater a meta`; }
-  }
-
-  // Lucro projetado
-  const despProj   = Math.round(ult.despesa * (projFinal / ult.receita));
-  const lucroProj  = projFinal - despProj;
-  const margemProj = projFinal > 0 ? lucroProj/projFinal : 0;
-
-  const metaVal = metaUsuario > 0 ? metaUsuario : projFinal;
-  const faltaMeta = Math.max(0, metaVal - recAtual);
-
-  document.getElementById('projWrap').innerHTML = `
-  <div class="proj-wrap">
-
-    <!-- CARD 1: Projeção próximo mês -->
-    <div class="proj-card">
-      <div class="proj-title">🔮 Projeção — ${proxNome} ${proxY}</div>
-      <div class="proj-row">
-        <span class="proj-lbl">Receita estimada</span>
-        <span class="proj-val pp">${fF(projFinal)}</span>
-      </div>
-      <div class="proj-row">
-        <span class="proj-lbl">Por tendência (últimos meses)</span>
-        <span class="proj-val nt">${fF(projA)}</span>
-      </div>
-      <div class="proj-row">
-        <span class="proj-lbl">Por ritmo diário × ${diasUteisProx} dias úteis</span>
-        <span class="proj-val nt">${fF(projC)}</span>
-      </div>
-      <div class="proj-row">
-        <span class="proj-lbl">Despesa estimada</span>
-        <span class="proj-val dn">${fF(despProj)}</span>
-      </div>
-      <div class="proj-row">
-        <span class="proj-lbl">Lucro estimado</span>
-        <span class="proj-val ${lucroProj>=0?'up':'dn'}">${fF(lucroProj)}</span>
-      </div>
-      <div class="proj-row">
-        <span class="proj-lbl">Margem estimada</span>
-        <span class="proj-val ${margemProj>.35?'up':margemProj>.15?'nt':'dn'}">${fP(margemProj)}</span>
-      </div>
-      ${crescimento!==0?`<div class="proj-row">
-        <span class="proj-lbl">Crescimento histórico médio</span>
-        <span class="proj-val ${crescimento>=0?'up':'dn'}">${crescimento>=0?'+':''}${fP(crescimento)}</span>
-      </div>`:''}
-    </div>
-
-    <!-- CARD 2: Meta e ritmo do mês atual -->
-    <div class="proj-card" style="--accent:var(--gold)">
-      <div class="proj-title" style="color:var(--gold)">🎯 Meta — ${ult.m} ${ult.y}</div>
-
-      <div class="meta-input-wrap">
-        <label>Meta mensal</label>
-        <input class="meta-inp" id="metaInp" type="number" step="100"
-          value="${metaUsuario > 0 ? metaUsuario : ''}" placeholder="${projFinal}">
-        <button class="meta-btn" onclick="salvarMeta()">Salvar</button>
-      </div>
-
-      ${metaUsuario > 0 ? `
-      <!-- progresso vs meta -->
-      <div class="prog-wrap">
-        <div class="prog-label">
-          <span class="prog-lbl">Atingido: ${fF(recAtual)} de ${fF(metaUsuario)}</span>
-          <span class="prog-pct">${pctMeta}%</span>
-        </div>
-        <div class="prog-bg">
-          <div class="prog-fill" style="width:${pctMeta}%;background:${pctMeta>=100?'var(--green)':pctMeta>=70?'var(--gold)':'var(--rose)'}"></div>
-        </div>
-      </div>` : ''}
-
-      <!-- progresso do mês -->
-      <div class="prog-wrap">
-        <div class="prog-label">
-          <span class="prog-lbl">Mês: dia ${diasDecor} de ${diasTotais}</span>
-          <span class="prog-pct">${pctMes}% do mês</span>
-        </div>
-        <div class="prog-bg">
-          <div class="prog-fill" style="width:${pctMes}%;background:var(--blue)"></div>
-        </div>
-      </div>
-
-      <div class="proj-row">
-        <span class="proj-lbl">Receita atual</span>
-        <span class="proj-val cg" style="color:var(--gold)">${fF(recAtual)}</span>
-      </div>
-      <div class="proj-row">
-        <span class="proj-lbl">R$/dia atual</span>
-        <span class="proj-val nt">${fF(ritmoAtual)}</span>
-      </div>
-      ${metaUsuario > 0 ? `
-      <div class="proj-row">
-        <span class="proj-lbl">Falta para a meta</span>
-        <span class="proj-val ${faltaMeta===0?'up':'dn'}">${faltaMeta===0?'✅ Meta batida!':fF(faltaMeta)}</span>
-      </div>
-      <div class="proj-row">
-        <span class="proj-lbl">R$/dia necessário agora</span>
-        <span class="proj-val ${ritmoNec<=ritmoAtual?'up':'dn'}">${ritmoNec>0?fF(ritmoNec):'—'}</span>
-      </div>` : ''}
-
-      <div><span class="ritmo-badge ${ritmoStatus}">${ritmoTxt}</span></div>
-    </div>
-
-  </div>
-  <!-- Gráfico de projeção -->
-  <div class="cc" style="margin-bottom:12px">
-    <div class="ctitle">📈 Histórico + Projeção do próximo mês</div>
-    <div class="csub">Linha sólida = real · Linha tracejada = projeção</div>
-    <div style="position:relative;height:220px"><canvas id="cProj"></canvas></div>
-  </div>`;
-
-  // Gráfico histórico + projeção
-  const labels = todos.map(x=>x.m.slice(0,3)+"'"+String(x.y).slice(2));
-  const recHist = todos.map(x=>x.receita);
-  const desHist = todos.map(x=>x.despesa);
-  // Adiciona ponto de projeção
-  labels.push(proxNome.slice(0,3)+"'"+String(proxY).slice(2));
-  const recProj = [...recHist, projFinal];
-  const desProj = [...desHist, despProj];
-  // Linha de meta
-  const metaLine = labels.map(()=>metaUsuario||null);
-
-  const datasets = [
-    {label:'Receita Real',data:recHist.concat([null]),borderColor:'#F5A623',
-     backgroundColor:'rgba(245,166,35,.1)',fill:true,tension:.4,
-     pointBackgroundColor:'#F5A623',pointRadius:5},
-    {label:'Projeção Receita',data:[...Array(recHist.length-1).fill(null), recHist[recHist.length-1], projFinal],
-     borderColor:'#F5A623',borderDash:[6,4],borderWidth:2,fill:false,tension:.4,
-     pointBackgroundColor:'#9B7FFF',pointRadius:[...Array(recHist.length).fill(0),7],pointHoverRadius:9},
-    {label:'Despesa Real',data:desHist.concat([null]),borderColor:'#FF4D6D',
-     backgroundColor:'rgba(255,77,109,.07)',fill:true,tension:.4,
-     pointBackgroundColor:'#FF4D6D',pointRadius:5},
-    {label:'Projeção Despesa',data:[...Array(desHist.length-1).fill(null), desHist[desHist.length-1], despProj],
-     borderColor:'#FF4D6D',borderDash:[6,4],borderWidth:2,fill:false,tension:.4,
-     pointBackgroundColor:'#9B7FFF',pointRadius:[...Array(desHist.length).fill(0),7],pointHoverRadius:9},
-  ];
-  if(metaUsuario > 0){
-    datasets.push({label:'Meta',data:metaLine,borderColor:'rgba(46,204,128,.6)',
-      borderDash:[4,4],borderWidth:1.5,pointRadius:0,fill:false});
-  }
-  setTimeout(()=>mk('cProj','line',{labels,datasets},CO), 50);
-}
-
-// ════════════════════════════════════════
-// EXPORTAR XLSX — gera planilha completa do Supabase
-// ════════════════════════════════════════
-async function exportarXlsx(){
-  const btn = event?.target;
-  if(btn){btn.textContent='⏳ Buscando…';btn.disabled=true;}
-  try{
-    const sb = supabase.createClient("""" + SUPA_URL + """","""" + SUPA_KEY + """");
-
-    // Busca os dados
-    const[{data:movs},{data:gsts},{data:cts}] = await Promise.all([
-      sb.from('movimento').select('*').order('data'),
-      sb.from('gastos').select('*').order('data'),
-      sb.from('contas').select('*').order('vencimento'),
-    ]);
-
-    const wb = XLSX.utils.book_new();
-
-    // ── ABA 1: Movimento diário ──
-    const hMov=['Data','Dia','Cartão','Dinheiro','Pacotes','B.Tosa','Vet','Receita','Taxa Máq','Rec.Líquida','Cães','Novos','Contato','Conversão','Clinte','Retorno','ROI','Investimento','Diversos'];
-    const rowsMov = [hMov].concat((movs||[]).map(r=>[
-      r.data,r.dia||'',r.cartao||0,r.dinheiro||0,r.pacotes||0,r.btosa||0,r.vet||0,
-      r.receita||0,r.taxa_maquina||0,r.receita_liq||0,
-      r.caes||0,r.caes_nv||0,r.contato||0,r.conversao||0,
-      r.clinte||0,r.retorno||0,r.roi||0,r.invest||0,r.diversos||0
-    ]));
-    const wsMov=XLSX.utils.aoa_to_sheet(rowsMov);
-    wsMov['!cols']=[{wch:14},{wch:5},{wch:10},{wch:10},{wch:10},{wch:10},{wch:8},{wch:10},{wch:10},{wch:12},{wch:7},{wch:7},{wch:8},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10}];
-    XLSX.utils.book_append_sheet(wb,wsMov,'movimento');
-
-    // ── ABA 2: Gastos ──
-    const hGst=['Data','Mês','Ano','Hora','Categoria','Descrição','Valor'];
-    const rowsGst=[hGst].concat((gsts||[]).map(g=>[g.data,g.mes,g.ano,g.hora||'',g.label||g.cat,g.descricao||'',g.val||0]));
-    const wsGst=XLSX.utils.aoa_to_sheet(rowsGst);
-    wsGst['!cols']=[{wch:14},{wch:6},{wch:6},{wch:8},{wch:16},{wch:30},{wch:10}];
-    XLSX.utils.book_append_sheet(wb,wsGst,'gastos');
-
-    // ── ABA 3: Contas ──
-    const hCt=['Vencimento','Valor','Taxas','Empresa','Categoria','Pago em','Status','Banco','Observação','Mês','Ano'];
-    const rowsCt=[hCt].concat((cts||[]).map(c=>[
-      c.vencimento||'',c.valor||0,c.taxas||0,c.empresa,c.categoria||'',
-      c.pago_em||'',c.status||'',c.banco||'',c.observacao||'',c.mes,c.ano
-    ]));
-    const wsCt=XLSX.utils.aoa_to_sheet(rowsCt);
-    wsCt['!cols']=[{wch:14},{wch:10},{wch:8},{wch:22},{wch:14},{wch:14},{wch:10},{wch:14},{wch:24},{wch:6},{wch:6}];
-    XLSX.utils.book_append_sheet(wb,wsCt,'contas');
-
-    // ── ABA 4: Resumo mensal ──
-    const hRes=['Ano','Mês','Receita Bruta','Taxa Máq','Rec.Líquida','Despesa','Lucro','Margem','Cães','Novos','Ticket','Conversões','Clinte','Retorno','ROI ADS','Dias'];
-    const rowsRes=[hRes];
-    const meses=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-    Object.keys(D).sort().forEach(ano=>{
-      meses.forEach(mes=>{
-        const m=D[ano]?.[mes];
-        if(!m)return;
-        rowsRes.push([ano,mes,
-          m.receita||0,m.taxa_maquina||0,m.receita_liq||m.receita||0,
-          m.despesa||0,m.lucro||0,((m.margem||0)*100).toFixed(1)+'%',
-          m.caes||0,m.caes_novos||0,m.ticket?.toFixed(2)||0,
-          m.conversao||0,m.clinte||0,m.retorno||0,m.roi_total||0,m.dias_trab||0
-        ]);
-      });
-    });
-    const wsRes=XLSX.utils.aoa_to_sheet(rowsRes);
-    wsRes['!cols']=[{wch:6},{wch:12},...Array(14).fill({wch:12})];
-    XLSX.utils.book_append_sheet(wb,wsRes,'resumo_mensal');
-
-    const hoje=new Date().toISOString().slice(0,10);
-    XLSX.writeFile(wb,`loja3_completo_${hoje}.xlsx`);
-    if(btn){btn.textContent='✅ Baixado!';setTimeout(()=>{btn.textContent='⬇️ Exportar xlsx';btn.disabled=false;},3000);}
-  }catch(e){
-    console.error('Exportar:',e);
-    if(btn){btn.textContent='❌ Erro';btn.disabled=false;}
-  }
-}
 
 up();
 buildProjecao();
