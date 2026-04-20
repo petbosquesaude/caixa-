@@ -4,6 +4,7 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>🐾 Dashboard — Loja 3 Banho &amp; Tosa</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -227,7 +228,8 @@ tr:hover td{background:rgba(245,166,35,.03)}
       <p>Dashboard de Gestão Completo · 2026</p>
     </div>
   </div>
-  <div class="badge" id="supaBadge" style="background:rgba(90,106,138,.08);border:1px solid rgba(90,106,138,.25);color:var(--muted);font-size:11px;margin-right:8px">☁️ Supabase</div>
+  <button onclick="exportarXlsx()" style="padding:8px 16px;border-radius:14px;border:1px solid rgba(245,166,35,.4);background:rgba(245,166,35,.07);color:var(--gold);font-family:var(--font);font-size:11px;font-weight:700;cursor:pointer;margin-right:8px;transition:all .15s" onmouseover="this.style.background='rgba(245,166,35,.15)'" onmouseout="this.style.background='rgba(245,166,35,.07)'">⬇️ Exportar xlsx</button>
+<div class="badge" id="supaBadge" style="background:rgba(90,106,138,.08);border:1px solid rgba(90,106,138,.25);color:var(--muted);font-size:11px;margin-right:8px">☁️ Supabase</div>
 <div class="badge" style="display:flex;gap:8px;align-items:center">⟳ Atualizado em 17/04/2026</div>
 </header>
 
@@ -1072,6 +1074,82 @@ function buildProjecao(){
       borderDash:[4,4],borderWidth:1.5,pointRadius:0,fill:false});
   }
   setTimeout(()=>mk('cProj','line',{labels,datasets},CO), 50);
+}
+
+// ════════════════════════════════════════
+// EXPORTAR XLSX — gera planilha completa do Supabase
+// ════════════════════════════════════════
+async function exportarXlsx(){
+  const btn = event?.target;
+  if(btn){btn.textContent='⏳ Buscando…';btn.disabled=true;}
+  try{
+    const sb = supabase.createClient("""" + SUPA_URL + """","""" + SUPA_KEY + """");
+
+    // Busca os dados
+    const[{data:movs},{data:gsts},{data:cts}] = await Promise.all([
+      sb.from('movimento').select('*').order('data'),
+      sb.from('gastos').select('*').order('data'),
+      sb.from('contas').select('*').order('vencimento'),
+    ]);
+
+    const wb = XLSX.utils.book_new();
+
+    // ── ABA 1: Movimento diário ──
+    const hMov=['Data','Dia','Cartão','Dinheiro','Pacotes','B.Tosa','Vet','Receita','Taxa Máq','Rec.Líquida','Cães','Novos','Contato','Conversão','Clinte','Retorno','ROI','Investimento','Diversos'];
+    const rowsMov = [hMov].concat((movs||[]).map(r=>[
+      r.data,r.dia||'',r.cartao||0,r.dinheiro||0,r.pacotes||0,r.btosa||0,r.vet||0,
+      r.receita||0,r.taxa_maquina||0,r.receita_liq||0,
+      r.caes||0,r.caes_nv||0,r.contato||0,r.conversao||0,
+      r.clinte||0,r.retorno||0,r.roi||0,r.invest||0,r.diversos||0
+    ]));
+    const wsMov=XLSX.utils.aoa_to_sheet(rowsMov);
+    wsMov['!cols']=[{wch:14},{wch:5},{wch:10},{wch:10},{wch:10},{wch:10},{wch:8},{wch:10},{wch:10},{wch:12},{wch:7},{wch:7},{wch:8},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10}];
+    XLSX.utils.book_append_sheet(wb,wsMov,'movimento');
+
+    // ── ABA 2: Gastos ──
+    const hGst=['Data','Mês','Ano','Hora','Categoria','Descrição','Valor'];
+    const rowsGst=[hGst].concat((gsts||[]).map(g=>[g.data,g.mes,g.ano,g.hora||'',g.label||g.cat,g.descricao||'',g.val||0]));
+    const wsGst=XLSX.utils.aoa_to_sheet(rowsGst);
+    wsGst['!cols']=[{wch:14},{wch:6},{wch:6},{wch:8},{wch:16},{wch:30},{wch:10}];
+    XLSX.utils.book_append_sheet(wb,wsGst,'gastos');
+
+    // ── ABA 3: Contas ──
+    const hCt=['Vencimento','Valor','Taxas','Empresa','Categoria','Pago em','Status','Banco','Observação','Mês','Ano'];
+    const rowsCt=[hCt].concat((cts||[]).map(c=>[
+      c.vencimento||'',c.valor||0,c.taxas||0,c.empresa,c.categoria||'',
+      c.pago_em||'',c.status||'',c.banco||'',c.observacao||'',c.mes,c.ano
+    ]));
+    const wsCt=XLSX.utils.aoa_to_sheet(rowsCt);
+    wsCt['!cols']=[{wch:14},{wch:10},{wch:8},{wch:22},{wch:14},{wch:14},{wch:10},{wch:14},{wch:24},{wch:6},{wch:6}];
+    XLSX.utils.book_append_sheet(wb,wsCt,'contas');
+
+    // ── ABA 4: Resumo mensal ──
+    const hRes=['Ano','Mês','Receita Bruta','Taxa Máq','Rec.Líquida','Despesa','Lucro','Margem','Cães','Novos','Ticket','Conversões','Clinte','Retorno','ROI ADS','Dias'];
+    const rowsRes=[hRes];
+    const meses=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    Object.keys(D).sort().forEach(ano=>{
+      meses.forEach(mes=>{
+        const m=D[ano]?.[mes];
+        if(!m)return;
+        rowsRes.push([ano,mes,
+          m.receita||0,m.taxa_maquina||0,m.receita_liq||m.receita||0,
+          m.despesa||0,m.lucro||0,((m.margem||0)*100).toFixed(1)+'%',
+          m.caes||0,m.caes_novos||0,m.ticket?.toFixed(2)||0,
+          m.conversao||0,m.clinte||0,m.retorno||0,m.roi_total||0,m.dias_trab||0
+        ]);
+      });
+    });
+    const wsRes=XLSX.utils.aoa_to_sheet(rowsRes);
+    wsRes['!cols']=[{wch:6},{wch:12},...Array(14).fill({wch:12})];
+    XLSX.utils.book_append_sheet(wb,wsRes,'resumo_mensal');
+
+    const hoje=new Date().toISOString().slice(0,10);
+    XLSX.writeFile(wb,`loja3_completo_${hoje}.xlsx`);
+    if(btn){btn.textContent='✅ Baixado!';setTimeout(()=>{btn.textContent='⬇️ Exportar xlsx';btn.disabled=false;},3000);}
+  }catch(e){
+    console.error('Exportar:',e);
+    if(btn){btn.textContent='❌ Erro';btn.disabled=false;}
+  }
 }
 
 up();
