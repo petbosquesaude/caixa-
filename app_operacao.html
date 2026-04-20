@@ -560,12 +560,15 @@ body::before{
 <div class="tab-wrap">
   <div class="tab-glider g0" id="glider"></div>
   <button class="tab-btn on" id="tab0" onclick="goTab(0)">
-    <span class="ticon">📋</span>Movimento
+    <span class="ticon">📋</span>Mov.
   </button>
   <button class="tab-btn" id="tab1" onclick="goTab(1)">
     <span class="ticon">💸</span>Gastos
   </button>
-  <button class="tab-btn" id="tab2" onclick="goTab(2)">
+  <button class="tab-btn t3" id="tab2" onclick="goTab(2)">
+    <span class="ticon">🧾</span>Contas
+  </button>
+  <button class="tab-btn" id="tab3" onclick="goTab(3)">
     <span class="ticon">📊</span>Resumo
   </button>
 </div>
@@ -746,7 +749,94 @@ body::before{
 <!-- ══════════════════════════════════════
      PANE 2 — RESUMO
 ══════════════════════════════════════ -->
+<!-- ══ ABA 2: CONTAS ══ -->
 <div class="pane" id="pane2">
+
+  <div class="dbar" style="margin-top:16px">
+    <div class="dbar-icon">📅</div>
+    <select id="ctMes">
+      <option value="1">Janeiro</option><option value="2">Fevereiro</option>
+      <option value="3">Março</option><option value="4">Abril</option>
+      <option value="5">Maio</option><option value="6">Junho</option>
+      <option value="7">Julho</option><option value="8">Agosto</option>
+      <option value="9">Setembro</option><option value="10">Outubro</option>
+      <option value="11">Novembro</option><option value="12">Dezembro</option>
+    </select>
+    <div class="dbar-sep"></div>
+    <select id="ctAno"></select>
+    <button class="btn-hoje" onclick="setHoje('ct')">Hoje</button>
+  </div>
+
+  <div class="sec" style="margin-top:16px">🏢 Empresa / Fornecedor</div>
+  <div class="nf c-orange" style="margin-bottom:8px">
+    <div class="nf-lbl">Nome</div>
+    <input class="nf-inp" id="ctEmpresa" type="text" placeholder="ex: Funcionário João..." style="font-size:16px">
+  </div>
+
+  <div class="sec">💰 Valores</div>
+  <div class="grid2" style="margin-bottom:8px">
+    <div class="nf c-rose">
+      <div class="nf-lbl">Valor (R$)</div>
+      <div class="nf-row"><span class="nf-pre">R$</span>
+        <input class="nf-inp" id="ctValor" type="number" inputmode="decimal" placeholder="0,00">
+      </div>
+    </div>
+    <div class="nf">
+      <div class="nf-lbl">Taxas (R$)</div>
+      <div class="nf-row"><span class="nf-pre">R$</span>
+        <input class="nf-inp" id="ctTaxas" type="number" inputmode="decimal" placeholder="0,00">
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">📅 Datas</div>
+  <div class="grid2" style="margin-bottom:8px">
+    <div class="nf c-blue">
+      <div class="nf-lbl">Vencimento</div>
+      <input class="nf-inp" id="ctVenc" type="date" style="font-size:14px">
+    </div>
+    <div class="nf c-teal">
+      <div class="nf-lbl">Pago em</div>
+      <input class="nf-inp" id="ctPago" type="date" style="font-size:14px">
+    </div>
+  </div>
+
+  <div class="sec">🏦 Banco e categoria</div>
+  <div class="grid2" style="margin-bottom:8px">
+    <div class="nf">
+      <div class="nf-lbl">Banco pagador</div>
+      <input class="nf-inp" id="ctBanco" type="text" placeholder="nu.pj, pagbank..." style="font-size:14px">
+    </div>
+    <div class="nf c-purple">
+      <div class="nf-lbl">Categoria</div>
+      <select id="ctCat" style="background:transparent;border:none;color:var(--text);font-family:var(--mono);font-size:13px;outline:none;width:100%;-webkit-appearance:none;margin-top:6px">
+        <option value="funcionario">Funcionário</option>
+        <option value="aluguel">Aluguel</option>
+        <option value="fornecedor">Fornecedor</option>
+        <option value="servico">Serviço</option>
+        <option value="equipamento">Equipamento</option>
+        <option value="marketing">Marketing</option>
+        <option value="outros">Outros</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="nf" style="margin-bottom:4px">
+    <div class="nf-lbl">Observação (opcional)</div>
+    <textarea class="nf-ta" id="ctObs" placeholder="detalhes adicionais..."></textarea>
+  </div>
+
+  <button class="btn-save teal" onclick="salvarConta()">＋ Lançar Conta</button>
+
+  <div class="list-top">
+    <span class="list-title" id="ctTitle">Contas do mês</span>
+    <button class="btn-clr" onclick="if(confirm('Limpar contas locais?')){DATA.contas=[];save();renderCt()}">Limpar</button>
+  </div>
+  <div id="ctList"></div>
+</div>
+
+<!-- ══ ABA 3: RESUMO ══ -->
+<div class="pane" id="pane3">
   <div id="resumoWrap" style="margin-top:8px"></div>
 </div>
 
@@ -755,8 +845,9 @@ body::before{
 <!-- barra exportar -->
 <div class="exp-bar">
   <div class="exp-row">
-    <button class="btn-exp mov" id="btnExpMov" onclick="exportarMov()" disabled>⬇️ Movimento</button>
+    <button class="btn-exp mov" id="btnExpMov" onclick="exportarMov()" disabled>⬇️ Mov.</button>
     <button class="btn-exp gst" id="btnExpGst" onclick="exportarGst()" disabled>⬇️ Gastos</button>
+    <button class="btn-exp" style="border-color:rgba(0,229,176,.4);background:rgba(0,229,176,.06);color:var(--teal)" id="btnExpCt" onclick="exportarContas()" disabled>⬇️ Contas</button>
   </div>
 </div>
 
@@ -769,6 +860,8 @@ function _sb(s,m){const e=document.getElementById('syncBadge');if(!e)return;cons
 async function _saveMov(r){_sb('saving');const{error}=await _SB.from('movimento').upsert({data:r.data,dia:r.dia||'',mes:r.mes,ano:r.ano,cartao:r.cartao||0,dinheiro:r.dinheiro||0,pacotes:r.pacotes||0,btosa:r.btosa||0,vet:r.vet||0,receita:r.receita||0,taxa_maquina:r.taxa_maquina||0,receita_liq:r.receita_liq||0,caes:r.caes||0,caes_nv:r.caes_nv||0,diversos:r.diversos||0,contato:r.contato||0,conversao:r.conversao||0,clinte:r.clinte||0,retorno:r.retorno||0,roi:r.roi||0,invest:r.invest||0},{onConflict:'data'});if(error){_sb('error',error.message?.slice(0,20));console.error(error);}else{_sb('saved');setTimeout(()=>_sb('idle'),3000);}}
 async function _saveGasto(g){_sb('saving');const{error}=await _SB.from('gastos').insert({data:g.data,mes:g.mes,ano:g.ano,hora:g.hora||'',cat:g.cat,label:g.label,val:g.val,descricao:g.desc||''});if(error){_sb('error',error.message?.slice(0,20));console.error(error);}else{_sb('saved');setTimeout(()=>_sb('idle'),3000);}}
 async function _delMov(dt){await _SB.from('movimento').delete().eq('data',dt);}
+async function _saveConta(c){_sb('saving');const{error}=await _SB.from('contas').insert({mes:c.mes,ano:c.ano,vencimento:c.vencimento||null,valor:c.valor||0,taxas:c.taxas||0,empresa:c.empresa,categoria:c.cat||'outros',pago_em:c.pago||null,status:c.pago?'pago':'no prazo',banco:c.banco||'',observacao:c.obs||''});if(error){_sb('error',error.message?.slice(0,20));console.error(error);}else{_sb('saved');setTimeout(()=>_sb('idle'),3000);}}
+async function _delConta(id){if(id)await _SB.from('contas').delete().eq('id',id);}
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -794,7 +887,7 @@ const CATS=[
 // ════════════════════════════════════════
 // ESTADO
 // ════════════════════════════════════════
-let DATA={movimento:[],gastos:[],ultimo_export:null};
+let DATA={movimento:[],gastos:[],contas:[],ultimo_export:null};
 
 function load(){
   const ls=localStorage.getItem('l3op');
@@ -831,8 +924,9 @@ function goTab(n){
   const tw=tabs[n].offsetWidth, tl=tabs[n].offsetLeft;
   g.style.width=tw+'px';
   g.style.transform=`translateX(${tl}px)`;
-  g.className='tab-glider g'+n;
-  if(n===2)buildResumo();
+  g.className='tab-glider g'+(n===2?'3':n);
+  if(n===2)renderCt();
+  if(n===3)buildResumo();
 }
 
 // ════════════════════════════════════════
@@ -849,6 +943,14 @@ function initSel(){
     for(let y=h.getFullYear()-1;y<=h.getFullYear()+1;y++){const o=document.createElement('option');o.value=y;o.textContent=y;sa.appendChild(o)}
     sa.value=h.getFullYear();
   });
+  // Selects de Contas
+  const saCt = document.getElementById('ctAno');
+  if(saCt){
+    const hh=new Date();
+    for(let y=hh.getFullYear()-1;y<=hh.getFullYear()+1;y++){const o=document.createElement('option');o.value=y;o.textContent=y;saCt.appendChild(o);}
+    saCt.value=hh.getFullYear();
+    document.getElementById('ctMes').value=hh.getMonth()+1;
+  }
   autoDow(); updateBanner();
   document.getElementById('mvDia').addEventListener('change',()=>{autoDow();updateBanner()});
   document.getElementById('mvMes').addEventListener('change',()=>{autoDow();updateBanner();renderMv()});
@@ -861,6 +963,7 @@ function initSel(){
 
 function setHoje(p){
   const h=new Date();
+  if(p==='ct'){document.getElementById('ctMes').value=h.getMonth()+1;document.getElementById('ctAno').value=h.getFullYear();renderCt();return;}
   document.getElementById(p+'Dia').value=h.getDate();
   document.getElementById(p+'Mes').value=h.getMonth()+1;
   document.getElementById(p+'Ano').value=h.getFullYear();
@@ -1020,6 +1123,60 @@ function renderGs(){
 // ════════════════════════════════════════
 // RESUMO
 // ════════════════════════════════════════
+// ════════════════════════════════════════
+// CONTAS
+// ════════════════════════════════════════
+function gdCt(){return{mes:+document.getElementById('ctMes').value,ano:+document.getElementById('ctAno').value};}
+
+function salvarConta(){
+  const emp=document.getElementById('ctEmpresa').value.trim();
+  const val=parseFloat(document.getElementById('ctValor').value)||0;
+  if(!emp){toast('Informe o nome da empresa','err');return;}
+  if(!val){toast('Informe o valor','err');return;}
+  const{mes,ano}=gdCt();
+  const c={
+    id:Date.now(),mes,ano,
+    empresa:emp,
+    valor:val,
+    taxas:parseFloat(document.getElementById('ctTaxas').value)||0,
+    vencimento:document.getElementById('ctVenc').value||null,
+    pago:document.getElementById('ctPago').value||null,
+    banco:document.getElementById('ctBanco').value.trim(),
+    cat:document.getElementById('ctCat').value,
+    obs:document.getElementById('ctObs').value.trim(),
+  };
+  DATA.contas.push(c);
+  save();
+  _saveConta(c);
+  ['ctEmpresa','ctValor','ctTaxas','ctVenc','ctPago','ctBanco','ctObs'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  toast('🧾 Conta lançada: R$'+val.toFixed(2).replace('.',','),'ok');
+  renderCt();
+}
+
+function renderCt(){
+  const{mes,ano}=gdCt();
+  const f=DATA.contas.filter(c=>c.mes===mes&&c.ano===ano);
+  const tot=f.reduce((s,c)=>s+c.valor,0);
+  const btnCt=document.getElementById('btnExpCt');if(btnCt)btnCt.disabled=!f.length;
+  document.getElementById('ctTitle').textContent=`${f.length} contas · R$ ${tot.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+  const wrap=document.getElementById('ctList');
+  if(!f.length){wrap.innerHTML=`<div class="empty"><span class="empty-icon">🧾</span><p>Nenhuma conta lançada</p></div>`;return;}
+  const statusColor={pago:'var(--green)',atrasado:'var(--rose)','no prazo':'var(--gold)'};
+  wrap.innerHTML=[...f].reverse().map(c=>`
+    <div class="rec">
+      <div class="rec-date" style="font-size:10px;min-width:36px;text-align:center;line-height:1.6">
+        ${c.vencimento?c.vencimento.slice(8,10)+'/'+c.vencimento.slice(5,7):'—'}<br>
+        <span style="color:${statusColor[c.pago?'pago':'no prazo']};font-size:9px">${c.pago?'pago':'pend.'}</span>
+      </div>
+      <div class="rec-info">
+        <div class="rec-main">${c.empresa}</div>
+        <div class="rec-sub">${c.cat}${c.banco?' · '+c.banco:''}</div>
+      </div>
+      <div class="rec-amt" style="color:var(--rose)">R$${c.valor.toFixed(2).replace('.',',')}</div>
+      <button class="rec-del" onclick="_delConta();DATA.contas=DATA.contas.filter(x=>x.id!==${c.id});save();renderCt()">✕</button>
+    </div>`).join('');
+}
+
 function buildResumo(){
   const h=new Date(),mes=h.getMonth()+1,ano=h.getFullYear();
   const mv=DATA.movimento.filter(x=>x.mes===mes&&x.ano===ano);
@@ -1129,6 +1286,27 @@ function exportarGst(){
   toast(`✅ gastos_${MN[mes].toUpperCase()}_${ano}.xlsx`,'ok');
 }
 
+function exportarContas(){
+  const mes=+document.getElementById('ctMes')?.value||(new Date().getMonth()+1);
+  const ano=+document.getElementById('ctAno')?.value||new Date().getFullYear();
+  const f=DATA.contas.filter(c=>c.mes===mes&&c.ano===ano);
+  if(!f.length){toast('Sem contas para exportar','err');return;}
+  const MN_EXP=['','Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const rows=[['Vencimento','Valor','Taxas','Empresa','Categoria','Pago em','Status','Banco','Observação']];
+  f.sort((a,b)=>(a.vencimento||'')>(b.vencimento||'')?1:-1).forEach(c=>rows.push([
+    c.vencimento||'',c.valor,c.taxas||0,c.empresa,c.cat||'',
+    c.pago||'',c.pago?'pago':'no prazo',c.banco||'',c.obs||''
+  ]));
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:14},{wch:12},{wch:10},{wch:22},{wch:14},{wch:14},{wch:10},{wch:14},{wch:24}];
+  XLSX.utils.book_append_sheet(wb,ws,'contas');
+  XLSX.writeFile(wb,`contas_${MN_EXP[mes].toUpperCase()}_${ano}.xlsx`);
+  DATA.ultimo_export=new Date().toISOString();save();
+  toast(`✅ contas_${MN_EXP[mes].toUpperCase()}_${ano}.xlsx`,'ok');
+  document.getElementById('btnExpCt').disabled=false;
+}
+
 function exportarTudo(){
   exportarMov();
   setTimeout(exportarGst,500);
@@ -1151,7 +1329,26 @@ initSel();
 buildCats();
 renderMv();
 renderGs();
+renderCt();
 updateBadge();
+// Carrega contas do Supabase no boot
+(async()=>{
+  try{
+    const{data,error}=await _SB.from('contas').select('*').order('criado_em',{ascending:false});
+    if(error||!data)return;
+    // Mescla sem duplicar
+    const ids=new Set(DATA.contas.map(c=>String(c.supa_id||'')));
+    data.forEach(r=>{
+      if(!DATA.contas.find(c=>c.supa_id===r.id)){
+        DATA.contas.push({id:Date.now()+Math.random(),supa_id:r.id,mes:r.mes,ano:r.ano,
+          empresa:r.empresa,valor:parseFloat(r.valor)||0,taxas:parseFloat(r.taxas)||0,
+          vencimento:r.vencimento,pago:r.pago_em,banco:r.banco||'',
+          cat:r.categoria||'outros',obs:r.observacao||''});
+      }
+    });
+    save();renderCt();
+  }catch(e){console.log('contas boot:',e);}
+})();
 </script>
 
 <script>
