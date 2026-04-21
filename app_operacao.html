@@ -557,19 +557,22 @@ body::before{
 </div>
 
 <!-- ── TABS ── -->
-<div class="tab-wrap">
+<div class="tab-wrap" style="overflow-x:auto">
   <div class="tab-glider g0" id="glider"></div>
-  <button class="tab-btn on" id="tab0" onclick="goTab(0)">
+  <button class="tab-btn on" id="tab0" onclick="goTab(0)" style="min-width:64px">
     <span class="ticon">📋</span>Mov.
   </button>
-  <button class="tab-btn" id="tab1" onclick="goTab(1)">
+  <button class="tab-btn" id="tab1" onclick="goTab(1)" style="min-width:64px">
     <span class="ticon">💸</span>Gastos
   </button>
-  <button class="tab-btn t3" id="tab2" onclick="goTab(2)">
+  <button class="tab-btn t3" id="tab2" onclick="goTab(2)" style="min-width:64px">
     <span class="ticon">🧾</span>Contas
   </button>
-  <button class="tab-btn" id="tab3" onclick="goTab(3)">
+  <button class="tab-btn" id="tab3" onclick="goTab(3)" style="min-width:64px">
     <span class="ticon">📊</span>Resumo
+  </button>
+  <button class="tab-btn" id="tab4" onclick="goTab(4)" style="min-width:64px">
+    <span class="ticon">🔄</span>Planos
   </button>
 </div>
 
@@ -737,6 +740,23 @@ body::before{
     <textarea class="nf-ta" id="gsDesc" placeholder="ex: shampoo 5L, manutenção tesoura..."></textarea>
   </div>
 
+  <!-- Toggle Não Operacional -->
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;
+    padding:12px 14px;background:rgba(255,45,85,.06);border:1px solid rgba(255,45,85,.2);
+    border-radius:12px;cursor:pointer" onclick="toggleNaoOp()" id="naoOpWrap">
+    <div id="naoOpToggle" style="width:36px;height:20px;border-radius:10px;
+      background:var(--muted2);border:1.5px solid var(--border);
+      position:relative;transition:all .2s;flex-shrink:0">
+      <div id="naoOpThumb" style="position:absolute;top:2px;left:2px;width:14px;height:14px;
+        border-radius:50%;background:var(--muted);transition:all .2s"></div>
+    </div>
+    <div>
+      <div style="font-size:12px;font-weight:700;color:var(--muted)" id="naoOpLbl">Gasto Operacional</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:1px">Toque para marcar como Multa/Juros/Buraco</div>
+    </div>
+    <span style="font-size:18px;margin-left:auto" id="naoOpIcon">⚙️</span>
+  </div>
+
   <button class="btn-save rose" onclick="salvarGasto()">＋ Lançar Gasto</button>
 
   <div class="list-top">
@@ -796,9 +816,20 @@ body::before{
       <input class="nf-inp" id="ctVenc" type="date" style="font-size:14px">
     </div>
     <div class="nf c-teal">
-      <div class="nf-lbl">Pago em</div>
+      <div class="nf-lbl">Data pagamento</div>
       <input class="nf-inp" id="ctPago" type="date" style="font-size:14px">
     </div>
+  </div>
+
+  <div class="sec">🔴 Status da conta</div>
+  <div class="nf c-rose" style="margin-bottom:8px">
+    <div class="nf-lbl">Status</div>
+    <select id="ctStatus" style="background:transparent;border:none;color:var(--text);font-family:var(--mono);font-size:14px;outline:none;width:100%;-webkit-appearance:none;margin-top:6px">
+      <option value="pendente">🟡 Pendente</option>
+      <option value="pago">🟢 Pago</option>
+      <option value="negociado">🔵 Negociado</option>
+      <option value="protestado">🔴 Protestado</option>
+    </select>
   </div>
 
   <div class="sec">🏦 Banco e categoria</div>
@@ -810,13 +841,14 @@ body::before{
     <div class="nf c-purple">
       <div class="nf-lbl">Categoria</div>
       <select id="ctCat" style="background:transparent;border:none;color:var(--text);font-family:var(--mono);font-size:13px;outline:none;width:100%;-webkit-appearance:none;margin-top:6px">
-        <option value="funcionario">Funcionário</option>
-        <option value="aluguel">Aluguel</option>
-        <option value="fornecedor">Fornecedor</option>
-        <option value="servico">Serviço</option>
-        <option value="equipamento">Equipamento</option>
-        <option value="marketing">Marketing</option>
-        <option value="outros">Outros</option>
+        <option value="protesto">🚫 PROTESTO / CARTÓRIO</option>
+        <option value="juros">📉 JUROS / MULTA BANCÁRIA</option>
+        <option value="negociacao">🤝 ACORDO / DÍVIDA NEGOCIADA</option>
+        <option value="funcionario">👤 Funcionário</option>
+        <option value="aluguel">🏠 Aluguel</option>
+        <option value="fornecedor">🧴 Fornecedor</option>
+        <option value="servico">🔧 Serviço</option>
+        <option value="outros">📦 Outros</option>
       </select>
     </div>
   </div>
@@ -828,11 +860,86 @@ body::before{
 
   <button class="btn-save teal" onclick="salvarConta()">＋ Lançar Conta</button>
 
+  <div id="ctPassivoCard" style="display:none;margin-bottom:10px;padding:14px 16px;
+    background:linear-gradient(135deg,rgba(255,107,0,.12),rgba(255,107,0,.04));
+    border:1.5px solid rgba(255,107,0,.4);border-radius:14px">
+    <div style="font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--orange);font-weight:700;margin-bottom:6px">📉 Total Passivo (não pago)</div>
+    <div id="ctPassivoVal" style="font-size:26px;font-weight:700;font-family:var(--mono);color:var(--orange)">—</div>
+    <div style="font-size:10px;color:var(--muted);margin-top:3px" id="ctPassivoCount"></div>
+  </div>
+
   <div class="list-top">
     <span class="list-title" id="ctTitle">Contas do mês</span>
     <button class="btn-clr" onclick="if(confirm('Limpar contas locais?')){DATA.contas=[];save();renderCt()}">Limpar</button>
   </div>
   <div id="ctList"></div>
+</div>
+
+<!-- ══ ABA 4: ASSINATURAS ══ -->
+<div class="pane" id="pane4">
+  <div class="sec" style="margin-top:16px">👤 Dados do assinante</div>
+
+  <!-- KPI MRR topo -->
+  <div id="mrrCard" style="margin-bottom:14px;padding:14px 16px;
+    background:linear-gradient(135deg,rgba(176,110,255,.12),rgba(176,110,255,.04));
+    border:1.5px solid rgba(176,110,255,.35);border-radius:14px">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--purple);font-weight:700">💎 Receita Recorrente Mensal (MRR)</div>
+        <div id="mrrVal" style="font-size:28px;font-weight:700;font-family:var(--mono);color:var(--purple);margin-top:4px">R$ 0,00</div>
+      </div>
+      <div style="text-align:right">
+        <div id="mrrCount" style="font-size:22px;font-weight:700;font-family:var(--mono);color:var(--purple)">0</div>
+        <div style="font-size:10px;color:var(--muted)">assinantes ativos</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid2" style="margin-bottom:8px">
+    <div class="nf c-purple">
+      <div class="nf-lbl">Nome do Tutor</div>
+      <input class="nf-inp" id="asCliente" type="text" placeholder="ex: João Silva" style="font-size:15px">
+    </div>
+    <div class="nf">
+      <div class="nf-lbl">Nome do Pet</div>
+      <input class="nf-inp" id="asPet" type="text" placeholder="ex: Rex" style="font-size:15px">
+    </div>
+  </div>
+
+  <div class="grid2" style="margin-bottom:8px">
+    <div class="nf c-gold" style="border-color:rgba(249,194,36,.35);background:rgba(249,194,36,.08)">
+      <div class="nf-lbl" style="color:var(--gold)">Valor Mensal R$</div>
+      <div class="nf-row"><span class="nf-pre">R$</span>
+        <input class="nf-inp" id="asValor" type="number" inputmode="decimal" placeholder="0,00" style="color:var(--gold)">
+      </div>
+    </div>
+    <div class="nf c-blue">
+      <div class="nf-lbl">Dia de Cobrança</div>
+      <select id="asDia" style="background:transparent;border:none;color:var(--text);font-family:var(--mono);font-size:16px;font-weight:700;outline:none;width:100%;-webkit-appearance:none;margin-top:4px"></select>
+    </div>
+  </div>
+
+  <div class="nf" style="margin-bottom:10px">
+    <div class="nf-lbl">Status</div>
+    <select id="asStatus" style="background:transparent;border:none;color:var(--text);font-family:var(--mono);font-size:14px;outline:none;width:100%;-webkit-appearance:none;margin-top:6px">
+      <option value="ativo">🟢 Ativo</option>
+      <option value="pausado">🟡 Pausado</option>
+      <option value="cancelado">🔴 Cancelado</option>
+    </select>
+  </div>
+
+  <div class="nf" style="margin-bottom:4px">
+    <div class="nf-lbl">Observação</div>
+    <textarea class="nf-ta" id="asObs" placeholder="ex: banho completo semana sim semana não..."></textarea>
+  </div>
+
+  <button class="btn-save" style="background:linear-gradient(135deg,var(--purple),#7B4ECC);color:#fff;box-shadow:0 4px 24px rgba(176,110,255,.35)" onclick="salvarAssinante()">＋ Cadastrar Assinante</button>
+
+  <div class="list-top" style="margin-top:16px">
+    <span class="list-title" id="asTitle">Assinantes</span>
+    <button class="btn-clr" onclick="if(confirm('Limpar?')){DATA.assinaturas=[];save();renderAs()}">Limpar</button>
+  </div>
+  <div id="asList"></div>
 </div>
 
 <!-- ══ ABA 3: RESUMO ══ -->
@@ -848,6 +955,7 @@ body::before{
     <button class="btn-exp mov" id="btnExpMov" onclick="exportarMov()" disabled>⬇️ Mov.</button>
     <button class="btn-exp gst" id="btnExpGst" onclick="exportarGst()" disabled>⬇️ Gastos</button>
     <button class="btn-exp" style="border-color:rgba(0,229,176,.4);background:rgba(0,229,176,.06);color:var(--teal)" id="btnExpCt" onclick="exportarContas()" disabled>⬇️ Contas</button>
+    <button class="btn-exp" style="border-color:rgba(176,110,255,.4);background:rgba(176,110,255,.06);color:var(--purple)" id="btnExpAs" onclick="exportarAssinantes()">⬇️ Planos</button>
   </div>
 </div>
 
@@ -858,9 +966,9 @@ body::before{
 const _SB=supabase.createClient("https://wyibsreqdvnllzuzjvgr.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind5aWJzcmVxZHZubGx6dXpqdmdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1NTc5MzEsImV4cCI6MjA5MjEzMzkzMX0.AbK_8f8NKvwHbDgvDJthibFKrUW8fFJmR2YGnjq7ovs");
 function _sb(s,m){const e=document.getElementById('syncBadge');if(!e)return;const mp={idle:['☁️ nuvem','si'],saving:['⏳…','ss'],saved:['✅ sync','sv'],error:['❌ '+(m||''),'se']};const[tx,c]=mp[s]||mp.idle;e.textContent=tx;e.className='sync-badge s-'+c;}
 async function _saveMov(r){_sb('saving');const{error}=await _SB.from('movimento').upsert({data:r.data,dia:r.dia||'',mes:r.mes,ano:r.ano,cartao:r.cartao||0,dinheiro:r.dinheiro||0,pacotes:r.pacotes||0,btosa:r.btosa||0,vet:r.vet||0,receita:r.receita||0,taxa_maquina:r.taxa_maquina||0,receita_liq:r.receita_liq||0,caes:r.caes||0,caes_nv:r.caes_nv||0,diversos:r.diversos||0,contato:r.contato||0,conversao:r.conversao||0,clinte:r.clinte||0,retorno:r.retorno||0,roi:r.roi||0,invest:r.invest||0},{onConflict:'data'});if(error){_sb('error',error.message?.slice(0,20));console.error(error);}else{_sb('saved');setTimeout(()=>_sb('idle'),3000);}}
-async function _saveGasto(g){_sb('saving');const{error}=await _SB.from('gastos').insert({data:g.data,mes:g.mes,ano:g.ano,hora:g.hora||'',cat:g.cat,label:g.label,val:g.val,descricao:g.desc||''});if(error){_sb('error',error.message?.slice(0,20));console.error(error);}else{_sb('saved');setTimeout(()=>_sb('idle'),3000);}}
+async function _saveGasto(g){_sb('saving');const{error}=await _SB.from('gastos').insert({data:g.data,mes:g.mes,ano:g.ano,hora:g.hora||'',cat:g.cat,label:g.label,val:g.val,descricao:g.desc||'',tipo:g.tipo||'operacional'});if(error){_sb('error',error.message?.slice(0,20));console.error(error);}else{_sb('saved');setTimeout(()=>_sb('idle'),3000);}}
 async function _delMov(dt){await _SB.from('movimento').delete().eq('data',dt);}
-async function _saveConta(c){_sb('saving');const{error}=await _SB.from('contas').insert({mes:c.mes,ano:c.ano,vencimento:c.vencimento||null,valor:c.valor||0,taxas:c.taxas||0,empresa:c.empresa,categoria:c.cat||'outros',pago_em:c.pago||null,status:c.pago?'pago':'no prazo',banco:c.banco||'',observacao:c.obs||''});if(error){_sb('error',error.message?.slice(0,20));console.error(error);}else{_sb('saved');setTimeout(()=>_sb('idle'),3000);}}
+async function _saveConta(c){_sb('saving');const{error}=await _SB.from('contas').insert({mes:c.mes,ano:c.ano,vencimento:c.vencimento||null,valor:c.valor||0,taxas:c.taxas||0,empresa:c.empresa,categoria:c.cat||'outros',pago_em:c.pago||null,status:c.status_sel||c.status||'pendente',tipo_passivo:['protesto','juros','negociacao'].includes(c.cat),banco:c.banco||'',observacao:c.obs||''});if(error){_sb('error',error.message?.slice(0,20));console.error(error);}else{_sb('saved');setTimeout(()=>_sb('idle'),3000);}}
 async function _delConta(id){if(id)await _SB.from('contas').delete().eq('id',id);}
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -887,7 +995,7 @@ const CATS=[
 // ════════════════════════════════════════
 // ESTADO
 // ════════════════════════════════════════
-let DATA={movimento:[],gastos:[],contas:[],ultimo_export:null};
+let DATA={movimento:[],gastos:[],contas:[],assinaturas:[],ultimo_export:null};
 
 function load(){
   const ls=localStorage.getItem('l3op');
@@ -927,6 +1035,7 @@ function goTab(n){
   g.className='tab-glider g'+(n===2?'3':n);
   if(n===2)renderCt();
   if(n===3)buildResumo();
+  if(n===4)renderAs();
 }
 
 // ════════════════════════════════════════
@@ -1064,12 +1173,35 @@ function renderMv(){
 // CATEGORIAS GASTOS
 // ════════════════════════════════════════
 let catSel='';
+let _naoOp=false;
 function buildCats(){
   document.getElementById('catGrid').innerHTML=CATS.map(c=>`
     <div class="cat" id="ct_${c.id}" onclick="selCat('${c.id}')">
       <span class="cat-i">${c.i}</span>${c.l}
     </div>`).join('');
 }
+function toggleNaoOp(){
+  _naoOp=!_naoOp;
+  const tog=document.getElementById('naoOpToggle');
+  const thm=document.getElementById('naoOpThumb');
+  const lbl=document.getElementById('naoOpLbl');
+  const ico=document.getElementById('naoOpIcon');
+  const wrp=document.getElementById('naoOpWrap');
+  if(_naoOp){
+    tog.style.background='rgba(255,45,85,.4)';tog.style.borderColor='var(--rose)';
+    thm.style.left='18px';thm.style.background='var(--rose)';
+    lbl.style.color='var(--rose)';lbl.textContent='🚨 NÃO OPERACIONAL';
+    ico.textContent='🚨';wrp.style.borderColor='rgba(255,45,85,.5)';
+    wrp.style.background='rgba(255,45,85,.1)';
+  }else{
+    tog.style.background='var(--muted2)';tog.style.borderColor='var(--border)';
+    thm.style.left='2px';thm.style.background='var(--muted)';
+    lbl.style.color='var(--muted)';lbl.textContent='Gasto Operacional';
+    ico.textContent='⚙️';wrp.style.borderColor='rgba(255,45,85,.2)';
+    wrp.style.background='rgba(255,45,85,.06)';
+  }
+}
+
 function selCat(id){
   catSel=id;
   document.querySelectorAll('.cat').forEach(el=>el.classList.remove('on'));
@@ -1086,12 +1218,13 @@ function salvarGasto(){
   const {dia,mes,ano}=gd('gs');
   const cat=CATS.find(c=>c.id===catSel);
   const h=new Date();
-  const _g={id:Date.now(),data:ds(dia,mes,ano),dia,mes,ano,hora:h.getHours()+':'+String(h.getMinutes()).padStart(2,'0'),cat:catSel,label:cat.l,icon:cat.i,val:v,desc:document.getElementById('gsDesc').value.trim()};
+  const _g={id:Date.now(),data:ds(dia,mes,ano),dia,mes,ano,hora:h.getHours()+':'+String(h.getMinutes()).padStart(2,'0'),cat:catSel,label:cat.l,icon:cat.i,val:v,desc:document.getElementById('gsDesc').value.trim(),tipo:_naoOp?'nao_op':'operacional'};
   DATA.gastos.push(_g);
   save();
   _saveGasto(_g);
   document.getElementById('gsVal').value='';
   document.getElementById('gsDesc').value='';
+  if(_naoOp){_naoOp=false;toggleNaoOp();}
   toast(`${cat.i} R$ ${v.toFixed(2).replace('.',',')} lançado`,'ok');
   renderGs();
 }
@@ -1115,7 +1248,7 @@ function renderGs(){
         <div class="rec-main">${g.label} · ${g.data.slice(8,10)}/${g.data.slice(5,7)}</div>
         <div class="rec-sub">${g.desc||'—'}</div>
       </div>
-      <div class="rec-amt" style="color:var(--rose)">R$${g.val.toFixed(2).replace('.',',')}</div>
+      ${g.tipo==='nao_op'?'<span style="font-size:10px;background:rgba(255,45,85,.15);border:1px solid rgba(255,45,85,.3);color:var(--rose);padding:2px 6px;border-radius:6px;margin-right:4px">🚨 N.Op</span>':''}<div class="rec-amt" style="color:var(--rose)">R$${g.val.toFixed(2).replace('.',',')}</div>
       <button class="rec-del" onclick="DATA.gastos=DATA.gastos.filter(x=>x.id!==${g.id});save();renderGs()">✕</button>
     </div>`).join('');
 }
@@ -1141,6 +1274,7 @@ function salvarConta(){
     taxas:parseFloat(document.getElementById('ctTaxas').value)||0,
     vencimento:document.getElementById('ctVenc').value||null,
     pago:document.getElementById('ctPago').value||null,
+    status_sel:document.getElementById('ctStatus')?.value||'pendente',
     banco:document.getElementById('ctBanco').value.trim(),
     cat:document.getElementById('ctCat').value,
     obs:document.getElementById('ctObs').value.trim(),
@@ -1161,12 +1295,25 @@ function renderCt(){
   document.getElementById('ctTitle').textContent=`${f.length} contas · R$ ${tot.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
   const wrap=document.getElementById('ctList');
   if(!f.length){wrap.innerHTML=`<div class="empty"><span class="empty-icon">🧾</span><p>Nenhuma conta lançada</p></div>`;return;}
-  const statusColor={pago:'var(--green)',atrasado:'var(--rose)','no prazo':'var(--gold)'};
-  wrap.innerHTML=[...f].reverse().map(c=>`
-    <div class="rec">
+  const statusColor={pago:'var(--muted)',pendente:'var(--orange)',negociado:'var(--blue)',protestado:'var(--rose)','no prazo':'var(--gold)',atrasado:'var(--rose)'};
+  const borderColor={protestado:'var(--rose)',pendente:'var(--orange)',negociado:'var(--blue)',pago:'var(--border)','no prazo':'var(--gold)',atrasado:'var(--rose)'};
+
+  // KPI passivo
+  const passivo = f.filter(c=>c.status_sel!=='pago'&&c.pago!==c.pago||c.status_sel!=='pago');
+  const totalPassivo = f.filter(c=>(c.status_sel||'pendente')!=='pago').reduce((s,c)=>s+c.valor,0);
+  const ctPC = document.getElementById('ctPassivoCard');
+  const ctPV = document.getElementById('ctPassivoVal');
+  const ctPN = document.getElementById('ctPassivoCount');
+  if(ctPC){
+    ctPC.style.display = totalPassivo>0?'block':'none';
+    if(ctPV) ctPV.textContent='R$ '+totalPassivo.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+    if(ctPN) ctPN.textContent=f.filter(c=>(c.status_sel||'pendente')!=='pago').length+' conta(s) em aberto';
+  }
+  wrap.innerHTML=[...f].sort((a,b)=>{const o={protestado:0,pendente:1,negociado:2,pago:3};return (o[a.status_sel||'pendente']||1)-(o[b.status_sel||'pendente']||1);}).map(c=>`
+    <div class="rec" style="border-color:${borderColor[c.status_sel||'pendente']||'var(--border)'};">
       <div class="rec-date" style="font-size:10px;min-width:36px;text-align:center;line-height:1.6">
         ${c.vencimento?c.vencimento.slice(8,10)+'/'+c.vencimento.slice(5,7):'—'}<br>
-        <span style="color:${statusColor[c.pago?'pago':'no prazo']};font-size:9px">${c.pago?'pago':'pend.'}</span>
+        <span style="color:${statusColor[c.status_sel||'pendente']};font-size:9px">${(c.status_sel||'pendente').toUpperCase()}</span>
       </div>
       <div class="rec-info">
         <div class="rec-main">${c.empresa}</div>
@@ -1175,6 +1322,85 @@ function renderCt(){
       <div class="rec-amt" style="color:var(--rose)">R$${c.valor.toFixed(2).replace('.',',')}</div>
       <button class="rec-del" onclick="_delConta();DATA.contas=DATA.contas.filter(x=>x.id!==${c.id});save();renderCt()">✕</button>
     </div>`).join('');
+}
+
+// ════════════════════════════════════════
+// ASSINATURAS
+// ════════════════════════════════════════
+function initAsDia(){
+  const sel=document.getElementById('asDia');
+  if(!sel||sel.options.length>0)return;
+  for(let i=1;i<=31;i++){const o=document.createElement('option');o.value=i;o.textContent=i;sel.appendChild(o);}
+  sel.value=5;
+}
+
+function salvarAssinante(){
+  const cliente=document.getElementById('asCliente').value.trim();
+  const val=parseFloat(document.getElementById('asValor').value)||0;
+  if(!cliente){toast('Informe o nome do tutor','err');return;}
+  if(!val){toast('Informe o valor mensal','err');return;}
+  const a={
+    id:Date.now(),
+    cliente,
+    pet:document.getElementById('asPet').value.trim(),
+    valor:val,
+    dia_mes:+document.getElementById('asDia').value||5,
+    status:document.getElementById('asStatus').value||'ativo',
+    obs:document.getElementById('asObs').value.trim(),
+  };
+  DATA.assinaturas.push(a);
+  save();
+  _saveAssinante(a);
+  ['asCliente','asPet','asValor','asObs'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  toast(`🔄 ${cliente} cadastrado — R$${val.toFixed(2).replace('.',',')} /mês`,'ok');
+  renderAs();
+}
+
+function renderAs(){
+  initAsDia();
+  const ativos=DATA.assinaturas.filter(a=>a.status==='ativo');
+  const mrr=ativos.reduce((s,a)=>s+a.valor,0);
+  const mrrV=document.getElementById('mrrVal');
+  const mrrC=document.getElementById('mrrCount');
+  if(mrrV)mrrV.textContent='R$ '+mrr.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  if(mrrC)mrrC.textContent=ativos.length;
+  const total=DATA.assinaturas.length;
+  document.getElementById('asTitle').textContent=`${total} assinante${total!==1?'s':''} · ${ativos.length} ativo${ativos.length!==1?'s':''}`;
+  const wrap=document.getElementById('asList');
+  if(!wrap)return;
+  if(!total){wrap.innerHTML=`<div class="empty"><span class="empty-icon">🔄</span><p>Nenhum assinante cadastrado</p></div>`;return;}
+  const statusC={ativo:'var(--green)',pausado:'var(--gold)',cancelado:'var(--rose)'};
+  const statusB={ativo:'rgba(29,185,84,.3)',pausado:'rgba(249,194,36,.3)',cancelado:'rgba(255,45,85,.3)'};
+  const sorted=[...DATA.assinaturas].sort((a,b)=>a.status==='ativo'?-1:1);
+  wrap.innerHTML=sorted.map(a=>`
+    <div class="rec" style="border-color:${statusB[a.status]||'var(--border)'}">
+      <div style="width:40px;height:40px;border-radius:12px;background:rgba(176,110,255,.12);
+        border:1px solid rgba(176,110,255,.25);display:flex;align-items:center;
+        justify-content:center;font-size:18px;flex-shrink:0">🐾</div>
+      <div class="rec-info">
+        <div class="rec-main" style="color:var(--purple)">${a.cliente}${a.pet?' · '+a.pet:''}</div>
+        <div class="rec-sub">Todo dia ${a.dia_mes} · <span style="color:${statusC[a.status]}">${a.status.toUpperCase()}</span>${a.obs?' · '+a.obs:''}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:15px;font-weight:700;font-family:var(--mono);color:var(--gold)">R$${a.valor.toFixed(2).replace('.',',')}</div>
+        <div style="font-size:9px;color:var(--muted)">/mês</div>
+      </div>
+      <button class="rec-del" onclick="_delAssinante(${a.id});DATA.assinaturas=DATA.assinaturas.filter(x=>x.id!==${a.id});save();renderAs()">✕</button>
+    </div>`).join('');
+}
+
+async function _saveAssinante(a){
+  _sb('saving');
+  const{error}=await _SB.from('assinantes').insert({
+    cliente:a.cliente,pet:a.pet||'',valor:a.valor,
+    dia_mes:a.dia_mes,status:a.status,observacao:a.obs||''
+  });
+  if(error){_sb('error',error.message?.slice(0,20));console.error(error);}
+  else{_sb('saved');setTimeout(()=>_sb('idle'),3000);}
+}
+async function _delAssinante(id_local){
+  const r=DATA.assinaturas.find(a=>a.id===id_local);
+  if(r?.supa_id)await _SB.from('assinantes').delete().eq('id',r.supa_id);
 }
 
 function buildResumo(){
@@ -1307,6 +1533,22 @@ function exportarContas(){
   document.getElementById('btnExpCt').disabled=false;
 }
 
+function exportarAssinantes(){
+  if(!DATA.assinaturas.length){toast('Sem assinantes','err');return;}
+  const rows=[['Tutor','Pet','Valor/Mês','Dia Cobrança','Status','Observação']];
+  DATA.assinaturas.forEach(a=>rows.push([a.cliente,a.pet||'',a.valor,a.dia_mes,a.status,a.obs||'']));
+  const mrr=DATA.assinaturas.filter(a=>a.status==='ativo').reduce((s,a)=>s+a.valor,0);
+  rows.push(['','','','','','']);
+  rows.push(['MRR (Ativos)',mrr,'','','','']);
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:20},{wch:12},{wch:12},{wch:14},{wch:10},{wch:24}];
+  XLSX.utils.book_append_sheet(wb,ws,'assinantes');
+  XLSX.writeFile(wb,`assinantes_${new Date().toISOString().slice(0,10)}.xlsx`);
+  DATA.ultimo_export=new Date().toISOString();save();
+  toast('✅ assinantes.xlsx baixado','ok');
+}
+
 function exportarTudo(){
   exportarMov();
   setTimeout(exportarGst,500);
@@ -1326,11 +1568,29 @@ function toast(msg,type='ok'){
 // ════════════════════════════════════════
 load();
 initSel();
+initAsDia();
 buildCats();
 renderMv();
 renderGs();
 renderCt();
+renderAs();
 updateBadge();
+// Carrega assinaturas do Supabase no boot
+(async()=>{
+  try{
+    const{data,error}=await _SB.from('assinantes').select('*').order('criado_em',{ascending:false});
+    if(error||!data)return;
+    data.forEach(r=>{
+      if(!DATA.assinaturas.find(a=>a.supa_id===r.id)){
+        DATA.assinaturas.push({id:Date.now()+Math.random(),supa_id:r.id,
+          cliente:r.cliente,pet:r.pet||'',valor:parseFloat(r.valor)||0,
+          dia_mes:r.dia_mes||5,status:r.status||'ativo',obs:r.observacao||''});
+      }
+    });
+    save();renderAs();
+  }catch(e){console.log('assinantes boot:',e);}
+})();
+
 // Carrega contas do Supabase no boot
 (async()=>{
   try{
