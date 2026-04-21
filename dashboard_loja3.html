@@ -409,6 +409,9 @@ const TODAY_YEAR  = 2026;
 const _SB = supabase.createClient("https://wyibsreqdvnllzuzjvgr.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind5aWJzcmVxZHZubGx6dXpqdmdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1NTc5MzEsImV4cCI6MjA5MjEzMzkzMX0.AbK_8f8NKvwHbDgvDJthibFKrUW8fFJmR2YGnjq7ovs");
 
 async function carregarDoSupabase(){
+  // MO definido localmente para garantir acesso independente de hoisting
+  const _MO = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+               'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   const badge = document.getElementById('supaBadge');
   if(badge){ badge.textContent='⏳ carregando…'; badge.style.color='var(--gold)'; }
   try {
@@ -432,7 +435,7 @@ async function carregarDoSupabase(){
     const D2 = {};
     movs.forEach(r => {
       const ano = String(r.ano);
-      const mes = MO[r.mes - 1];
+      const mes = _MO[r.mes - 1];
       if(!mes) return;
       if(!D2[ano]) D2[ano] = {};
       if(!D2[ano][mes]) D2[ano][mes] = {
@@ -464,7 +467,7 @@ async function carregarDoSupabase(){
     // Agrega gastos por mês
     gsts.forEach(g => {
       const ano = String(g.ano);
-      const mes = MO[g.mes - 1];
+      const mes = _MO[g.mes - 1];
       if(!mes || !D2[ano]?.[mes]) return;
       D2[ano][mes].despesa = (D2[ano][mes].despesa || 0) + (Number(g.val) || 0);
     });
