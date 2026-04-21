@@ -275,6 +275,12 @@ tr:hover td{background:rgba(245,166,35,.03)}
   <div class="kc pk"><div class="kicon">🏥</div><div class="klabel">Veterinário</div><div class="kval" id="k_vet">—</div><div class="kdesc">Receita serviço vet</div></div>
   <div class="kc gr"><div class="kicon">🔧</div><div class="klabel">Custo por Cão</div><div class="kval" id="k_cpc">—</div><div class="kdesc">Despesa ÷ cães atendidos</div></div>
 </div>
+<div class="kg4" style="margin-top:10px">
+  <div class="kc rs" style="border-top:3px solid var(--rose)"><div class="kicon">🚨</div><div class="klabel">Desp. Não Op.</div><div class="kval" id="k_nao_op" style="color:var(--rose)">—</div><div class="kdesc">Multas · Juros · Buracos</div></div>
+  <div class="kc tl" style="border-top:3px solid var(--teal)"><div class="kicon">⚙️</div><div class="klabel">Lucro Operacional</div><div class="kval" id="k_luc_op" style="color:var(--teal)">—</div><div class="kdesc">Sem as despesas não-op</div></div>
+  <div class="kc or" style="border-top:3px solid var(--orange)"><div class="kicon">📉</div><div class="klabel">Passivo Total</div><div class="kval" id="k_passivo" style="color:var(--orange)">—</div><div class="kdesc">Dívidas pendentes</div></div>
+  <div class="kc pp" style="border-top:3px solid var(--purple)"><div class="kicon">💎</div><div class="klabel">MRR Assinaturas</div><div class="kval" id="k_mrr" style="color:var(--purple)">—</div><div class="kdesc">Receita garantida/mês</div></div>
+</div>
 
 <!-- ════ OPERACIONAL ════ -->
 <div class="sec"><em>🐾</em> Operacional</div>
@@ -386,6 +392,20 @@ tr:hover td{background:rgba(245,166,35,.03)}
 <tbody id="tBody"></tbody>
 </table>
 </div>
+
+<!-- ════ DÍVIDAS PENDENTES ════ -->
+<div class="sec"><em>📉</em> Contas a Pagar e Dívidas Pendentes</div>
+<div class="tcard"><table>
+  <thead><tr><th>Empresa</th><th>Categoria</th><th>Vencimento</th><th>Valor</th><th>Status</th><th>Banco</th></tr></thead>
+  <tbody id="passivoBody"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px">Carregando…</td></tr></tbody>
+</table></div>
+
+<!-- ════ ASSINANTES ════ -->
+<div class="sec"><em>🔄</em> Assinantes Ativos</div>
+<div class="tcard"><table>
+  <thead><tr><th>Tutor</th><th>Pet</th><th>Valor/Mês</th><th>Dia Cobr.</th><th>Status</th></tr></thead>
+  <tbody id="assinantesBody"><tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">Carregando…</td></tr></tbody>
+</table></div>
 
 <!-- ════ PROJEÇÃO ════ -->
 <div class="sec"><em>🔮</em> Projeção — Próximo Mês</div>
@@ -527,6 +547,14 @@ function up(){
   const liqEl=document.getElementById('k_rec_liq');
   if(liqEl){liqEl.textContent=fF(a.receita_liq||a.receita);}
   document.getElementById('k_des').textContent=fF(a.despesa);
+  const _nopEl=document.getElementById('k_nao_op');
+  if(_nopEl)_nopEl.textContent=a.despesa_nao_op>0?fF(a.despesa_nao_op):'—';
+  const _lopEl=document.getElementById('k_luc_op');
+  if(_lopEl){const _lop=a.lucro_op||a.lucro;_lopEl.textContent=fF(_lop);_lopEl.style.color=_lop>=0?'var(--teal)':'var(--rose)';}
+  const _pasEl=document.getElementById('k_passivo');
+  if(_pasEl)_pasEl.textContent=window._PASSIVO>0?fF(window._PASSIVO):'—';
+  const _mrrEl=document.getElementById('k_mrr');
+  if(_mrrEl)_mrrEl.textContent=window._MRR>0?fF(window._MRR):'—';
   const lEl=document.getElementById('k_luc');
   lEl.textContent=fF(a.lucro); lEl.style.color=a.lucro>=0?'var(--teal)':'var(--rose)';
   const mEl=document.getElementById('k_marg');
@@ -977,6 +1005,22 @@ function buildProjecao(){
       borderDash:[4,4],borderWidth:1.5,pointRadius:0,fill:false});
   }
   setTimeout(()=>mk('cProj','line',{labels,datasets},CO), 50);
+
+  // Gráfico MRR vs Receita Variável
+  const _mrr2=window._MRR||0;
+  if(_mrr2>0&&todos.length>0){
+    if(!document.getElementById('mrrGrafWrap')){
+      const div=document.createElement('div');
+      div.id='mrrGrafWrap';div.className='cc';div.style.marginBottom='12px';
+      div.innerHTML='<div class="ctitle">💎 Receita Recorrente vs Variável</div><div class="csub">Roxo = garantido (MRR) · Dourado = variável</div><div style="position:relative;height:180px"><canvas id="cMrr"></canvas></div>';
+      document.getElementById('projWrap')?.appendChild(div);
+    }
+    const lv=todos.map(x=>x.m.slice(0,3)+"'"+String(x.y).slice(2));
+    setTimeout(()=>mk('cMrr','bar',{labels:lv,datasets:[
+      {label:'MRR garantido',data:todos.map(()=>_mrr2),backgroundColor:'rgba(176,110,255,.7)',borderRadius:4},
+      {label:'Variável',data:todos.map(x=>Math.max(0,(x.receita_liq||x.receita)-_mrr2)),backgroundColor:'rgba(249,194,36,.55)',borderRadius:4},
+    ]},{...CO,scales:{...CO.scales,x:{...CO.scales.x,stacked:true},y:{...CO.scales.y,stacked:true}}}),80);
+  }
 }
 
 
@@ -1000,15 +1044,32 @@ function buildProjecao(){
     setBadge('⏳ carregando…','var(--gold)');
     try{
       const sb = supabase.createClient(_URL, _KEY);
-      const [r1, r2] = await Promise.all([
+      const [r1, r2, r3, r4] = await Promise.all([
         sb.from('movimento').select('*').order('data'),
         sb.from('gastos').select('*').order('data'),
+        sb.from('contas').select('*').order('vencimento'),
+        sb.from('assinantes').select('*'),
       ]);
       if(r1.error) throw r1.error;
       if(r2.error) throw r2.error;
 
-      const movs = r1.data || [];
-      const gsts = r2.data || [];
+      const movs  = r1.data || [];
+      const gsts  = r2.data || [];
+      const conts = r3.data || [];
+      const asnts = r4.data || [];
+
+      window._MRR = 0;
+      window._ASSINANTES = [];
+      window._PASSIVO = conts.filter(c=>c.status!=='pago').reduce((s,c)=>s+(Number(c.valor)||0),0);
+      window._PASSIVO_LIST = conts.filter(c=>c.status!=='pago').sort((a,b)=>{
+        const o={protestado:0,pendente:1,negociado:2};return (o[a.status]||1)-(o[b.status]||1);
+      });
+      asnts.forEach(a=>{
+        if(a.status==='ativo'){
+          window._MRR+=(Number(a.valor)||0);
+          window._ASSINANTES.push(a);
+        }
+      });
 
       if(!movs.length){ setBadge('☁️ sem dados','var(--muted)'); return; }
 
@@ -1021,7 +1082,8 @@ function buildProjecao(){
         if(!D2[ano]) D2[ano] = {};
         if(!D2[ano][mes]) D2[ano][mes] = {
           receita:0, taxa_maquina:0, receita_liq:0, cartao:0, dinheiro:0,
-          pacotes:0, btosa:0, vet:0, despesa:0, lucro:0, margem:0,
+          pacotes:0, btosa:0, vet:0, despesa:0, despesa_op:0, despesa_nao_op:0,
+          lucro:0, lucro_op:0, margem:0,
           caes:0, caes_novos:0, ticket:0, conversao:0, clinte:0, retorno:0,
           roi_total:0, investimento:0, diversos:0, dias_trab:0,
           rec_dia:0, cpc:0, cpl:0, tick_ads:0, tx_ret_ads:0, ltv:0,
@@ -1049,7 +1111,10 @@ function buildProjecao(){
         const ano = String(g.ano);
         const mes = _MO[g.mes - 1];
         if(!mes || !D2[ano]?.[mes]) return;
-        D2[ano][mes].despesa += Number(g.val) || 0;
+        const val = Number(g.val)||0;
+        D2[ano][mes].despesa += val;
+        if(g.tipo==='nao_op') D2[ano][mes].despesa_nao_op += val;
+        else D2[ano][mes].despesa_op += val;
       });
 
       // Recalcula métricas derivadas
@@ -1058,7 +1123,8 @@ function buildProjecao(){
           if(!m.receita_liq) m.receita_liq = m.receita - m.taxa_maquina;
           const base = m.receita_liq || m.receita;
           m.lucro      = base - m.despesa;
-          m.margem     = base > 0 ? m.lucro / base : 0;
+          m.lucro_op   = base - (m.despesa_op||m.despesa);
+          m.margem     = base > 0 ? m.lucro_op / base : 0;
           m.rec_dia    = m.dias_trab > 0 ? base / m.dias_trab : 0;
           m.ticket     = m.caes > 0 ? base / m.caes : 0;
           m.cpc        = m.caes > 0 ? m.despesa / m.caes : 0;
@@ -1072,6 +1138,26 @@ function buildProjecao(){
       // Substitui D completamente (sem mesclar com JSON estático)
       Object.keys(D).forEach(k => delete D[k]);
       Object.keys(D2).forEach(ano => { D[ano] = D2[ano]; });
+
+      // Preenche tabela passivo
+      const _pB=document.getElementById('passivoBody');
+      if(_pB){
+        const _pl=window._PASSIVO_LIST||[];
+        const _sc={protestado:'var(--rose)',pendente:'var(--orange)',negociado:'var(--blue)'};
+        const _ff=v=>'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+        _pB.innerHTML=!_pl.length
+          ?'<tr><td colspan="6" style="text-align:center;color:var(--green);padding:16px">✅ Nenhuma dívida pendente</td></tr>'
+          :_pl.map(c=>`<tr><td style="font-weight:700">${c.empresa||'—'}</td><td class="cm">${c.categoria||'—'}</td><td class="cm">${c.vencimento?c.vencimento.slice(0,10):'—'}</td><td class="cr" style="font-weight:700">${_ff(c.valor)}</td><td style="color:${_sc[c.status]||'var(--muted)'};font-weight:700">${(c.status||'').toUpperCase()}</td><td class="cm">${c.banco||'—'}</td></tr>`).join('');
+      }
+      // Preenche tabela assinantes
+      const _aB=document.getElementById('assinantesBody');
+      if(_aB){
+        const _al=window._ASSINANTES||[];
+        const _ff2=v=>'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+        _aB.innerHTML=!_al.length
+          ?'<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:16px">Nenhum assinante ativo</td></tr>'
+          :_al.map(a=>`<tr><td style="font-weight:700;color:var(--purple)">${a.cliente}</td><td class="cm">${a.pet||'—'}</td><td style="color:var(--gold);font-weight:700">${_ff2(a.valor)}</td><td class="cm">Dia ${a.dia_mes}</td><td style="color:var(--green)">🟢 ATIVO</td></tr>`).join('');
+      }
 
       // Regenera botões de ano com os anos do Supabase
       const anos = Object.keys(D).sort();
