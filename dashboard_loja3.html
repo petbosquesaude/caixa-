@@ -490,17 +490,25 @@ async function carregarDoSupabase(){
       });
     });
 
-    // MERGE: Supabase tem prioridade, mantém dados do JSON que não estão no Supabase
-    Object.keys(D2).forEach(ano => {
-      if(!D[ano]) D[ano] = {};
-      Object.assign(D[ano], D2[ano]);
-    });
+    // FIX: substitui D completamente com dados do Supabase
+    // Apaga JSON estático para não misturar
+    Object.keys(D).forEach(k => { delete D[k]; });
+    Object.keys(D2).forEach(ano => { D[ano] = D2[ano]; });
+
+    // Regenera botões de ano (pode ter meses/anos novos)
+    const _anos = Object.keys(D).sort();
+    const _yF = document.getElementById('yF');
+    if(_yF){
+      _yF.innerHTML = '<button class="bf active" onclick="clr()">Todos</button>' +
+        _anos.map(a=>`<button class="bf" onclick="tY('${a}')">${a}</button>`).join('');
+    }
 
     up();
     buildProjecao();
 
     if(badge){
-      badge.textContent = '✅ Supabase';
+      const _tot = Object.values(D).reduce((s,m)=>s+Object.keys(m).length, 0);
+      badge.textContent = '✅ ' + _tot + (_tot===1?' mês':' meses');
       badge.style.color = 'var(--teal)';
       badge.style.borderColor = 'rgba(0,212,170,.3)';
     }
