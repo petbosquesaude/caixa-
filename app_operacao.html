@@ -841,14 +841,25 @@ body::before{
     <div class="nf c-purple">
       <div class="nf-lbl">Categoria</div>
       <select id="ctCat" style="background:transparent;border:none;color:var(--text);font-family:var(--mono);font-size:13px;outline:none;width:100%;-webkit-appearance:none;margin-top:6px">
-        <option value="protesto">🚫 PROTESTO / CARTÓRIO</option>
-        <option value="juros">📉 JUROS / MULTA BANCÁRIA</option>
-        <option value="negociacao">🤝 ACORDO / DÍVIDA NEGOCIADA</option>
-        <option value="funcionario">👤 Funcionário</option>
-        <option value="aluguel">🏠 Aluguel</option>
-        <option value="fornecedor">🧴 Fornecedor</option>
-        <option value="servico">🔧 Serviço</option>
-        <option value="outros">📦 Outros</option>
+        <optgroup label="── Dívidas / Passivo ──">
+          <option value="protesto">🚫 PROTESTO / CARTÓRIO</option>
+          <option value="juros">📉 JUROS / MULTA BANCÁRIA</option>
+          <option value="negociacao">🤝 ACORDO / DÍVIDA NEGOCIADA</option>
+        </optgroup>
+        <optgroup label="── Operacional ──">
+          <option value="funcionario">👤 Funcionário</option>
+          <option value="aluguel">🏠 Aluguel</option>
+          <option value="fornecedor">🧴 Fornecedor</option>
+          <option value="servico">🔧 Serviço</option>
+          <option value="equipamento">✂️ Equipamento</option>
+        </optgroup>
+        <optgroup label="── Tributos e Taxas ──">
+          <option value="imposto">🏛️ Imposto / Tributo (ISS, IPTU)</option>
+          <option value="taxa_fin">💳 Taxa Financeira (banco, maquininha)</option>
+        </optgroup>
+        <optgroup label="── Outros ──">
+          <option value="outros">📦 Outros</option>
+        </optgroup>
       </select>
     </div>
   </div>
@@ -1287,6 +1298,46 @@ function salvarConta(){
   renderCt();
 }
 
+function toggleBaixa(id){
+  const el=document.getElementById('baixa_'+id);
+  if(!el)return;
+  const aberto=el.style.display==='block';
+  document.querySelectorAll('[id^="baixa_"]').forEach(e=>{e.style.display='none';});
+  if(!aberto){
+    el.style.display='block';
+    const inp=document.getElementById('bx_data_'+id);
+    if(inp&&!inp.value){inp.value=new Date().toISOString().slice(0,10);}
+  }
+}
+async function confirmarBaixa(id){
+  const c=DATA.contas.find(x=>x.id===id);
+  if(!c){toast('Conta não encontrada','err');return;}
+  const dp=document.getElementById('bx_data_'+id)?.value;
+  if(!dp){toast('Informe a data','err');return;}
+  const tx=parseFloat(document.getElementById('bx_taxa_'+id)?.value)||0;
+  c.status_sel='pago';c.pago=dp;
+  if(tx>0){
+    const mes=new Date(dp+'T12:00').getMonth()+1;
+    const ano=new Date(dp+'T12:00').getFullYear();
+    const g={id:Date.now(),data:dp,
+      dia:new Date(dp+'T12:00').toLocaleDateString('pt-BR',{weekday:'short'}).slice(0,3),
+      mes,ano,hora:new Date().getHours()+':'+String(new Date().getMinutes()).padStart(2,'0'),
+      cat:'juros',label:'Taxas ao quitar: '+c.empresa,icon:'📉',
+      val:tx,desc:'Taxas/juros ao quitar: '+c.empresa,tipo:'nao_op'};
+    DATA.gastos.push(g);
+    _saveGasto(g);
+    toast('✅ Baixa dada + R$'+tx.toFixed(2).replace('.',',')+' taxas como N.Op','ok');
+  }else{
+    toast('✅ Baixa dada — '+new Date(dp+'T12:00').toLocaleDateString('pt-BR'),'ok');
+  }
+  try{
+    await _SB.from('contas')
+      .update({status:'pago',pago_em:dp})
+      .eq('empresa',c.empresa)
+      .eq('valor',c.valor);
+  }catch(e){console.error('baixa:',e);}
+  save();renderCt();
+}
 function renderCt(){
   const{mes,ano}=gdCt();
   const f=DATA.contas.filter(c=>c.mes===mes&&c.ano===ano);
@@ -1310,7 +1361,7 @@ function renderCt(){
     if(ctPN) ctPN.textContent=f.filter(c=>(c.status_sel||'pendente')!=='pago').length+' conta(s) em aberto';
   }
   wrap.innerHTML=[...f].sort((a,b)=>{const o={protestado:0,pendente:1,negociado:2,pago:3};return (o[a.status_sel||'pendente']||1)-(o[b.status_sel||'pendente']||1);}).map(c=>`
-    <div class="rec" style="border-color:${borderColor[c.status_sel||'pendente']||'var(--border)'};">
+    <div class="rec" style="display:grid;grid-template-columns:auto 1fr auto auto;align-items:start;gap:10px;border-color:${borderColor[c.status_sel||'pendente']||'var(--border)'};">
       <div class="rec-date" style="font-size:10px;min-width:36px;text-align:center;line-height:1.6">
         ${c.vencimento?c.vencimento.slice(8,10)+'/'+c.vencimento.slice(5,7):'—'}<br>
         <span style="color:${statusColor[c.status_sel||'pendente']};font-size:9px">${(c.status_sel||'pendente').toUpperCase()}</span>
@@ -1319,8 +1370,30 @@ function renderCt(){
         <div class="rec-main">${c.empresa}</div>
         <div class="rec-sub">${c.cat}${c.banco?' · '+c.banco:''}</div>
       </div>
-      <div class="rec-amt" style="color:var(--rose)">R$${c.valor.toFixed(2).replace('.',',')}</div>
-      <button class="rec-del" onclick="_delConta();DATA.contas=DATA.contas.filter(x=>x.id!==${c.id});save();renderCt()">✕</button>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0">
+        <div class="rec-amt" style="color:var(--rose)">R$${c.valor.toFixed(2).replace('.',',')}</div>
+        ${(c.status_sel||'pendente')!=='pago'?`<button onclick="toggleBaixa(${c.id})" style="padding:4px 10px;border-radius:8px;border:1px solid rgba(29,185,84,.4);background:rgba(29,185,84,.08);color:var(--green);font-size:10px;font-weight:700;cursor:pointer;font-family:var(--body)">💳 Baixa</button>`:'<span style="font-size:9px;color:var(--green)">✅ pago</span>'}
+      </div>
+      <button class="rec-del" onclick="DATA.contas=DATA.contas.filter(x=>x.id!==${c.id});save();renderCt()">✕</button>
+    </div>
+    <div id="baixa_${c.id}" style="display:none;padding:12px 14px;margin-top:4px;
+      background:rgba(29,185,84,.05);border:1px solid rgba(29,185,84,.2);
+      border-radius:10px;grid-column:1/-1">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--green);font-weight:700;margin-bottom:10px">💳 Registrar Pagamento</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <div>
+          <label style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700;display:block;margin-bottom:4px">Data do pagamento</label>
+          <input type="date" id="bx_data_${c.id}" style="width:100%;background:#0A0D15;border:1.5px solid rgba(29,185,84,.3);border-radius:10px;padding:9px 12px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none">
+        </div>
+        <div>
+          <label style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700;display:block;margin-bottom:4px">Taxas/Juros pagos R$</label>
+          <input type="number" id="bx_taxa_${c.id}" inputmode="decimal" placeholder="0,00" style="width:100%;background:#0A0D15;border:1.5px solid rgba(255,122,32,.3);border-radius:10px;padding:9px 12px;color:var(--orange);font-family:var(--mono);font-size:13px;outline:none">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="confirmarBaixa(${c.id})" style="flex:1;padding:10px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--green),#138A40);color:#000;font-weight:800;font-size:13px;cursor:pointer;font-family:var(--body)">✅ Confirmar</button>
+        <button onclick="toggleBaixa(${c.id})" style="padding:10px 16px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:13px;cursor:pointer;font-family:var(--body)">✕</button>
+      </div>
     </div>`).join('');
 }
 
@@ -1385,10 +1458,30 @@ function renderAs(){
         <div style="font-size:15px;font-weight:700;font-family:var(--mono);color:var(--gold)">R$${a.valor.toFixed(2).replace('.',',')}</div>
         <div style="font-size:9px;color:var(--muted)">/mês</div>
       </div>
-      <button class="rec-del" onclick="_delAssinante(${a.id});DATA.assinaturas=DATA.assinaturas.filter(x=>x.id!==${a.id});save();renderAs()">✕</button>
+      <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;align-items:flex-end">
+        ${a.status==='ativo'?`<button onclick="cancelarAssinante(${a.id})" style="padding:5px 10px;border-radius:8px;border:1px solid rgba(255,45,85,.4);background:rgba(255,45,85,.08);color:var(--rose);font-size:10px;font-weight:700;cursor:pointer;font-family:var(--body)">⏸ Cancelar</button>`
+        :a.status==='cancelado'?`<span style="font-size:9px;color:var(--muted);padding:5px">cancelado</span><button onclick="reativarAssinante(${a.id})" style="padding:5px 10px;border-radius:8px;border:1px solid rgba(29,185,84,.4);background:rgba(29,185,84,.08);color:var(--green);font-size:10px;font-weight:700;cursor:pointer;font-family:var(--body)">▶ Reativar</button>`
+        :`<button onclick="reativarAssinante(${a.id})" style="padding:5px 10px;border-radius:8px;border:1px solid rgba(249,194,36,.4);background:rgba(249,194,36,.08);color:var(--gold);font-size:10px;font-weight:700;cursor:pointer;font-family:var(--body)">▶ Reativar</button>`}
+      </div>
     </div>`).join('');
 }
 
+async function cancelarAssinante(id){
+  const a=DATA.assinaturas.find(x=>x.id===id);
+  if(!a)return;
+  a.status='cancelado';save();renderAs();
+  try{if(a.supa_id)await _SB.from('assinantes').update({status:'cancelado'}).eq('id',a.supa_id);}
+  catch(e){console.error(e);}
+  toast('⏸ '+a.cliente+' cancelado — histórico mantido','warn');
+}
+async function reativarAssinante(id){
+  const a=DATA.assinaturas.find(x=>x.id===id);
+  if(!a)return;
+  a.status='ativo';save();renderAs();
+  try{if(a.supa_id)await _SB.from('assinantes').update({status:'ativo'}).eq('id',a.supa_id);}
+  catch(e){console.error(e);}
+  toast('▶ '+a.cliente+' reativado!','ok');
+}
 async function _saveAssinante(a){
   _sb('saving');
   const{error}=await _SB.from('assinantes').insert({
