@@ -224,45 +224,6 @@ tr:hover td{background:rgba(245,166,35,.03)}
   background:rgba(245,166,35,.08);color:var(--gold);font-size:13px;font-weight:700;
   cursor:pointer;transition:all .15s;font-family:var(--font)}
 .meta-btn:hover{background:rgba(245,166,35,.15)}
-
-/* ════ MEDIDOR DE COMBUSTÍVEL ════ */
-.fuel-gauge-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  position: relative;
-}
-.fuel-gauge {
-  width: 28px;
-  height: 110px;
-  background: var(--muted2);
-  border-radius: 14px;
-  overflow: hidden;
-  position: relative;
-  display: flex;
-  flex-direction: column-reverse;
-  border: 1.5px solid var(--border);
-}
-.fuel-segment {
-  transition: background 0.3s ease;
-}
-.fuel-pointer {
-  position: absolute;
-  right: -18px;
-  width: 0;
-  height: 0;
-  border-left: 8px solid var(--orange);
-  border-top: 5px solid transparent;
-  border-bottom: 5px solid transparent;
-  transition: top 0.5s ease;
-}
-.fuel-label-end {
-  font-size: 8px;
-  color: var(--muted);
-  font-weight: 700;
-  letter-spacing: 0.5px;
-}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
@@ -952,7 +913,7 @@ function up(){
 }
 
 // ══════════════════════════════════════════════
-// PROJEÇÃO — chamada independente, sempre mostra
+// PROJEÇÃO
 // ══════════════════════════════════════════════
 let metaUsuario = parseFloat(localStorage.getItem('meta_loja3')) || 0;
 
@@ -1258,7 +1219,7 @@ function buildProjecao(){
         m.dias_trab    += 1;
       });
 
-        gsts.forEach(g => {
+      gsts.forEach(g => {
         const ano = String(g.ano);
         const mes = _MO[g.mes - 1];
         if(!mes || !D2[ano]?.[mes]) return;
@@ -1281,22 +1242,10 @@ function buildProjecao(){
 
       // Somar contas pagas como despesa operacional
       conts.forEach(c => {
-        
-      gsts.forEach(g => {
-        const ano = String(g.ano);
-        const mes = _MO[g.mes - 1];
-        if(!mes || !D2[ano]?.[mes]) return;
-        const val = Number(g.val)||0;
-        D2[ano][mes].despesa += val;
-        if(g.tipo==='nao_op') D2[ano][mes].despesa_nao_op += val;
-        else D2[ano][mes].despesa_op += val;
-      });
-
-      // Somar contas pagas como despesa operacional
-      conts.forEach(c => {
         if(c.status === 'pago') {
-          const ano = String(c.mes ? (c.mes <= 12 ? (c.ano || new Date(c.vencimento).getFullYear()) : new Date(c.vencimento).getFullYear()) : new Date(c.vencimento).getFullYear());
-          const mes = _MO[(c.mes || new Date(c.vencimento).getMonth()+1) - 1];
+          const ano = String(c.ano || new Date(c.vencimento).getFullYear());
+          const mesNum = c.mes || (new Date(c.vencimento).getMonth() + 1);
+          const mes = _MO[mesNum - 1];
           if(!mes || !D2[ano]?.[mes]) return;
           D2[ano][mes].despesa_op += (Number(c.valor)||0);
           D2[ano][mes].despesa += (Number(c.valor)||0);
@@ -1391,7 +1340,7 @@ function buildProjecao(){
 })();
 
 // ════════════════════════════════════════════════════════
-// EXPORTAR XLSX — 4 abas: movimento, gastos, contas, resumo
+// EXPORTAR XLSX
 // ════════════════════════════════════════════════════════
 async function exportarXlsx(btn){
   if(btn){ btn.textContent='⏳…'; btn.disabled=true; }
