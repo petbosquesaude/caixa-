@@ -224,6 +224,45 @@ tr:hover td{background:rgba(245,166,35,.03)}
   background:rgba(245,166,35,.08);color:var(--gold);font-size:13px;font-weight:700;
   cursor:pointer;transition:all .15s;font-family:var(--font)}
 .meta-btn:hover{background:rgba(245,166,35,.15)}
+
+/* ════ MEDIDOR DE COMBUSTÍVEL ════ */
+.fuel-gauge-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+}
+.fuel-gauge {
+  width: 28px;
+  height: 110px;
+  background: var(--muted2);
+  border-radius: 14px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column-reverse;
+  border: 1.5px solid var(--border);
+}
+.fuel-segment {
+  transition: background 0.3s ease;
+}
+.fuel-pointer {
+  position: absolute;
+  right: -18px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid var(--orange);
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  transition: top 0.5s ease;
+}
+.fuel-label-end {
+  font-size: 8px;
+  color: var(--muted);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
@@ -237,7 +276,7 @@ tr:hover td{background:rgba(245,166,35,.03)}
       <p>Dashboard de Gestão Completo · 2026</p>
     </div>
   </div>
-  <button onclick="exportarXlsx(this)" style="padding:8px 16px;border-radius:14px;border:1px solid rgba(245,166,35,.4);background:rgba(245,166,35,.07);color:var(--gold);font-family:var(--font);font-size:11px;font-weight:700;cursor:pointer;margin-right:8px;letter-spacing:.3px">⬇️ Exportar xlsx</button><div class="badge" id="supaBadge" style="cursor:default">☁️ conectando…</div><div class="badge">⟳ Atualizado em 21/04/2026</div>
+  <button onclick="exportarXlsx(this)" style="padding:8px 16px;border-radius:14px;border:1px solid rgba(245,166,35,.4);background:rgba(245,166,35,.07);color:var(--gold);font-family:var(--font);font-size:11px;font-weight:700;cursor:pointer;margin-right:8px;letter-spacing:.3px">⬇️ Exportar xlsx</button><div class="badge" id="supaBadge" style="cursor:default">☁️ conectando…</div><div class="badge">⟳ Atualizado em 25/04/2026</div>
 </header>
 
 <div class="fbar">
@@ -270,7 +309,7 @@ tr:hover td{background:rgba(245,166,35,.03)}
 <div class="sec"><em>💰</em> Financeiro</div>
 <div class="kg6" style="grid-template-columns:repeat(auto-fill,minmax(155px,1fr))">
   <div class="kc gd"><div class="kicon">💰</div><div class="klabel">Receita Bruta</div><div class="kval" id="k_rec">—</div><div class="kdesc">Faturamento antes da taxa</div></div>
-  <div class="kc rs" style="border-top:3px solid var(--rose)"><div class="kicon">💳</div><div class="klabel">Taxa Máquina (5%)</div><div class="kval" id="k_taxa" style="color:var(--rose)">—</div><div class="kdesc">⚠ Sai do caixa em 30 dias</div></div>
+  <div class="kc rs" style="border-top:3px solid var(--rose)"><div class="kicon">💳</div><div class="klabel">Taxa Máquina (6%)</div><div class="kval" id="k_taxa" style="color:var(--rose)">—</div><div class="kdesc">⚠ Sai do caixa em 30 dias</div></div>
   <div class="kc tl" style="border-top:3px solid var(--teal)"><div class="kicon">💎</div><div class="klabel">Receita Líquida</div><div class="kval" id="k_rec_liq" style="color:var(--teal)">—</div><div class="kdesc">Real disponível no caixa</div></div>
   <div class="kc rs"><div class="kicon">💸</div><div class="klabel">Despesas</div><div class="kval" id="k_des">—</div><div class="kdesc">Contas pagas no período</div></div>
   <div class="kc tl"><div class="kicon">📈</div><div class="klabel">Lucro Real</div><div class="kval" id="k_luc">—</div><div class="kdesc">Líquida − Despesas</div></div>
@@ -289,6 +328,27 @@ tr:hover td{background:rgba(245,166,35,.03)}
   <div class="kc tl" style="border-top:3px solid var(--teal)"><div class="kicon">⚙️</div><div class="klabel">Lucro Operacional</div><div class="kval" id="k_luc_op" style="color:var(--teal)">—</div><div class="kdesc">Sem as despesas não-op</div></div>
   <div class="kc or" style="border-top:3px solid var(--orange)"><div class="kicon">📉</div><div class="klabel">Passivo Total</div><div class="kval" id="k_passivo" style="color:var(--orange)">—</div><div class="kdesc">Dívidas pendentes</div></div>
   <div class="kc pp" style="border-top:3px solid var(--purple)"><div class="kicon">💎</div><div class="klabel">MRR Assinaturas</div><div class="kval" id="k_mrr" style="color:var(--purple)">—</div><div class="kdesc">Receita garantida/mês</div></div>
+</div>
+<!-- ════ CARDS FUNCIONÁRIO E COMBUSTÍVEL ════ -->
+<div class="kg4" style="margin-top:10px">
+  <div class="kc bl" style="border-top:3px solid var(--blue)">
+    <div class="kicon">👤</div>
+    <div class="klabel">Funcionário</div>
+    <div class="kval" id="k_func" style="color:var(--blue)">—</div>
+    <div class="kdesc">Salários e encargos</div>
+  </div>
+  <div class="kc or" style="border-top:3px solid var(--orange)">
+    <div class="kicon">⛽</div>
+    <div class="klabel">Combustível</div>
+    <div class="kval" id="k_comb" style="color:var(--orange)">—</div>
+    <div class="kdesc">Gasto com transporte</div>
+  </div>
+</div>
+<!-- ════ GRÁFICO GASTOS POR CATEGORIA ════ -->
+<div class="cc" style="margin-bottom:10px">
+  <div class="ctitle">💸 Despesas por Categoria</div>
+  <div class="csub">Distribuição dos gastos no período</div>
+  <div style="position:relative;height:300px"><canvas id="cCats"></canvas></div>
 </div>
 
 <!-- ════ OPERACIONAL ════ -->
@@ -382,7 +442,7 @@ tr:hover td{background:rgba(245,166,35,.03)}
   </div>
 </div>
 
-</div></div><!-- /Projeção -->
+</div></div><!-- /Análise Visual -->
 
 <!-- ════ TABELA ════ -->
 <div class="acc-wrap">
@@ -392,7 +452,7 @@ tr:hover td{background:rgba(245,166,35,.03)}
 <table>
 <thead><tr>
   <th>Período</th>
-  <th>Rec.Bruta</th><th style="color:var(--rose)">Taxa 5%</th><th style="color:var(--teal)">Rec.Líquida</th><th>Despesa</th><th>Lucro</th><th>Margem</th><th>R$/Dia</th>
+  <th>Rec.Bruta</th><th style="color:var(--rose)">Taxa 6%</th><th style="color:var(--teal)">Rec.Líquida</th><th>Despesa</th><th>Lucro</th><th>Margem</th><th>R$/Dia</th>
   <th>Cães</th><th title="caes.(nv)">Novos</th><th>Ticket</th><th>Custo/Cão</th>
   <th>Cartão</th><th>Dinheiro</th>
   <th title="conversão">Conv.</th>
@@ -408,7 +468,7 @@ tr:hover td{background:rgba(245,166,35,.03)}
 </table>
 </div>
 
-</div></div><!-- /Análise Visual -->
+</div></div><!-- /Tabela -->
 
 <!-- ════ DÍVIDAS PENDENTES ════ -->
 <div class="acc-wrap">
@@ -419,7 +479,7 @@ tr:hover td{background:rgba(245,166,35,.03)}
   <tbody id="passivoBody"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px">Carregando…</td></tr></tbody>
 </table></div>
 
-</div></div></div><!-- /Dívidas -->
+</div></div><!-- /Dívidas -->
 
 <!-- ════ ASSINANTES ════ -->
 <div class="acc-wrap">
@@ -430,7 +490,7 @@ tr:hover td{background:rgba(245,166,35,.03)}
   <tbody id="assinantesBody"><tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">Carregando…</td></tr></tbody>
 </table></div>
 
-</div></div></div><!-- /Assinantes -->
+</div></div><!-- /Assinantes -->
 
 <!-- ════ PROJEÇÃO ════ -->
 <div class="acc-wrap">
@@ -438,7 +498,7 @@ tr:hover td{background:rgba(245,166,35,.03)}
 <div class="acc-body open">
 <div id="projWrap"></div>
 
-</div></div><!-- /Tabela -->
+</div></div><!-- /Projeção -->
 
 <!-- ════ COMPARATIVO ════ -->
 <div class="acc-wrap">
@@ -452,7 +512,7 @@ tr:hover td{background:rgba(245,166,35,.03)}
 <script>
 const D    = {"2026": {"Março": {"receita": 5620.0, "taxa_maquina": 0.0, "receita_liq": 0.0, "cartao": 3680.0, "dinheiro": 1940.0, "pacotes": 970.0, "btosa": 5620.0, "vet": 0.0, "caes": 53.0, "caes_novos": 12.0, "ticket": 106.04, "conversao": 12.0, "clinte": 1800.0, "retorno": 2570.0, "roi_total": 4370.0, "investimento": 350.0, "roi_x": 12.49, "contato": 0.0, "despesa": 12060.0, "diversos": 195.0, "lucro": -6440.0, "dias_trab": 5, "margem": -1.1459, "rec_dia": 1124.0, "cpc": 227.55, "cpl": 29.17, "tick_ads": 364.17, "tx_ret_ads": 0.5881, "ltv": 1092.5}}};
 const DOW  = {"2026": {"Março": {"qua": {"rec": 1220.0, "caes": 11.0, "nov": 3.0, "conv": 3.0, "dias": 1}, "qui": {"rec": 1200.0, "caes": 14.0, "nov": 2.0, "conv": 2.0, "dias": 1}, "seg": {"rec": 1000.0, "caes": 9.0, "nov": 2.0, "conv": 2.0, "dias": 1}, "sex": {"rec": 1500.0, "caes": 12.0, "nov": 4.0, "conv": 4.0, "dias": 1}, "ter": {"rec": 700.0, "caes": 7.0, "nov": 1.0, "conv": 1.0, "dias": 1}}}};
-const TODAY_DAY   = 21;
+const TODAY_DAY   = 25;
 const TODAY_MONTH = 4;
 const TODAY_YEAR  = 2026;
 const MO   = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -511,7 +571,7 @@ const CO={
   responsive:true,maintainAspectRatio:false,
   plugins:{
     legend:{labels:{color:'#3D5470',font:{family:'DM Sans',size:11},boxWidth:10}},
-    tooltip:{backgroundColor:'#0B0F1A',borderColor:'#151E2E',borderWidth:1,titleColor:'#D8E6F3',bodyColor:'#3D5470',callbacks:{footer:items=>items.some(i=>i.dataset.label?.includes('quida'))?['','⚠ Já descontado 5% da maquininha (cobrado em 30 dias)']:undefined}}
+    tooltip:{backgroundColor:'#0B0F1A',borderColor:'#151E2E',borderWidth:1,titleColor:'#D8E6F3',bodyColor:'#3D5470',callbacks:{footer:items=>items.some(i=>i.dataset.label?.includes('quida'))?['','⚠ Já descontado 6% da maquininha (cobrado em 30 dias)']:undefined}}
   },
   scales:{
     x:{grid:{color:'rgba(21,30,46,.8)'},ticks:{color:'#3D5470',font:{family:'DM Sans',size:10}}},
@@ -535,7 +595,6 @@ function buildHeatmap(){
 
   const vals=DOW_K.map(d=>agg[d].rec);
   const maxV=Math.max(...vals,1);
-  // azul escuro→cyan: intensidade proporcional
   const toColor=(v,mx)=>{ const t=mx>0?v/mx:0; const r=Math.round(10+t*10),g=Math.round(28+t*160),b=Math.round(80+t*100); return `rgb(${r},${g},${b})`; };
 
   document.getElementById('hmap').innerHTML=DOW_K.map((d,i)=>{
@@ -618,6 +677,17 @@ function up(){
   document.getElementById('k_din_p').textContent=a.receita>0?fP(a.dinheiro/a.receita)+' do total':'';
   document.getElementById('k_vet').textContent=a.vet>0?fF(a.vet):'—';
   document.getElementById('k_cpc').textContent=a.cpc>0?fF(a.cpc):'—';
+
+  // ── Cards Funcionário e Combustível ──
+  const gastoCats = window._CAT_TOTALS || {};
+  const funcGasto = gastoCats['Funcionário'] || gastoCats['funcionario'] || 0;
+  const combGasto = gastoCats['Combustível'] || gastoCats['combustivel'] || gastoCats['Transporte'] || gastoCats['transporte'] || 0;
+  
+  const funcEl = document.getElementById('k_func');
+  if(funcEl){funcEl.textContent=funcGasto>0?fF(funcGasto):'—';}
+  
+  const combEl = document.getElementById('k_comb');
+  if(combEl){combEl.textContent=combGasto>0?fF(combGasto):'—';}
 
   // ── Operacional ──
   document.getElementById('k_caes').textContent=Math.round(a.caes).toLocaleString('pt-BR');
@@ -770,6 +840,46 @@ function up(){
   buildFunnel(a);
   buildProjecao();
 
+  // ══ GRÁFICO DESPESAS POR CATEGORIA ══
+  if(window._CAT_TOTALS && Object.keys(window._CAT_TOTALS).length){
+    const catEntries = Object.entries(window._CAT_TOTALS).sort((a,b)=>b[1]-a[1]);
+    const catLabels = catEntries.map(e=>e[0]);
+    const catValues = catEntries.map(e=>e[1]);
+    const catColors = [
+      'rgba(245,166,35,.85)',
+      'rgba(255,77,109,.85)',
+      'rgba(77,158,255,.85)',
+      'rgba(0,212,170,.85)',
+      'rgba(155,127,255,.85)',
+      'rgba(255,139,61,.85)',
+      'rgba(46,204,128,.85)',
+      'rgba(255,110,180,.85)',
+      'rgba(0,197,212,.85)',
+      'rgba(163,230,53,.85)'
+    ];
+    mk('cCats','doughnut',{
+      labels: catLabels,
+      datasets: [{data: catValues, backgroundColor: catColors.slice(0,catLabels.length), borderWidth: 0, hoverOffset: 8}]
+    },{
+      responsive: true, maintainAspectRatio: false,
+      cutout: '65%',
+      plugins: {
+        legend: {position: 'bottom', labels: {color: '#3D5470', font: {family: 'DM Sans', size: 10}, boxWidth: 8, padding: 12}},
+        tooltip: {
+          backgroundColor: '#0B0F1A', borderColor: '#151E2E', borderWidth: 1,
+          titleColor: '#D8E6F3', bodyColor: '#3D5470',
+          callbacks: {
+            label: ctx => {
+              const total = catValues.reduce((s,v)=>s+v,0);
+              const pct = total > 0 ? (ctx.raw/total*100).toFixed(1) : 0;
+              return ' '+fF(ctx.raw)+' (' + pct + '%)';
+            }
+          }
+        }
+      }
+    });
+  }
+
   // ══ TABELA ══
   const MXR=Math.max(...r.map(x=>x.receita),1);
   document.getElementById('tBody').innerHTML=r
@@ -821,7 +931,7 @@ function up(){
     return `<div class="xcard" style="border-top:3px solid ${col}">
       <div class="xyear" style="color:${col}">● ${y}</div>
       <div class="xrow"><span class="xkey">💰 Rec.Bruta</span><span class="xval cg">${fF(a2.receita)}</span></div>
-      <div class="xrow"><span class="xkey">💳 Taxa(5%)</span><span class="xval cr">${a2.taxa_maquina>0?fF(a2.taxa_maquina):'—'}</span></div>
+      <div class="xrow"><span class="xkey">💳 Taxa(6%)</span><span class="xval cr">${a2.taxa_maquina>0?fF(a2.taxa_maquina):'—'}</span></div>
       <div class="xrow"><span class="xkey">💎 Rec.Líquida</span><span class="xval ct">${fF(a2.receita_liq||a2.receita)}</span></div>
       <div class="xrow"><span class="xkey">💸 Despesas</span><span class="xval cr">${a2.despesa>0?fF(a2.despesa):'—'}</span></div>
       <div class="xrow"><span class="xkey">📈 Lucro</span><span class="xval ${a2.lucro>=0?'ct':'cr'}">${fF(a2.lucro)}</span></div>
@@ -852,7 +962,6 @@ function salvarMeta(){
 }
 
 function buildProjecao(){
-  // Coleta todos os meses em ordem cronológica
   const todos = [];
   Object.keys(D).sort().forEach(y=>{
     [1,2,3,4,5,6,7,8,9,10,11,12].forEach(mn=>{
@@ -866,22 +975,17 @@ function buildProjecao(){
     return;
   }
 
-  // Último mês disponível
   const ult = todos[todos.length-1];
   const recDia = ult.rec_dia || (ult.receita / (ult.dias_trab||16));
 
-  // Próximo mês
   let proxMN = ult.mn + 1, proxY = ult.y;
   if(proxMN > 12){ proxMN = 1; proxY++; }
   const proxNome = MO[proxMN-1];
   const diasProxMes = DIAS_MES[proxMN] + (proxMN===2&&proxY%4===0?1:0);
-  // Estima dias úteis (aprox 75% dos dias do mês)
   const diasUteisProx = Math.round(diasProxMes * 0.75);
 
-  // Projeção A — tendência simples (média dos últimos meses)
   const ultimos3 = todos.slice(-3);
   const mediaRec = ultimos3.reduce((s,x)=>s+x.receita,0) / ultimos3.length;
-  // Crescimento médio mês a mês
   let crescimento = 0;
   if(todos.length >= 2){
     const taxas = [];
@@ -891,14 +995,9 @@ function buildProjecao(){
     if(taxas.length) crescimento = taxas.reduce((s,v)=>s+v,0)/taxas.length;
   }
   const projA = Math.round(mediaRec * (1 + crescimento));
-
-  // Projeção C — por ritmo diário × dias úteis do próximo mês
   const projC = Math.round(recDia * diasUteisProx);
-
-  // Projeção final = média das duas
   const projFinal = Math.round((projA + projC) / 2);
 
-  // Se a planilha atual é do mês em curso → progresso real
   const mesAtual   = TODAY_MONTH, anoAtual = TODAY_YEAR;
   const estesMes   = ult.mn === mesAtual && ult.y === anoAtual;
   const diasDecor  = estesMes ? TODAY_DAY : (ult.dias_trab||16);
@@ -908,7 +1007,6 @@ function buildProjecao(){
   const pctMes     = Math.min(100, Math.round(diasDecor / diasTotais * 100));
   const pctMeta    = metaUsuario > 0 ? Math.min(100, Math.round(recAtual / metaUsuario * 100)) : 0;
 
-  // Ritmo atual vs necessário
   const ritmoAtual = recDia;
   let ritmoStatus = 'nt', ritmoTxt = 'Defina uma meta para ver o ritmo';
   if(metaUsuario > 0){
@@ -918,7 +1016,6 @@ function buildProjecao(){
     else { ritmoStatus='bad'; ritmoTxt=`🚨 Ritmo insuficiente — precisa de R$ ${fF(ritmoNec)}/dia para bater a meta`; }
   }
 
-  // Lucro projetado
   const despProj   = Math.round(ult.despesa * (projFinal / ult.receita));
   const lucroProj  = projFinal - despProj;
   const margemProj = projFinal > 0 ? lucroProj/projFinal : 0;
@@ -929,7 +1026,6 @@ function buildProjecao(){
   document.getElementById('projWrap').innerHTML = `
   <div class="proj-wrap">
 
-    <!-- CARD 1: Projeção próximo mês -->
     <div class="proj-card">
       <div class="proj-title">🔮 Projeção — ${proxNome} ${proxY}</div>
       <div class="proj-row">
@@ -962,7 +1058,6 @@ function buildProjecao(){
       </div>`:''}
     </div>
 
-    <!-- CARD 2: Meta e ritmo do mês atual -->
     <div class="proj-card" style="--accent:var(--gold)">
       <div class="proj-title" style="color:var(--gold)">🎯 Meta — ${ult.m} ${ult.y}</div>
 
@@ -974,7 +1069,6 @@ function buildProjecao(){
       </div>
 
       ${metaUsuario > 0 ? `
-      <!-- progresso vs meta -->
       <div class="prog-wrap">
         <div class="prog-label">
           <span class="prog-lbl">Atingido: ${fF(recAtual)} de ${fF(metaUsuario)}</span>
@@ -985,7 +1079,6 @@ function buildProjecao(){
         </div>
       </div>` : ''}
 
-      <!-- progresso do mês -->
       <div class="prog-wrap">
         <div class="prog-label">
           <span class="prog-lbl">Mês: dia ${diasDecor} de ${diasTotais}</span>
@@ -1018,22 +1111,18 @@ function buildProjecao(){
     </div>
 
   </div>
-  <!-- Gráfico de projeção -->
   <div class="cc" style="margin-bottom:12px">
     <div class="ctitle">📈 Histórico + Projeção do próximo mês</div>
     <div class="csub">Linha sólida = real · Linha tracejada = projeção</div>
     <div style="position:relative;height:220px"><canvas id="cProj"></canvas></div>
   </div>`;
 
-  // Gráfico histórico + projeção
   const labels = todos.map(x=>x.m.slice(0,3)+"'"+String(x.y).slice(2));
   const recHist = todos.map(x=>x.receita);
   const desHist = todos.map(x=>x.despesa);
-  // Adiciona ponto de projeção
   labels.push(proxNome.slice(0,3)+"'"+String(proxY).slice(2));
   const recProj = [...recHist, projFinal];
   const desProj = [...desHist, despProj];
-  // Linha de meta
   const metaLine = labels.map(()=>metaUsuario||null);
 
   const datasets = [
@@ -1056,7 +1145,6 @@ function buildProjecao(){
   }
   setTimeout(()=>mk('cProj','line',{labels,datasets},CO), 50);
 
-  // Gráfico MRR vs Receita Variável
   const _mrr2=window._MRR||0;
   if(_mrr2>0&&todos.length>0){
     if(!document.getElementById('mrrGrafWrap')){
@@ -1121,9 +1209,22 @@ function buildProjecao(){
         }
       });
 
+      // Acumular totais por categoria
+      window._CAT_TOTALS = {};
+      gsts.forEach(g => {
+        const cat = g.label || g.cat || 'outros';
+        window._CAT_TOTALS[cat] = (window._CAT_TOTALS[cat] || 0) + (Number(g.val) || 0);
+      });
+      // Somar contas pagas por categoria
+      conts.forEach(c => {
+        if(c.status === 'pago') {
+          const cat = c.categoria || 'contas';
+          window._CAT_TOTALS[cat] = (window._CAT_TOTALS[cat] || 0) + (Number(c.valor) || 0);
+        }
+      });
+
       if(!movs.length){ setBadge('☁️ sem dados','var(--muted)'); return; }
 
-      // Constrói objeto de dados a partir do Supabase
       const D2 = {};
       movs.forEach(r => {
         const ano = String(r.ano);
@@ -1167,7 +1268,17 @@ function buildProjecao(){
         else D2[ano][mes].despesa_op += val;
       });
 
-      // Reconstrói DOW (heatmap) a partir dos dados diários do Supabase
+      // Somar contas pagas como despesa operacional
+      conts.forEach(c => {
+        if(c.status === 'pago') {
+          const ano = String(c.mes ? (c.mes <= 12 ? (c.ano || new Date(c.vencimento).getFullYear()) : new Date(c.vencimento).getFullYear()) : new Date(c.vencimento).getFullYear());
+          const mes = _MO[(c.mes || new Date(c.vencimento).getMonth()+1) - 1];
+          if(!mes || !D2[ano]?.[mes]) return;
+          D2[ano][mes].despesa_op += (Number(c.valor)||0);
+          D2[ano][mes].despesa += (Number(c.valor)||0);
+        }
+      });
+
       const _DOW2 = {};
       movs.forEach(r => {
         const _ano = String(r.ano);
@@ -1189,7 +1300,6 @@ function buildProjecao(){
       Object.keys(DOW).forEach(k=>delete DOW[k]);
       Object.keys(_DOW2).forEach(k=>{DOW[k]=_DOW2[k];});
 
-      // Recalcula métricas derivadas
       Object.values(D2).forEach(meses => {
         Object.values(meses).forEach(m => {
           if(!m.receita_liq) m.receita_liq = m.receita - m.taxa_maquina;
@@ -1207,11 +1317,9 @@ function buildProjecao(){
         });
       });
 
-      // Substitui D completamente (sem mesclar com JSON estático)
       Object.keys(D).forEach(k => delete D[k]);
       Object.keys(D2).forEach(ano => { D[ano] = D2[ano]; });
 
-      // Preenche tabela passivo
       const _pB=document.getElementById('passivoBody');
       if(_pB){
         const _pl=window._PASSIVO_LIST||[];
@@ -1221,7 +1329,6 @@ function buildProjecao(){
           ?'<tr><td colspan="6" style="text-align:center;color:var(--green);padding:16px">✅ Nenhuma dívida pendente</td></tr>'
           :_pl.map(c=>`<tr><td style="font-weight:700">${c.empresa||'—'}</td><td class="cm">${c.categoria||'—'}</td><td class="cm">${c.vencimento?c.vencimento.slice(0,10):'—'}</td><td class="cr" style="font-weight:700">${_ff(c.valor)}</td><td style="color:${_sc[c.status]||'var(--muted)'};font-weight:700">${(c.status||'').toUpperCase()}</td><td class="cm">${c.banco||'—'}</td></tr>`).join('');
       }
-      // Preenche tabela assinantes
       const _aB=document.getElementById('assinantesBody');
       if(_aB){
         const _al=window._ASSINANTES||[];
@@ -1231,7 +1338,6 @@ function buildProjecao(){
           :_al.map(a=>`<tr><td style="font-weight:700;color:var(--purple)">${a.cliente}</td><td class="cm">${a.pet||'—'}</td><td style="color:var(--gold);font-weight:700">${_ff2(a.valor)}</td><td class="cm">Dia ${a.dia_mes}</td><td style="color:var(--green)">🟢 ATIVO</td></tr>`).join('');
       }
 
-      // Regenera botões de ano com os anos do Supabase
       const anos = Object.keys(D).sort();
       const yF = document.getElementById('yF');
       if(yF){
@@ -1239,7 +1345,6 @@ function buildProjecao(){
           anos.map(a => `<button class="bf" onclick="tY('${a}')">${a}</button>`).join('');
       }
 
-      // Re-renderiza tudo
       up();
       if(typeof buildProjecao === 'function') buildProjecao();
 
@@ -1252,14 +1357,12 @@ function buildProjecao(){
     }
   }
 
-  // Executa após o DOM estar pronto
   if(document.readyState === 'loading'){
     document.addEventListener('DOMContentLoaded', carregar);
   } else {
     setTimeout(carregar, 100);
   }
 
-  // Expõe para uso global (botão exportar)
   window._SB_SUPA = () => supabase.createClient(_URL, _KEY);
 })();
 
@@ -1278,28 +1381,24 @@ async function exportarXlsx(btn){
     const movs = r1.data||[], gsts = r2.data||[], cts = r3.data||[];
     const wb = XLSX.utils.book_new();
 
-    // Aba movimento
     const wsMov = XLSX.utils.aoa_to_sheet([
       ['Data','Dia','Cartão','Dinheiro','Pacotes','B.Tosa','Vet','Receita','Taxa Máq','Rec.Líquida','Cães','Novos','Contato','Conversão','Clinte','Retorno','ROI','Investimento','Diversos'],
       ...movs.map(r=>[r.data,r.dia||'',r.cartao||0,r.dinheiro||0,r.pacotes||0,r.btosa||0,r.vet||0,r.receita||0,r.taxa_maquina||0,r.receita_liq||0,r.caes||0,r.caes_nv||0,r.contato||0,r.conversao||0,r.clinte||0,r.retorno||0,r.roi||0,r.invest||0,r.diversos||0])
     ]);
     XLSX.utils.book_append_sheet(wb,wsMov,'movimento');
 
-    // Aba gastos
     const wsGst = XLSX.utils.aoa_to_sheet([
       ['Data','Mês','Ano','Hora','Categoria','Descrição','Valor'],
       ...gsts.map(g=>[g.data,g.mes,g.ano,g.hora||'',g.label||g.cat,g.descricao||'',g.val||0])
     ]);
     XLSX.utils.book_append_sheet(wb,wsGst,'gastos');
 
-    // Aba contas
     const wsCt = XLSX.utils.aoa_to_sheet([
       ['Vencimento','Valor','Taxas','Empresa','Categoria','Pago em','Status','Banco','Observação'],
       ...cts.map(c=>[c.vencimento||'',c.valor||0,c.taxas||0,c.empresa,c.categoria||'',c.pago_em||'',c.status||'',c.banco||'',c.observacao||''])
     ]);
     XLSX.utils.book_append_sheet(wb,wsCt,'contas');
 
-    // Aba resumo mensal
     const _MO2 = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
     const rowsRes=[['Ano','Mês','Rec.Bruta','Taxa Máq','Rec.Líquida','Despesa','Lucro','Margem%','Cães','Novos','Ticket','Conversões','ROI ADS','Dias']];
     Object.keys(D).sort().forEach(ano=>{
