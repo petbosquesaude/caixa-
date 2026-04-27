@@ -328,7 +328,9 @@ async function carregarDados() {
     atualizarAlertas();
     atualizarBadge();
     
-    toast(`✅ ${clientes.length} clientes carregados`, 'ok');
+    if (clientes.length) {
+      toast(`✅ ${clientes.length} clientes carregados`, 'ok');
+    }
   } catch (e) {
     console.error('Erro ao carregar:', e);
     toast('Erro ao carregar dados do servidor', 'err');
