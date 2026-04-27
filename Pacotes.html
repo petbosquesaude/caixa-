@@ -38,7 +38,6 @@
   --green:#1DB954;
   --greenf:rgba(29,185,84,.1);
   --orange:#FF7A20;
-  --orangef:rgba(255,122,32,.1);
   --text:#EEF2FF;
   --muted:#5A6A8A;
   --muted2:#2E3A52;
@@ -113,11 +112,18 @@ body{font-family:var(--body);color:var(--text);background:var(--bg);min-height:1
 .progress-fill.rose{background:var(--rose)}
 .progress-text{font-size:10px;color:var(--muted);margin-top:4px}
 .client-dates{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin:8px 0}
+.client-status-badge{font-size:9px;font-weight:700;padding:3px 8px;border-radius:8px}
+.client-status-badge.vencido{background:rgba(255,45,85,.15);color:var(--rose)}
+.client-status-badge.ativo{background:rgba(29,185,84,.15);color:var(--green)}
+.client-status-badge.ultimo{background:rgba(249,194,36,.15);color:var(--gold)}
 .client-buttons{display:flex;gap:8px;margin-top:12px}
 .btn-checkin{flex:2;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--green),#138A40);color:#000;font-weight:700;font-size:13px;cursor:pointer}
 .btn-call{flex:1;padding:12px;border-radius:10px;border:1.5px solid var(--border2);background:transparent;color:var(--text);font-size:13px;cursor:pointer}
 .btn-history{flex:1;padding:12px;border-radius:10px;border:1.5px solid var(--border2);background:transparent;color:var(--text);font-size:13px;cursor:pointer}
-.btn-checkin:active,.btn-call:active,.btn-history:active{transform:scale(.96)}
+.btn-renew{flex:1;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--gold),var(--goldd));color:#000;font-weight:700;font-size:13px;cursor:pointer}
+.btn-checkin:active,.btn-call:active,.btn-history:active,.btn-renew:active{transform:scale(.96)}
+.btn-checkin.disabled{opacity:0.3;cursor:default;transform:none}
+.btn-renew.disabled{opacity:0.3;cursor:default;transform:none}
 
 /* Empty state */
 .empty{text-align:center;padding:60px 20px;color:var(--muted)}
@@ -149,11 +155,15 @@ body{font-family:var(--body);color:var(--text);background:var(--bg);min-height:1
 .form-row{display:flex;gap:10px}
 .form-row .form-group{flex:1}
 
+/* Dias da semana */
+.dias-wrap{display:flex;gap:8px;flex-wrap:wrap}
+.dia-btn{padding:10px 14px;border-radius:10px;border:1.5px solid var(--border2);background:var(--s1);color:var(--muted);cursor:pointer;font-size:12px;font-weight:600}
+.dia-btn.selected{border-color:var(--gold);background:rgba(249,194,36,.15);color:var(--gold)}
+
 /* History items */
 .history-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border2)}
 .history-date{font-family:var(--mono);font-size:12px}
 .history-rest{font-size:11px;color:var(--muted)}
-.history-badge{padding:2px 8px;border-radius:6px;font-size:9px;background:rgba(0,229,176,.1);color:var(--teal)}
 
 /* Toast */
 .toast{position:fixed;top:22px;left:50%;z-index:999;transform:translateX(-50%) translateY(-90px);padding:11px 20px;border-radius:24px;font-size:13px;font-weight:700;border:1px solid;transition:transform .3s;backdrop-filter:blur(12px);white-space:nowrap}
@@ -189,7 +199,7 @@ body{font-family:var(--body);color:var(--text);background:var(--bg);min-height:1
 <div class="stats-row">
   <div class="stat-card green"><div class="stat-val" id="statAtivos">0</div><div class="stat-label">ATIVOS</div></div>
   <div class="stat-card blue"><div class="stat-val" id="statUsos">0</div><div class="stat-label">USOS/MÊS</div></div>
-  <div class="stat-card gold"><div class="stat-val" id="statRenovar">0</div><div class="stat-label">ÚLTIMO BANHO</div></div>
+  <div class="stat-card gold"><div class="stat-val" id="statUltimo">0</div><div class="stat-label">ÚLTIMO BANHO</div></div>
   <div class="stat-card rose"><div class="stat-val" id="statVencidos">0</div><div class="stat-label">VENCIDOS</div></div>
 </div>
 
@@ -223,14 +233,38 @@ body{font-family:var(--body);color:var(--text);background:var(--bg);min-height:1
       <div class="form-group"><label class="form-label">NOME DO TUTOR *</label><input type="text" id="newNome" class="form-input" placeholder="Ex: João Silva"></div>
       <div class="form-group"><label class="form-label">NOME DO PET</label><input type="text" id="newPet" class="form-input" placeholder="Ex: Rex"></div>
       <div class="form-group"><label class="form-label">TELEFONE</label><input type="tel" id="newTelefone" class="form-input" placeholder="(11) 99999-9999"></div>
+      
       <div class="form-row">
-        <div class="form-group"><label class="form-label">TIPO</label><select id="newTipo" class="form-select"><option value="semanal">📅 Semanal (4 banhos)</option><option value="quinzenal">📅 Quinzenal (2 banhos)</option><option value="mensal">📅 Mensal (4 banhos)</option></select></div>
-        <div class="form-group"><label class="form-label">VALOR (R$)</label><input type="number" id="newValor" class="form-input" placeholder="120,00" step="10"></div>
+        <div class="form-group"><label class="form-label">📅 DATA PAGAMENTO *</label><input type="date" id="newDataPagamento" class="form-input"></div>
+        <div class="form-group"><label class="form-label">💰 VALOR (R$)</label><input type="number" id="newValor" class="form-input" placeholder="120,00" step="10"></div>
       </div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">DATA INÍCIO *</label><input type="date" id="newInicio" class="form-input"></div>
+      
+      <div class="form-group"><label class="form-label">🔄 FREQUÊNCIA</label>
+        <select id="newFrequencia" class="form-select">
+          <option value="semanal">Semanal (vem 1x por semana)</option>
+          <option value="quinzenal">Quinzenal (vem a cada 15 dias)</option>
+          <option value="mensal">Mensal (vem 1x por mês)</option>
+        </select>
       </div>
-      <div class="form-group"><label class="form-label">OBSERVAÇÃO</label><input type="text" id="newObs" class="form-input" placeholder="Raça, alergias, etc."></div>
+      
+      <div class="form-group" id="diaSemanaGroup" style="display:none">
+        <label class="form-label">📆 DIA DA SEMANA PREFERIDO</label>
+        <div class="dias-wrap" id="diasSemana">
+          <div class="dia-btn" data-dia="segunda">SEG</div>
+          <div class="dia-btn" data-dia="terca">TER</div>
+          <div class="dia-btn" data-dia="quarta">QUA</div>
+          <div class="dia-btn" data-dia="quinta">QUI</div>
+          <div class="dia-btn" data-dia="sexta">SEX</div>
+          <div class="dia-btn" data-dia="sabado">SÁB</div>
+        </div>
+      </div>
+      
+      <div class="form-group" id="diaMesGroup" style="display:none">
+        <label class="form-label">📆 DIA DO MÊS (1-31)</label>
+        <input type="number" id="newDiaMes" class="form-input" placeholder="Ex: 15" min="1" max="31">
+      </div>
+      
+      <div class="form-group"><label class="form-label">📝 OBSERVAÇÃO</label><input type="text" id="newObs" class="form-input" placeholder="Raça, alergias, etc."></div>
     </div>
     <div class="modal-footer">
       <button class="bottom-btn" id="btnSalvarPacote" style="flex:1;background:linear-gradient(135deg,var(--green),#138A40);color:#000;border:none">💾 SALVAR</button>
@@ -263,8 +297,7 @@ body{font-family:var(--body);color:var(--text);background:var(--bg);min-height:1
     </div>
     <div class="modal-body" id="alertsBody"></div>
     <div class="modal-footer">
-      <button class="bottom-btn btn-new" id="btnMarcarLidos" style="flex:1">✅ MARCAR LIDOS</button>
-      <button class="bottom-btn" id="btnFecharAlertas" style="flex:1;background:transparent;border:1.5px solid var(--border2)">FECHAR</button>
+      <button class="bottom-btn btn-new" id="btnFecharAlertasModal" style="flex:1">FECHAR</button>
     </div>
   </div>
 </div>
@@ -278,6 +311,7 @@ const supabaseClient = supabase.createClient(SUPA_URL, SUPA_KEY);
 let clientes = [];
 let historico = [];
 let currentHistoryId = null;
+let selectedDiaSemana = 'sexta';
 
 // ============================================
 // UTILITÁRIOS
@@ -319,7 +353,7 @@ async function carregarDados() {
     const { data: historicoData, error: historicoError } = await supabaseClient
       .from('app_pacotes_historico')
       .select('*')
-      .order('data_uso', { ascending: false });
+      .order('data_evento', { ascending: false });
     
     if (!historicoError) historico = historicoData || [];
 
@@ -342,100 +376,30 @@ async function carregarDados() {
 // CALCULAR STATUS DO PACOTE
 // ============================================
 function calcularStatus(cliente) {
-  const usosRestantes = cliente.total_banhos - cliente.usos_realizados;
-  let status = 'ok';
-  let statusText = '';
-  let cor = 'green';
+  const usosRealizados = cliente.usos_realizados || 0;
+  const totalBanhos = cliente.total_banhos || 4;
+  const usosRestantes = totalBanhos - usosRealizados;
   
   if (usosRestantes <= 0) {
-    status = 'vencido';
-    statusText = '🔴 PACOTE VENCIDO';
-    cor = 'rose';
+    return { status: 'vencido', statusText: '🔴 PACOTE VENCIDO', cor: 'rose', usosRestantes };
   } else if (usosRestantes === 1) {
-    status = 'urgent';
-    statusText = '🟡 ÚLTIMO BANHO! Renove esta semana';
-    cor = 'gold';
+    return { status: 'ultimo', statusText: '🟡 ÚLTIMO BANHO! Renove esta semana', cor: 'gold', usosRestantes };
   } else {
-    statusText = `🟢 ${usosRestantes} banhos restantes`;
-    cor = 'green';
+    return { status: 'ativo', statusText: `🟢 ${usosRestantes} banhos restantes`, cor: 'green', usosRestantes };
   }
-  
-  return { status, statusText, cor, usosRestantes };
 }
 
 // ============================================
-// RENDERIZAR LISTA DE CLIENTES
-// ============================================
-function renderClientes() {
-  const search = document.getElementById('searchInput').value.toLowerCase();
-  const filtrados = clientes.filter(c => 
-    c.cliente_nome.toLowerCase().includes(search) || 
-    (c.pet_nome && c.pet_nome.toLowerCase().includes(search))
-  );
-  
-  const container = document.getElementById('clientList');
-  if (!filtrados.length) {
-    container.innerHTML = `<div class="empty"><div class="empty-icon">🐕</div><p>Nenhum cliente encontrado</p></div>`;
-    return;
-  }
-  
-  container.innerHTML = filtrados.map(c => {
-    const stat = calcularStatus(c);
-    const percent = (c.usos_realizados / c.total_banhos) * 100;
-    const badgeClass = c.tipo_pacote;
-    const badgeText = c.tipo_pacote === 'semanal' ? '📅 Semanal' : (c.tipo_pacote === 'quinzenal' ? '📅 Quinzenal' : '📅 Mensal');
-    
-    return `
-      <div class="client-card ${stat.status === 'urgent' ? 'warning' : (stat.status === 'vencido' ? 'urgent' : '')}">
-        <div class="client-header">
-          <div class="client-avatar">🐕</div>
-          <div class="client-info">
-            <div class="client-name">${escapeHtml(c.cliente_nome)}</div>
-            <div class="client-pet">${c.pet_nome ? escapeHtml(c.pet_nome) : 'Pet não informado'} • ${c.telefone || 'sem telefone'}</div>
-          </div>
-          <div class="client-badge ${badgeClass}">${badgeText}</div>
-        </div>
-        
-        <div class="progress-wrap">
-          <div class="progress-bar"><div class="progress-fill ${stat.cor}" style="width:${percent}%"></div></div>
-          <div class="progress-text">${c.usos_realizados} de ${c.total_banhos} banhos usados</div>
-        </div>
-        
-        <div class="client-dates">
-          <span>📅 Início: ${formatarData(c.data_inicio)}</span>
-          <span>⏰ ${stat.statusText}</span>
-        </div>
-        
-        <div class="client-buttons">
-          <button class="btn-checkin" onclick="registrarUso(${c.id})">✅ VEIO HOJE</button>
-          <button class="btn-call" onclick="ligarCliente('${c.telefone || ''}')">📞 LIGAR</button>
-          <button class="btn-history" onclick="verHistorico(${c.id})">📜 HISTÓRICO</button>
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-function escapeHtml(text) {
-  if (!text) return '';
-  return text.replace(/[&<>]/g, function(m) {
-    if (m === '&') return '&amp;';
-    if (m === '<') return '&lt;';
-    if (m === '>') return '&gt;';
-    return m;
-  });
-}
-
-// ============================================
-// REGISTRAR USO (CHECK-IN)
+// REGISTRAR USO (CHECK-IN) - AUTOMÁTICO
 // ============================================
 async function registrarUso(id) {
   const cliente = clientes.find(c => c.id === id);
   if (!cliente) return;
   
   const hoje = new Date().toISOString().slice(0, 10);
-  const novosUsos = cliente.usos_realizados + 1;
-  const vencido = novosUsos >= cliente.total_banhos;
+  const novosUsos = (cliente.usos_realizados || 0) + 1;
+  const totalBanhos = cliente.total_banhos || 4;
+  const vencido = novosUsos >= totalBanhos;
   
   try {
     const { error: updateError } = await supabaseClient
@@ -450,25 +414,62 @@ async function registrarUso(id) {
     
     if (updateError) throw updateError;
     
-    // Registrar no histórico
-    const { error: histError } = await supabaseClient
+    await supabaseClient
       .from('app_pacotes_historico')
       .insert({
         cliente_id: id,
         cliente_nome: cliente.cliente_nome,
         pet_nome: cliente.pet_nome,
-        data_uso: hoje,
-        tipo_pacote: cliente.tipo_pacote,
-        usos_restantes: cliente.total_banhos - novosUsos
+        data_evento: hoje,
+        tipo_evento: 'presenca',
+        usos_restantes: totalBanhos - novosUsos
       });
-    
-    if (histError) console.warn('Erro ao salvar histórico:', histError);
     
     toast(`✅ ${cliente.pet_nome || cliente.cliente_nome} - banho registrado!`, 'ok');
     carregarDados();
   } catch (e) {
     console.error(e);
     toast('Erro ao registrar uso', 'err');
+  }
+}
+
+// ============================================
+// RENOVAR PACOTE
+// ============================================
+async function renovarPacote(id) {
+  const cliente = clientes.find(c => c.id === id);
+  if (!cliente) return;
+  
+  const hoje = new Date().toISOString().slice(0, 10);
+  const totalBanhos = cliente.tipo_frequencia === 'semanal' ? 4 : (cliente.tipo_frequencia === 'quinzenal' ? 2 : 4);
+  
+  try {
+    await supabaseClient
+      .from('app_pacotes_clientes')
+      .update({
+        usos_realizados: 0,
+        status: 'ativo',
+        data_pagamento: hoje,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id);
+    
+    await supabaseClient
+      .from('app_pacotes_historico')
+      .insert({
+        cliente_id: id,
+        cliente_nome: cliente.cliente_nome,
+        pet_nome: cliente.pet_nome,
+        data_evento: hoje,
+        tipo_evento: 'renovacao',
+        observacao: `Renovado por R$ ${cliente.valor_pago || 0}`
+      });
+    
+    toast(`💰 ${cliente.pet_nome || cliente.cliente_nome} - pacote renovado!`, 'ok');
+    carregarDados();
+  } catch (e) {
+    console.error(e);
+    toast('Erro ao renovar', 'err');
   }
 }
 
@@ -485,17 +486,17 @@ async function verHistorico(id) {
   if (!hist.length) {
     document.getElementById('historyBody').innerHTML = '<div class="empty"><div class="empty-icon">📭</div><p>Nenhum registro ainda</p></div>';
   } else {
+    const eventLabels = { 'presenca': '✅ VEIO', 'falta': '❌ FALTOU', 'renovacao': '💰 RENOVOU' };
     document.getElementById('historyBody').innerHTML = `
       <div style="margin-bottom:16px;padding:12px;background:rgba(90,106,138,.08);border-radius:12px">
         <div><strong>${escapeHtml(cliente.cliente_nome)}</strong> · ${cliente.pet_nome ? escapeHtml(cliente.pet_nome) : ''}</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:4px">📞 ${cliente.telefone || '—'} | 📦 ${cliente.tipo_pacote}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">📞 ${cliente.telefone || '—'} | 📦 ${cliente.tipo_frequencia}</div>
       </div>
-      <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:12px">🔽 HISTÓRICO DE USOS</div>
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:12px">🔽 HISTÓRICO</div>
       ${hist.map(h => `
         <div class="history-item">
-          <span class="history-date">✅ ${formatarData(h.data_uso)}</span>
-          <span class="history-rest">restantes: ${h.usos_restantes}</span>
-          <span class="history-badge">${h.tipo_pacote}</span>
+          <span class="history-date">${formatarData(h.data_evento)}</span>
+          <span class="history-rest">${eventLabels[h.tipo_evento] || h.tipo_evento}</span>
         </div>
       `).join('')}
     `;
@@ -505,41 +506,117 @@ async function verHistorico(id) {
 }
 
 // ============================================
+// RENDERIZAR LISTA DE CLIENTES
+// ============================================
+function escapeHtml(text) {
+  if (!text) return '';
+  return text.replace(/[&<>]/g, function(m) {
+    if (m === '&') return '&amp;';
+    if (m === '<') return '&lt;';
+    if (m === '>') return '&gt;';
+    return m;
+  });
+}
+
+function renderClientes() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const filtrados = clientes.filter(c => 
+    c.cliente_nome.toLowerCase().includes(search) || 
+    (c.pet_nome && c.pet_nome.toLowerCase().includes(search))
+  );
+  
+  const container = document.getElementById('clientList');
+  if (!filtrados.length) {
+    container.innerHTML = `<div class="empty"><div class="empty-icon">🐕</div><p>Nenhum cliente encontrado</p></div>`;
+    return;
+  }
+  
+  container.innerHTML = filtrados.map(c => {
+    const usosRealizados = c.usos_realizados || 0;
+    const totalBanhos = c.total_banhos || 4;
+    const percent = (usosRealizados / totalBanhos) * 100;
+    const stat = calcularStatus(c);
+    const badgeClass = c.tipo_frequencia;
+    const badgeText = c.tipo_frequencia === 'semanal' ? '📅 Semanal' : (c.tipo_frequencia === 'quinzenal' ? '📅 Quinzenal' : '📅 Mensal');
+    const vencido = usosRealizados >= totalBanhos;
+    const isUltimo = (totalBanhos - usosRealizados) === 1 && !vencido;
+    
+    return `
+      <div class="client-card ${vencido ? 'urgent' : (isUltimo ? 'warning' : '')}">
+        <div class="client-header">
+          <div class="client-avatar">🐕</div>
+          <div class="client-info">
+            <div class="client-name">${escapeHtml(c.cliente_nome)}</div>
+            <div class="client-pet">${c.pet_nome ? escapeHtml(c.pet_nome) : 'Pet não informado'} • ${c.telefone || 'sem telefone'}</div>
+          </div>
+          <div class="client-badge ${badgeClass}">${badgeText}</div>
+        </div>
+        
+        <div class="progress-wrap">
+          <div class="progress-bar"><div class="progress-fill ${stat.cor}" style="width:${percent}%"></div></div>
+          <div class="progress-text">${usosRealizados} de ${totalBanhos} banhos usados</div>
+        </div>
+        
+        <div class="client-dates">
+          <span>📅 Início: ${formatarData(c.data_inicio || c.data_pagamento)}</span>
+          <span>⏰ ${stat.statusText}</span>
+        </div>
+        
+        <div class="client-buttons">
+          ${!vencido ? `<button class="btn-checkin" onclick="registrarUso(${c.id})">✅ VEIO HOJE</button>` : `<button class="btn-checkin disabled" disabled>✅ PACOTE VENCIDO</button>`}
+          <button class="btn-call" onclick="ligarCliente('${c.telefone || ''}')">📞 LIGAR</button>
+          <button class="btn-history" onclick="verHistorico(${c.id})">📜 HISTÓRICO</button>
+        </div>
+        ${vencido ? `<div style="margin-top:12px"><button class="btn-renew" onclick="renovarPacote(${c.id})">💰 RENOVAR PACOTE</button></div>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+// ============================================
 // SALVAR NOVO PACOTE
 // ============================================
 async function salvarPacote() {
   const nome = document.getElementById('newNome').value.trim();
-  const pet = document.getElementById('newPet').value.trim();
-  const telefone = document.getElementById('newTelefone').value.trim();
-  const tipo = document.getElementById('newTipo').value;
-  const valor = parseFloat(document.getElementById('newValor').value) || 0;
-  const inicio = document.getElementById('newInicio').value;
-  const obs = document.getElementById('newObs').value;
+  const pagamento = document.getElementById('newDataPagamento').value;
+  const frequencia = document.getElementById('newFrequencia').value;
   
   if (!nome) { toast('Nome do tutor é obrigatório', 'err'); return; }
-  if (!inicio) { toast('Data de início é obrigatória', 'err'); return; }
+  if (!pagamento) { toast('Data de pagamento é obrigatória', 'err'); return; }
   
-  const totalBanhos = tipo === 'semanal' ? 4 : (tipo === 'quinzenal' ? 2 : 4);
+  let diaSemana = null;
+  let diaMes = null;
+  
+  if (frequencia === 'semanal') {
+    diaSemana = selectedDiaSemana;
+  } else if (frequencia === 'mensal') {
+    diaMes = parseInt(document.getElementById('newDiaMes').value) || 15;
+  }
+  
+  const totalBanhos = frequencia === 'semanal' ? 4 : (frequencia === 'quinzenal' ? 2 : 4);
   
   try {
     const { error } = await supabaseClient
       .from('app_pacotes_clientes')
       .insert({
         cliente_nome: nome,
-        pet_nome: pet || null,
-        telefone: telefone || null,
-        tipo_pacote: tipo,
+        pet_nome: document.getElementById('newPet').value || null,
+        telefone: document.getElementById('newTelefone').value || null,
+        tipo_frequencia: frequencia,
+        dia_semana: diaSemana,
+        dia_mes: diaMes,
         total_banhos: totalBanhos,
         usos_realizados: 0,
-        data_inicio: inicio,
-        valor_mensal: valor,
-        observacao: obs || null,
+        data_pagamento: pagamento,
+        data_inicio: pagamento,
+        valor_pago: parseFloat(document.getElementById('newValor').value) || 0,
+        observacao: document.getElementById('newObs').value || null,
         status: 'ativo'
       });
     
     if (error) throw error;
     
-    toast(`✅ ${pet || nome} cadastrado com sucesso!`, 'ok');
+    toast(`✅ ${nome} cadastrado com sucesso!`, 'ok');
     closeNewModal();
     carregarDados();
   } catch (e) {
@@ -552,19 +629,19 @@ async function salvarPacote() {
 // ATUALIZAR ESTATÍSTICAS
 // ============================================
 function atualizarStats() {
-  const ativos = clientes.filter(c => c.status === 'ativo' && c.usos_realizados < c.total_banhos).length;
-  const vencidos = clientes.filter(c => c.usos_realizados >= c.total_banhos).length;
-  const renovar = clientes.filter(c => (c.total_banhos - c.usos_realizados) === 1 && c.status !== 'vencido').length;
+  const ativos = clientes.filter(c => (c.usos_realizados || 0) < (c.total_banhos || 4)).length;
+  const vencidos = clientes.filter(c => (c.usos_realizados || 0) >= (c.total_banhos || 4)).length;
+  const ultimo = clientes.filter(c => ((c.total_banhos || 4) - (c.usos_realizados || 0)) === 1 && (c.usos_realizados || 0) < (c.total_banhos || 4)).length;
   
   const hoje = new Date();
   const usosMes = historico.filter(h => {
-    const data = new Date(h.data_uso);
-    return data.getMonth() === hoje.getMonth() && data.getFullYear() === hoje.getFullYear();
+    const data = new Date(h.data_evento);
+    return h.tipo_evento === 'presenca' && data.getMonth() === hoje.getMonth() && data.getFullYear() === hoje.getFullYear();
   }).length;
   
   document.getElementById('statAtivos').textContent = ativos;
   document.getElementById('statUsos').textContent = usosMes;
-  document.getElementById('statRenovar').textContent = renovar;
+  document.getElementById('statUltimo').textContent = ultimo;
   document.getElementById('statVencidos').textContent = vencidos;
 }
 
@@ -572,19 +649,19 @@ function atualizarStats() {
 // ATUALIZAR BANNER DE ALERTAS
 // ============================================
 function atualizarAlertas() {
-  const urgentes = clientes.filter(c => (c.total_banhos - c.usos_realizados) === 1 && c.status !== 'vencido');
-  const vencidos = clientes.filter(c => c.usos_realizados >= c.total_banhos);
+  const vencidos = clientes.filter(c => (c.usos_realizados || 0) >= (c.total_banhos || 4));
+  const ultimo = clientes.filter(c => ((c.total_banhos || 4) - (c.usos_realizados || 0)) === 1 && (c.usos_realizados || 0) < (c.total_banhos || 4));
   
-  const temAlertas = urgentes.length > 0 || vencidos.length > 0;
+  const temAlertas = vencidos.length > 0 || ultimo.length > 0;
   document.getElementById('alertBanner').style.display = temAlertas ? 'block' : 'none';
   
   if (temAlertas) {
     let html = '';
-    urgentes.slice(0, 3).forEach(c => {
+    ultimo.slice(0, 2).forEach(c => {
       html += `<div class="alert-item"><div class="alert-icon">🟡</div><div class="alert-info"><div class="alert-name">${escapeHtml(c.pet_nome || c.cliente_nome)}</div><div class="alert-desc">Último banho! Renove esta semana</div></div><button class="alert-btn" onclick="ligarCliente('${c.telefone || ''}')">📞 LIGAR</button></div>`;
     });
-    if (vencidos.length && urgentes.length < 3) {
-      vencidos.slice(0, 3 - urgentes.length).forEach(c => {
+    if (vencidos.length && ultimo.length < 2) {
+      vencidos.slice(0, 2 - ultimo.length).forEach(c => {
         html += `<div class="alert-item"><div class="alert-icon">🔴</div><div class="alert-info"><div class="alert-name">${escapeHtml(c.pet_nome || c.cliente_nome)}</div><div class="alert-desc">Pacote vencido! Cliente precisa renovar</div></div><button class="alert-btn" onclick="ligarCliente('${c.telefone || ''}')">📞 LIGAR</button></div>`;
       });
     }
@@ -596,14 +673,14 @@ function atualizarAlertas() {
 // CENTRAL DE ALERTAS (MODAL)
 // ============================================
 function openAlertsModal() {
-  const urgentes = clientes.filter(c => (c.total_banhos - c.usos_realizados) === 1 && c.status !== 'vencido');
-  const vencidos = clientes.filter(c => c.usos_realizados >= c.total_banhos);
+  const vencidos = clientes.filter(c => (c.usos_realizados || 0) >= (c.total_banhos || 4));
+  const ultimo = clientes.filter(c => ((c.total_banhos || 4) - (c.usos_realizados || 0)) === 1 && (c.usos_realizados || 0) < (c.total_banhos || 4));
   
   let html = '';
   
-  if (urgentes.length) {
-    html += `<div style="margin-bottom:20px"><div style="font-size:11px;color:var(--gold);margin-bottom:12px;font-weight:700">🟡 ÚLTIMO BANHO (URGENTE) — ${urgentes.length}</div>`;
-    urgentes.forEach(c => {
+  if (ultimo.length) {
+    html += `<div style="margin-bottom:20px"><div style="font-size:11px;color:var(--gold);margin-bottom:12px;font-weight:700">🟡 ÚLTIMO BANHO — ${ultimo.length}</div>`;
+    ultimo.forEach(c => {
       html += `<div class="alert-item"><div class="alert-icon">🟡</div><div class="alert-info"><div class="alert-name">${escapeHtml(c.pet_nome || c.cliente_nome)}</div><div class="alert-desc">${escapeHtml(c.cliente_nome)} · ${c.telefone || 'sem telefone'}</div></div><button class="alert-btn" onclick="ligarCliente('${c.telefone || ''}')">📞 LIGAR</button></div>`;
     });
     html += `</div>`;
@@ -617,7 +694,7 @@ function openAlertsModal() {
     html += `</div>`;
   }
   
-  if (!urgentes.length && !vencidos.length) {
+  if (!ultimo.length && !vencidos.length) {
     html = '<div class="empty"><div class="empty-icon">✅</div><p>Nenhum alerta no momento</p></div>';
   }
   
@@ -634,32 +711,31 @@ function exportarRelatorio() {
     return;
   }
   
-  const wsData = [['Cliente', 'Pet', 'Telefone', 'Tipo', 'Usos', 'Total', 'Status', 'Início', 'Último Uso', 'Observação']];
+  const wsData = [['Cliente', 'Pet', 'Telefone', 'Tipo', 'Usos', 'Total', 'Status', 'Pagamento', 'Valor']];
   clientes.forEach(c => {
     wsData.push([
       c.cliente_nome,
       c.pet_nome || '',
       c.telefone || '',
-      c.tipo_pacote,
-      c.usos_realizados,
-      c.total_banhos,
-      c.usos_realizados >= c.total_banhos ? 'VENCIDO' : 'ATIVO',
-      c.data_inicio,
-      c.ultimo_uso || '',
-      c.observacao || ''
+      c.tipo_frequencia,
+      c.usos_realizados || 0,
+      c.total_banhos || 4,
+      (c.usos_realizados || 0) >= (c.total_banhos || 4) ? 'VENCIDO' : 'ATIVO',
+      c.data_pagamento,
+      c.valor_pago || 0
     ]);
   });
   
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet(wsData);
-  ws['!cols'] = [{wch:20},{wch:15},{wch:15},{wch:12},{wch:8},{wch:8},{wch:10},{wch:12},{wch:12},{wch:25}];
+  ws['!cols'] = [{wch:20},{wch:15},{wch:15},{wch:12},{wch:8},{wch:8},{wch:10},{wch:12},{wch:12}];
   XLSX.utils.book_append_sheet(wb, ws, 'pacotes');
   XLSX.writeFile(wb, `pacotes_${new Date().toISOString().slice(0,10)}.xlsx`);
   toast('Relatório exportado!', 'ok');
 }
 
 // ============================================
-// EXPORTAR HISTÓRICO DO CLIENTE
+// EXPORTAR HISTÓRICO
 // ============================================
 function exportarHistorico() {
   if (!currentHistoryId) return;
@@ -672,9 +748,10 @@ function exportarHistorico() {
     return;
   }
   
-  const wsData = [['Data do Banho', 'Usos Restantes', 'Tipo Pacote']];
+  const eventLabels = { 'presenca': 'VEIO', 'falta': 'FALTOU', 'renovacao': 'RENOVOU' };
+  const wsData = [['Data', 'Evento']];
   hist.forEach(h => {
-    wsData.push([h.data_uso, h.usos_restantes, h.tipo_pacote]);
+    wsData.push([h.data_evento, eventLabels[h.tipo_evento] || h.tipo_evento]);
   });
   
   const wb = XLSX.utils.book_new();
@@ -687,18 +764,15 @@ function exportarHistorico() {
 // ============================================
 // SINCRONIZAR
 // ============================================
-function syncNow() {
-  carregarDados();
-  toast('🔄 Sincronizando...', 'ok');
-}
+function syncNow() { carregarDados(); toast('🔄 Sincronizando...', 'ok'); }
 
 function atualizarBadge() {
-  const vencidos = clientes.filter(c => c.usos_realizados >= c.total_banhos).length;
-  const urgentes = clientes.filter(c => (c.total_banhos - c.usos_realizados) === 1).length;
+  const vencidos = clientes.filter(c => (c.usos_realizados || 0) >= (c.total_banhos || 4)).length;
+  const ultimo = clientes.filter(c => ((c.total_banhos || 4) - (c.usos_realizados || 0)) === 1).length;
   const el = document.getElementById('bkpBadge');
-  if (vencidos > 0 || urgentes > 0) {
+  if (vencidos > 0 || ultimo > 0) {
     el.className = 'bkp warn';
-    el.textContent = `⚠️ ${urgentes + vencidos}`;
+    el.textContent = `⚠️ ${vencidos + ultimo}`;
   } else {
     el.className = 'bkp ok';
     el.textContent = '💾 ok';
@@ -710,7 +784,7 @@ function atualizarBadge() {
 // ============================================
 function openNewModal() {
   document.getElementById('newModal').classList.add('show');
-  document.getElementById('newInicio').value = new Date().toISOString().slice(0, 10);
+  document.getElementById('newDataPagamento').value = new Date().toISOString().slice(0, 10);
   document.getElementById('newNome').focus();
 }
 
@@ -721,6 +795,7 @@ function closeNewModal() {
   document.getElementById('newTelefone').value = '';
   document.getElementById('newValor').value = '';
   document.getElementById('newObs').value = '';
+  document.getElementById('newDiaMes').value = '';
 }
 
 function closeHistoryModal() {
@@ -730,11 +805,6 @@ function closeHistoryModal() {
 
 function closeAlertsModal() {
   document.getElementById('alertsModal').classList.remove('show');
-}
-
-function marcarTodosLidos() {
-  closeAlertsModal();
-  toast('Alertas marcados como visualizados', 'ok');
 }
 
 // ============================================
@@ -751,8 +821,26 @@ document.getElementById('closeHistoryModalBtn').addEventListener('click', closeH
 document.getElementById('btnFecharHistorico').addEventListener('click', closeHistoryModal);
 document.getElementById('btnExportarHistorico').addEventListener('click', exportarHistorico);
 document.getElementById('closeAlertsModalBtn').addEventListener('click', closeAlertsModal);
-document.getElementById('btnFecharAlertas').addEventListener('click', closeAlertsModal);
-document.getElementById('btnMarcarLidos').addEventListener('click', marcarTodosLidos);
+document.getElementById('btnFecharAlertasModal').addEventListener('click', closeAlertsModal);
+
+// Frequência change
+document.getElementById('newFrequencia').addEventListener('change', (e) => {
+  const val = e.target.value;
+  document.getElementById('diaSemanaGroup').style.display = val === 'semanal' ? 'block' : 'none';
+  document.getElementById('diaMesGroup').style.display = val === 'mensal' ? 'block' : 'none';
+});
+
+// Dias da semana
+document.querySelectorAll('#diasSemana .dia-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#diasSemana .dia-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedDiaSemana = btn.dataset.dia;
+  });
+});
+
+// Inicializar com sexta selecionada
+document.querySelector('#diasSemana .dia-btn[data-dia="sexta"]')?.classList.add('selected');
 
 // ============================================
 // INICIALIZAR
