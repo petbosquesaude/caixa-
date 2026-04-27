@@ -5,7 +5,6 @@
 <title>🐾 Dashboard — Loja 3 Banho &amp; Tosa</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<!-- bibliotecas para PDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -227,6 +226,17 @@ tr:hover td{background:rgba(245,166,35,.03)}
   background:rgba(245,166,35,.08);color:var(--gold);font-size:13px;font-weight:700;
   cursor:pointer;transition:all .15s;font-family:var(--font)}
 .meta-btn:hover{background:rgba(245,166,35,.15)}
+
+/* ════ DIÁRIO ════ */
+.diario-grid{display:flex;flex-wrap:wrap;gap:8px}
+.diario-card{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:12px 14px;cursor:pointer;transition:all .15s;flex:1 0 100%}
+.diario-card:hover{border-color:var(--gold);background:rgba(245,166,35,.03)}
+.diario-main{display:flex;justify-content:space-between;align-items:center}
+.diario-data{font-size:13px;font-weight:700;color:var(--text)}
+.diario-dow{font-size:10px;color:var(--muted);text-transform:uppercase}
+.diario-val{font-family:var(--mono);font-weight:700;font-size:14px}
+.diario-detalhes{display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--muted);line-height:1.8}
+.diario-detalhes.open{display:block}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
@@ -267,6 +277,14 @@ tr:hover td{background:rgba(245,166,35,.03)}
   </div>
   <button class="bclr" onclick="clr()">✕ Limpar</button>
   <div class="plabel" id="pLbl">📅 Todos os períodos</div>
+</div>
+
+<!-- ══════════════ ANÁLISE DIÁRIA (movida para perto dos filtros) ══════════════ -->
+<div class="acc-wrap" id="accDiario" style="display:none">
+  <div class="acc-hdr" onclick="toggleAcc(this)"><div class="acc-title"><em>📆</em> Análise Diária</div><span class="acc-arr open">▼</span></div>
+  <div class="acc-body open">
+    <div id="diarioWrap"></div>
+  </div>
 </div>
 
 <!-- ════ FINANCEIRO ════ -->
@@ -342,7 +360,7 @@ tr:hover td{background:rgba(245,166,35,.03)}
   <div class="kc lm"><div class="kicon">💎</div><div class="klabel">LTV Estimado</div><div class="kval" id="k_ltv">—</div><div class="kdesc">Valor de vida (×3 visitas)</div></div>
 </div>
 
-<!-- ══════════════ NOVAS SEÇÕES ══════════════ -->
+<!-- ══════════════ DEMAIS SEÇÕES ══════════════ -->
 
 <!-- 1. COMPARATIVO SEMANAL -->
 <div class="acc-wrap">
@@ -735,7 +753,6 @@ function renderComparativoSemanal(){
     return;
   }
   const dados = D[sY][sM];
-  // semanas simuladas (divide igualmente)
   const semanas = [
     {nome:'1ª Semana'},
     {nome:'2ª Semana'},
@@ -758,33 +775,77 @@ function renderComparativoSemanal(){
   wrap.innerHTML = html;
 }
 
+// ═══ ANÁLISE DIÁRIA (NOVA) ═══
+function renderDiario(){
+  const wrap = document.getElementById('diarioWrap');
+  const acc = document.getElementById('accDiario');
+  if(sM==='Todos' || sY==='Todos'){
+    if(acc) acc.style.display = 'none';
+    return;
+  }
+  if(acc) acc.style.display = '';
+  const movs = window._MOVS || [];
+  const mesNum = MO.indexOf(sM)+1;
+  const anoNum = parseInt(sY);
+  const dias = movs.filter(r => r.mes === mesNum && r.ano === anoNum).sort((a,b)=>a.data.localeCompare(b.data));
+  if(!dias.length){
+    wrap.innerHTML = '<div style="text-align:center;color:var(--muted);padding:20px">Nenhum dia lançado neste mês.</div>';
+    return;
+  }
+  wrap.innerHTML = `<div class="diario-grid">` + dias.map((r,i)=>{
+    const dataPartes = r.data.split('-');
+    const diaNum = dataPartes[2];
+    const diaSemana = (r.dia || '').toUpperCase();
+    const recLiq = r.receita_liq || (r.receita - r.taxa_maquina);
+    return `
+    <div class="diario-card" onclick="toggleDiarioDetalhe(this)">
+      <div class="diario-main">
+        <div>
+          <div class="diario-data">${diaNum}/${String(mesNum).padStart(2,'0')}/${anoNum}</div>
+          <div class="diario-dow">${diaSemana}</div>
+        </div>
+        <div class="diario-val" style="color:var(--teal)">${fF(recLiq)}</div>
+        <div style="text-align:right"><span style="color:var(--blue)">${r.caes||0} cães</span></div>
+      </div>
+      <div class="diario-detalhes">
+        💳 Cartão: ${fF(r.cartao||0)} &nbsp; 💵 Dinheiro: ${fF(r.dinheiro||0)}<br>
+        📦 Pacotes: ${fF(r.pacotes||0)} &nbsp; 🏥 Vet: ${fF(r.vet||0)}<br>
+        🐾 Cães: ${r.caes||0} (🆕 ${r.caes_nv||0} novos)<br>
+        📱 ADS: ${r.conversao||0} conv · Clinte ${fF(r.clinte||0)} · Ret. ${fF(r.retorno||0)} · ROI ${fF(r.roi||0)}<br>
+        📣 Invest: ${fF(r.invest||0)}
+      </div>
+    </div>`;
+  }).join('') + `</div>`;
+  // Abre automaticamente o acordeão
+  const accBody = document.querySelector('#accDiario .acc-body');
+  const accArr = document.querySelector('#accDiario .acc-arr');
+  if(accBody && !accBody.classList.contains('open')){
+    accBody.classList.add('open');
+    if(accArr) accArr.classList.add('open');
+  }
+}
+
+function toggleDiarioDetalhe(card){
+  const det = card.querySelector('.diario-detalhes');
+  if(det) det.classList.toggle('open');
+}
+
 // ═══ SAZONALIDADE ═══
 function renderSazonalidade(){
   const anos = Object.keys(D).sort();
   const datasets = anos.map((ano,i)=>{
     const cores = ['#3D5470','#4D9EFF','#F5A623','#00D4AA','#9B7FFF'];
     const data = MO.map(m=> D[ano]?.[m]?.receita || null);
-    return {
-      label: ano,
-      data,
-      borderColor: cores[i%cores.length],
-      tension: 0.3,
-      pointRadius: 4,
-      borderWidth: ano==='2026'?2.5:1.5
-    };
+    return { label: ano, data, borderColor: cores[i%cores.length], tension: 0.3, pointRadius: 4, borderWidth: ano==='2026'?2.5:1.5 };
   });
   if(CH['cSaz']) CH['cSaz'].destroy();
   const ctx = document.getElementById('cSaz').getContext('2d');
   CH['cSaz'] = new Chart(ctx, {
-    type: 'line',
-    data: { labels: MS, datasets },
+    type: 'line', data: { labels: MS, datasets },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { labels: { color: '#3D5470', font: { size: 11 } } } },
-      scales: {
-        y: { ticks: { color: '#3D5470', callback: v=>fK(v) } },
-        x: { ticks: { color: '#3D5470' } }
-      }
+      scales: { y: { ticks: { color: '#3D5470', callback: v=>fK(v) } }, x: { ticks: { color: '#3D5470' } } }
     }
   });
 }
@@ -952,7 +1013,7 @@ function up(){
     mk('cCats','doughnut',{labels:catLabels,datasets:[{data:catValues,backgroundColor:catColors.slice(0,catLabels.length),borderWidth:0,hoverOffset:8}]},{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{color:'#3D5470',font:{family:'DM Sans',size:10},boxWidth:8,padding:12}},tooltip:{backgroundColor:'#0B0F1A',borderColor:'#151E2E',borderWidth:1,titleColor:'#D8E6F3',bodyColor:'#3D5470',callbacks:{label:ctx=>{const total=catValues.reduce((s,v)=>s+v,0);return' '+fF(ctx.raw)+' ('+(total>0?(ctx.raw/total*100).toFixed(1):0)+'%)';}}}}});
   }
 
-  // Tabela (resumo mantido)
+  // Tabela
   const MXR=Math.max(...r.map(x=>x.receita),1);
   document.getElementById('tBody').innerHTML=r.sort((a,b)=>parseInt(a.year)*100+MO.indexOf(a.month)-(parseInt(b.year)*100+MO.indexOf(b.month))).map(x=>{
     const bw=Math.round(x.receita/MXR*100);
@@ -995,16 +1056,16 @@ function up(){
     </div>`;
   }).join('');
 
-  // Novas funções
   renderMetaNovos(a);
   renderPontoEquilibrio(a);
   renderComparativoSemanal();
   renderSazonalidade();
+  renderDiario(); // Agora renderiza logo abaixo dos filtros
   document.getElementById('pdfMesLabel').textContent = MO[TODAY_MONTH-1] + ' ' + TODAY_YEAR;
 }
 
 // ══════════════════════════════════════════════
-// PROJEÇÃO — mantida igual
+// PROJEÇÃO
 // ══════════════════════════════════════════════
 let metaUsuario = parseFloat(localStorage.getItem('meta_loja3')) || 0;
 function salvarMeta(){
@@ -1106,7 +1167,7 @@ function buildProjecao(){
 }
 
 // ════════════════════════════════════════════════════════
-// SUPABASE (mantido com ajustes para novos dados)
+// SUPABASE
 // ════════════════════════════════════════════════════════
 (function(){
   const _URL = "https://wyibsreqdvnllzuzjvgr.supabase.co";
@@ -1130,6 +1191,7 @@ function buildProjecao(){
       if(r1.error) throw r1.error;
       if(r2.error) throw r2.error;
       const movs = r1.data||[], gsts = r2.data||[], conts = r3.data||[], asnts = r4.data||[];
+      window._MOVS = movs; // IMPORTANTE para análise diária
       window._MRR = 0; window._ASSINANTES = [];
       window._PASSIVO = conts.filter(c=>c.status!=='pago').reduce((s,c)=>s+(Number(c.valor)||0),0);
       window._PASSIVO_LIST = conts.filter(c=>c.status!=='pago').sort((a,b)=>{const o={protestado:0,pendente:1,negociado:2};return (o[a.status]||1)-(o[b.status]||1);});
