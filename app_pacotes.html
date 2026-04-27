@@ -384,14 +384,43 @@ function calcularStatus(cliente) {
 }
 
 // ============================================
-// RENDERIZAR LISTA DE CLIENTES
+// ORDENAÇÃO ESPECIAL: quem tem banho nesta semana (último restante) no topo
+// ============================================
+function ordenarClientes(lista) {
+  const hoje = new Date();
+  return [...lista].sort((a, b) => {
+    const restantesA = a.total_banhos - a.usos_realizados;
+    const restantesB = b.total_banhos - b.usos_realizados;
+    
+    // 1. Vencidos vão para o fim (mas com renovação visível)
+    if (restantesA <= 0 && restantesB > 0) return 1;
+    if (restantesB <= 0 && restantesA > 0) return -1;
+    
+    // 2. Último banho (restantes === 1) no topo
+    if (restantesA === 1 && restantesB !== 1) return -1;
+    if (restantesB === 1 && restantesA !== 1) return 1;
+    
+    // 3. Depois, ordenar por quem tem agendamento mais próximo?
+    // Vamos usar uma lógica simples: quem tem menos usos restantes primeiro
+    if (restantesA !== restantesB) return restantesA - restantesB;
+    
+    // 4. Por nome
+    return a.cliente_nome.localeCompare(b.cliente_nome);
+  });
+}
+
+// ============================================
+// RENDERIZAR LISTA DE CLIENTES (MINIMALISTA + EXPANSÃO NO 3º BANHO)
 // ============================================
 function renderClientes() {
   const search = document.getElementById('searchInput').value.toLowerCase();
-  const filtrados = clientes.filter(c => 
+  let filtrados = clientes.filter(c => 
     c.cliente_nome.toLowerCase().includes(search) || 
     (c.pet_nome && c.pet_nome.toLowerCase().includes(search))
   );
+  
+  // Aplica ordenação especial
+  filtrados = ordenarClientes(filtrados);
   
   const container = document.getElementById('clientList');
   if (!filtrados.length) {
@@ -400,14 +429,38 @@ function renderClientes() {
   }
   
   container.innerHTML = filtrados.map(c => {
-    const stat = calcularStatus(c);
-    const percent = (c.usos_realizados / c.total_banhos) * 100;
+    const usosRestantes = c.total_banhos - c.usos_realizados;
+    const vencido = usosRestantes <= 0;
+    const isUltimo = usosRestantes === 1;
+    // "Terceiro banho" - consideramos quando usos_realizados >= 3 (para pacote de 4) ou quando restam <=2? Vamos usar: mostrar detalhes se já usou 3 ou mais (ou seja, falta 1 ou 0). 
+    // Mas o pedido: "expanda quando chegar no terceiro banho" – então se usos_realizados >= 3 (para 4), ou se for quinzenal (total=2), nunca expande. Ajuste:
+    const totalBanhos = c.total_banhos;
+    const usosFeitos = c.usos_realizados;
+    const expandirDetalhes = (totalBanhos === 4 && usosFeitos >= 3) || (totalBanhos === 2 && usosFeitos >= 1); // quinzenal mostra sempre? Vou só para 3º de 4
+    // Mas para não complicar, vou usar: expandir se usosRestantes <= 2 (ou seja, já usou a maioria)
+    const mostrarProgresso = (usosRestantes <= 2 && !vencido) || (usosRestantes === 1);
+    
     const badgeClass = c.tipo_frequencia;
     const badgeText = c.tipo_frequencia === 'semanal' ? '📅 Semanal' : (c.tipo_frequencia === 'quinzenal' ? '📅 Quinzenal' : '📅 Mensal');
-    const vencido = c.usos_realizados >= c.total_banhos;
     
-    return `
-      <div class="client-card ${stat.status === 'urgent' ? 'warning' : (stat.status === 'vencido' ? 'urgent' : '')}">
+    let statusText = '';
+    let fillCor = 'green';
+    if (vencido) {
+      statusText = '🔴 AGUARDANDO RENOVAÇÃO';
+      fillCor = 'rose';
+    } else if (isUltimo) {
+      statusText = '🟡 ÚLTIMO BANHO! Renove esta semana';
+      fillCor = 'gold';
+    } else {
+      statusText = `🟢 ${usosRestantes} banhos restantes`;
+      fillCor = 'green';
+    }
+    
+    const cardClass = vencido ? 'urgent' : (isUltimo ? 'warning' : '');
+    
+    // Montagem do card minimalista (sempre mostra nome, pet, telefone, data pagamento, último uso)
+    let html = `
+      <div class="client-card ${cardClass}">
         <div class="client-header">
           <div class="client-avatar">🐕</div>
           <div class="client-info">
@@ -417,23 +470,54 @@ function renderClientes() {
           <div class="client-badge ${badgeClass}">${badgeText}</div>
         </div>
         
-        <div class="progress-wrap">
-          <div class="progress-bar"><div class="progress-fill ${stat.cor}" style="width:${percent}%"></div></div>
-          <div class="progress-text">${c.usos_realizados} de ${c.total_banhos} banhos usados</div>
-        </div>
-        
         <div class="client-dates">
-          <span>📅 Início: ${formatarData(c.data_inicio)}</span>
           <span>📅 Pagamento: ${formatarData(c.data_pagamento) || '—'}</span>
-          <span>⏰ ${stat.statusText}</span>
+          <span>📅 Último uso: ${formatarData(c.ultimo_uso) || '—'}</span>
         </div>
-        
-        <div class="client-buttons">
-          ${!vencido ? `<button class="btn-checkin" onclick="registrarUso(${c.id})">✅ VEIO HOJE</button>` : `<button class="btn-renew" onclick="renovarPacote(${c.id})">💰 RENOVAR</button>`}
+    `;
+    
+    // Se for vencido, mostra apenas renovação e não mostra progresso nem botão de check-in
+    if (vencido) {
+      html += `
+        <div class="client-buttons" style="margin-top:12px">
+          <button class="btn-renew" onclick="renovarPacote(${c.id})">💰 RENOVAR</button>
           <button class="btn-history" onclick="verHistorico(${c.id})">📜 HISTÓRICO</button>
         </div>
-      </div>
-    `;
+      `;
+    } else {
+      // Se não vencido e estiver no terceiro banho (ou restam <=2), mostra progresso e detalhes
+      if (mostrarProgresso) {
+        const percent = (c.usos_realizados / c.total_banhos) * 100;
+        html += `
+          <div class="progress-wrap">
+            <div class="progress-bar"><div class="progress-fill ${fillCor}" style="width:${percent}%"></div></div>
+            <div class="progress-text">${c.usos_realizados} de ${c.total_banhos} banhos usados</div>
+          </div>
+          <div class="client-dates" style="margin-top:4px">
+            <span>⏰ ${statusText}</span>
+          </div>
+        `;
+      } else {
+        // Minimalista: só mostra quantos restam de forma resumida (opcional, mas pedido "fechado só com nome, data pagamento e último banho")
+        // Vamos mostrar apenas um texto discreto
+        html += `
+          <div style="margin-top:8px; font-size:10px; color:var(--muted); text-align:right">
+            ${usosRestantes} banhos restantes
+          </div>
+        `;
+      }
+      
+      // Botões
+      html += `
+        <div class="client-buttons" style="margin-top:12px">
+          <button class="btn-checkin" onclick="registrarUso(${c.id})">✅ VEIO HOJE</button>
+          <button class="btn-history" onclick="verHistorico(${c.id})">📜 HISTÓRICO</button>
+        </div>
+      `;
+    }
+    
+    html += `</div>`;
+    return html;
   }).join('');
 }
 
@@ -690,7 +774,7 @@ function openAlertsModal() {
   let html = '';
   
   if (urgentes.length) {
-    html += `<div style="margin-bottom:20px"><div style="font-size:11px;color:var(--gold);margin-bottom:12px;font-weight:700">🟡 ÚLTIMO BANHO (URGENTE) — ${urgentes.length}</div>`;
+    html += `<div style="margin-bottom:20px"><div style="font-size:11px;color:var(--gold margin-bottom:12px;font-weight:700">🟡 ÚLTIMO BANHO (URGENTE) — ${urgentes.length}</div>`;
     urgentes.forEach(c => {
       html += `<div class="alert-item"><div class="alert-icon">🟡</div><div class="alert-info"><div class="alert-name">${escapeHtml(c.pet_nome || c.cliente_nome)}</div><div class="alert-desc">${escapeHtml(c.cliente_nome)} · ${c.telefone || 'sem telefone'}</div></div></div>`;
     });
