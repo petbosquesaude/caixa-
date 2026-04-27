@@ -26,18 +26,11 @@
   --border2:#2D3450;
   --gold:#F9C224;
   --goldd:#C4901A;
-  --goldf:rgba(249,194,36,.13);
   --teal:#00E5B0;
-  --tealf:rgba(0,229,176,.1);
   --rose:#FF2D55;
-  --rosef:rgba(255,45,85,.12);
   --blue:#4DA6FF;
-  --bluef:rgba(77,166,255,.1);
   --purple:#C48FFF;
-  --purplef:rgba(196,143,255,.1);
   --green:#1DB954;
-  --greenf:rgba(29,185,84,.1);
-  --orange:#FF7A20;
   --text:#EEF2FF;
   --muted:#5A6A8A;
   --muted2:#2E3A52;
@@ -56,21 +49,18 @@ body{font-family:var(--body);color:var(--text);background:var(--bg);min-height:1
 .hdr-title{font-family:var(--title);font-size:28px;background:linear-gradient(135deg,#fff 30%,var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .hdr-sub{font-size:10px;color:var(--muted);margin-top:2px}
 .bkp{padding:7px 12px;border-radius:20px;font-size:10px;font-family:var(--mono);font-weight:600;border:1.5px solid;cursor:pointer}
-.bkp.ok{background:var(--greenf);border-color:rgba(29,185,84,.35);color:var(--green)}
+.bkp.ok{background:rgba(29,185,84,.15);border-color:rgba(29,185,84,.35);color:var(--green)}
 .bkp.warn{background:rgba(249,194,36,.1);border-color:rgba(249,194,36,.4);color:var(--gold);animation:blink 2s infinite}
-.bkp.bad{background:var(--rosef);border-color:rgba(255,45,85,.4);color:var(--rose)}
+.bkp.bad{background:rgba(255,45,85,.15);border-color:rgba(255,45,85,.4);color:var(--rose)}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.55}}
 
 /* Alert Banner */
-.alert-banner{background:linear-gradient(135deg,rgba(255,45,85,.12),rgba(255,45,85,.03));border:1px solid rgba(255,45,85,.3);border-radius:14px;margin:16px 16px 0;padding:14px}
-.alert-title{font-size:9px;text-transform:uppercase;letter-spacing:2px;color:var(--rose);font-weight:700;margin-bottom:10px}
-.alert-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,45,85,.15)}
-.alert-item:last-child{border-bottom:none}
-.alert-icon{font-size:20px}
-.alert-info{flex:1}
-.alert-name{font-size:13px;font-weight:700}
+.alert-banner{background:linear-gradient(135deg,rgba(249,194,36,.12),rgba(249,194,36,.03));border:1px solid rgba(249,194,36,.4);border-radius:14px;margin:16px 16px 0;padding:12px 14px}
+.alert-title{font-size:9px;text-transform:uppercase;letter-spacing:2px;color:var(--gold);font-weight:700;margin-bottom:8px}
+.alert-item{display:flex;align-items:center;justify-content:space-between;padding:8px 0}
+.alert-item:last-child{padding-bottom:0}
+.alert-name{font-size:13px;font-weight:700;color:var(--gold)}
 .alert-desc{font-size:9px;color:var(--muted);margin-top:2px}
-.alert-btn{padding:6px 12px;border-radius:8px;border:none;background:rgba(255,45,85,.2);color:var(--rose);font-size:10px;font-weight:600;cursor:pointer}
 
 /* Stats Row */
 .stats-row{display:flex;gap:8px;margin:16px 16px 0}
@@ -92,9 +82,8 @@ body{font-family:var(--body);color:var(--text);background:var(--bg);min-height:1
 .sec::after{content:'';flex:1;height:1px;background:var(--border2)}
 
 .client-card{background:var(--s1);border:1.5px solid var(--border);border-radius:14px;margin:8px 16px;padding:16px;transition:all .15s}
-.client-card:active{transform:scale(.98)}
-.client-card.urgent{border-color:var(--rose);background:rgba(255,45,85,.05)}
-.client-card.warning{border-color:var(--gold);background:rgba(249,194,36,.05)}
+.client-card.vencido{border-color:var(--rose);background:rgba(255,45,85,.05)}
+.client-card.ultimo{border-color:var(--gold);background:rgba(249,194,36,.05)}
 .client-header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
 .client-avatar{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--purple),var(--blue));display:flex;align-items:center;justify-content:center;font-size:22px}
 .client-info{flex:1}
@@ -112,18 +101,11 @@ body{font-family:var(--body);color:var(--text);background:var(--bg);min-height:1
 .progress-fill.rose{background:var(--rose)}
 .progress-text{font-size:10px;color:var(--muted);margin-top:4px}
 .client-dates{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin:8px 0}
-.client-status-badge{font-size:9px;font-weight:700;padding:3px 8px;border-radius:8px}
-.client-status-badge.vencido{background:rgba(255,45,85,.15);color:var(--rose)}
-.client-status-badge.ativo{background:rgba(29,185,84,.15);color:var(--green)}
-.client-status-badge.ultimo{background:rgba(249,194,36,.15);color:var(--gold)}
 .client-buttons{display:flex;gap:8px;margin-top:12px}
-.btn-checkin{flex:2;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--green),#138A40);color:#000;font-weight:700;font-size:13px;cursor:pointer}
-.btn-call{flex:1;padding:12px;border-radius:10px;border:1.5px solid var(--border2);background:transparent;color:var(--text);font-size:13px;cursor:pointer}
+.btn-checkin{flex:1;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--green),#138A40);color:#000;font-weight:700;font-size:13px;cursor:pointer}
 .btn-history{flex:1;padding:12px;border-radius:10px;border:1.5px solid var(--border2);background:transparent;color:var(--text);font-size:13px;cursor:pointer}
 .btn-renew{flex:1;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--gold),var(--goldd));color:#000;font-weight:700;font-size:13px;cursor:pointer}
-.btn-checkin:active,.btn-call:active,.btn-history:active,.btn-renew:active{transform:scale(.96)}
-.btn-checkin.disabled{opacity:0.3;cursor:default;transform:none}
-.btn-renew.disabled{opacity:0.3;cursor:default;transform:none}
+.btn-checkin:active,.btn-history:active,.btn-renew:active{transform:scale(.96)}
 
 /* Empty state */
 .empty{text-align:center;padding:60px 20px;color:var(--muted)}
@@ -135,7 +117,7 @@ body{font-family:var(--body);color:var(--text);background:var(--bg);min-height:1
 .bottom-btn:active{transform:scale(.96)}
 .btn-new{background:linear-gradient(135deg,var(--purple),#7B4ECC);color:#fff}
 .btn-report{background:rgba(0,229,176,.1);border:1.5px solid rgba(0,229,176,.3);color:var(--teal)}
-.btn-alerts{background:rgba(249,194,36,.1);border:1.5px solid rgba(249,194,36,.3);color:var(--gold);position:relative}
+.btn-alerts{background:rgba(249,194,36,.1);border:1.5px solid rgba(249,194,36,.3);color:var(--gold)}
 
 /* Modal */
 .modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
@@ -184,7 +166,7 @@ body{font-family:var(--body);color:var(--text);background:var(--bg);min-height:1
       <div class="hdr-sub">controle de clientes</div>
     </div>
   </div>
-  <div class="bkp ok" id="bkpBadge" onclick="syncNow()">💾 sincronizar</div>
+  <div class="bkp ok" id="bkpBadge" onclick="syncNow()">💾 sinc</div>
 </div>
 
 <!-- Alert Banner -->
@@ -313,9 +295,6 @@ let historico = [];
 let currentHistoryId = null;
 let selectedDiaSemana = 'sexta';
 
-// ============================================
-// UTILITÁRIOS
-// ============================================
 function toast(msg, type = 'ok') {
   const el = document.getElementById('toast');
   el.textContent = msg;
@@ -329,16 +308,8 @@ function formatarData(data) {
   return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
 }
 
-function ligarCliente(telefone) {
-  if (telefone && telefone.trim()) {
-    window.location.href = `tel:${telefone}`;
-  } else {
-    toast('Telefone não cadastrado', 'err');
-  }
-}
-
 // ============================================
-// CARREGAR DADOS DO SUPABASE
+// CARREGAR DADOS
 // ============================================
 async function carregarDados() {
   try {
@@ -366,54 +337,36 @@ async function carregarDados() {
       toast(`✅ ${clientes.length} clientes carregados`, 'ok');
     }
   } catch (e) {
-    console.error('Erro ao carregar:', e);
-    toast('Erro ao carregar dados do servidor', 'err');
-    document.getElementById('clientList').innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><p>Erro de conexão com o servidor<br>Verifique sua internet</p></div>`;
+    console.error(e);
+    toast('Erro ao carregar dados', 'err');
+    document.getElementById('clientList').innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><p>Erro de conexão</p></div>`;
   }
 }
 
 // ============================================
-// CALCULAR STATUS DO PACOTE
+// REGISTRAR PRESENÇA (SÓ ISSO VAI PARA O HISTÓRICO)
 // ============================================
-function calcularStatus(cliente) {
-  const usosRealizados = cliente.usos_realizados || 0;
-  const totalBanhos = cliente.total_banhos || 4;
-  const usosRestantes = totalBanhos - usosRealizados;
-  
-  if (usosRestantes <= 0) {
-    return { status: 'vencido', statusText: '🔴 PACOTE VENCIDO', cor: 'rose', usosRestantes };
-  } else if (usosRestantes === 1) {
-    return { status: 'ultimo', statusText: '🟡 ÚLTIMO BANHO! Renove esta semana', cor: 'gold', usosRestantes };
-  } else {
-    return { status: 'ativo', statusText: `🟢 ${usosRestantes} banhos restantes`, cor: 'green', usosRestantes };
-  }
-}
-
-// ============================================
-// REGISTRAR USO (CHECK-IN) - AUTOMÁTICO
-// ============================================
-async function registrarUso(id) {
+async function registrarPresenca(id) {
   const cliente = clientes.find(c => c.id === id);
   if (!cliente) return;
   
   const hoje = new Date().toISOString().slice(0, 10);
   const novosUsos = (cliente.usos_realizados || 0) + 1;
   const totalBanhos = cliente.total_banhos || 4;
-  const vencido = novosUsos >= totalBanhos;
+  const usosRestantes = totalBanhos - novosUsos;
   
   try {
-    const { error: updateError } = await supabaseClient
+    await supabaseClient
       .from('app_pacotes_clientes')
       .update({
         usos_realizados: novosUsos,
         ultimo_uso: hoje,
-        status: vencido ? 'vencido' : 'ativo',
+        status: usosRestantes <= 0 ? 'vencido' : 'ativo',
         updated_at: new Date().toISOString()
       })
       .eq('id', id);
     
-    if (updateError) throw updateError;
-    
+    // Só registra PRESENÇA no histórico
     await supabaseClient
       .from('app_pacotes_historico')
       .insert({
@@ -422,14 +375,14 @@ async function registrarUso(id) {
         pet_nome: cliente.pet_nome,
         data_evento: hoje,
         tipo_evento: 'presenca',
-        usos_restantes: totalBanhos - novosUsos
+        usos_restantes: usosRestantes
       });
     
     toast(`✅ ${cliente.pet_nome || cliente.cliente_nome} - banho registrado!`, 'ok');
     carregarDados();
   } catch (e) {
     console.error(e);
-    toast('Erro ao registrar uso', 'err');
+    toast('Erro ao registrar', 'err');
   }
 }
 
@@ -454,6 +407,7 @@ async function renovarPacote(id) {
       })
       .eq('id', id);
     
+    // Registrar renovação no histórico
     await supabaseClient
       .from('app_pacotes_historico')
       .insert({
@@ -462,7 +416,7 @@ async function renovarPacote(id) {
         pet_nome: cliente.pet_nome,
         data_evento: hoje,
         tipo_evento: 'renovacao',
-        observacao: `Renovado por R$ ${cliente.valor_pago || 0}`
+        observacao: `Renovado - R$ ${cliente.valor_pago || 0}`
       });
     
     toast(`💰 ${cliente.pet_nome || cliente.cliente_nome} - pacote renovado!`, 'ok');
@@ -474,29 +428,28 @@ async function renovarPacote(id) {
 }
 
 // ============================================
-// VER HISTÓRICO DO CLIENTE
+// VER HISTÓRICO (SÓ PRESENÇAS)
 // ============================================
 async function verHistorico(id) {
   currentHistoryId = id;
   const cliente = clientes.find(c => c.id === id);
-  const hist = historico.filter(h => h.cliente_id === id);
+  const hist = historico.filter(h => h.cliente_id === id && h.tipo_evento === 'presenca');
   
   document.getElementById('historyTitle').innerHTML = `📜 ${cliente.pet_nome || cliente.cliente_nome}`;
   
   if (!hist.length) {
-    document.getElementById('historyBody').innerHTML = '<div class="empty"><div class="empty-icon">📭</div><p>Nenhum registro ainda</p></div>';
+    document.getElementById('historyBody').innerHTML = '<div class="empty"><div class="empty-icon">📭</div><p>Nenhuma presença registrada ainda</p></div>';
   } else {
-    const eventLabels = { 'presenca': '✅ VEIO', 'falta': '❌ FALTOU', 'renovacao': '💰 RENOVOU' };
     document.getElementById('historyBody').innerHTML = `
       <div style="margin-bottom:16px;padding:12px;background:rgba(90,106,138,.08);border-radius:12px">
         <div><strong>${escapeHtml(cliente.cliente_nome)}</strong> · ${cliente.pet_nome ? escapeHtml(cliente.pet_nome) : ''}</div>
         <div style="font-size:12px;color:var(--muted);margin-top:4px">📞 ${cliente.telefone || '—'} | 📦 ${cliente.tipo_frequencia}</div>
       </div>
-      <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:12px">🔽 HISTÓRICO</div>
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:12px">🔽 HISTÓRICO DE PRESENÇAS</div>
       ${hist.map(h => `
         <div class="history-item">
-          <span class="history-date">${formatarData(h.data_evento)}</span>
-          <span class="history-rest">${eventLabels[h.tipo_evento] || h.tipo_evento}</span>
+          <span class="history-date">✅ ${formatarData(h.data_evento)}</span>
+          <span class="history-rest">${h.usos_restantes > 0 ? `restavam ${h.usos_restantes} banhos` : 'ÚLTIMO BANHO!'}</span>
         </div>
       `).join('')}
     `;
@@ -506,7 +459,7 @@ async function verHistorico(id) {
 }
 
 // ============================================
-// RENDERIZAR LISTA DE CLIENTES
+// RENDERIZAR LISTA
 // ============================================
 function escapeHtml(text) {
   if (!text) return '';
@@ -535,14 +488,30 @@ function renderClientes() {
     const usosRealizados = c.usos_realizados || 0;
     const totalBanhos = c.total_banhos || 4;
     const percent = (usosRealizados / totalBanhos) * 100;
-    const stat = calcularStatus(c);
-    const badgeClass = c.tipo_frequencia;
-    const badgeText = c.tipo_frequencia === 'semanal' ? '📅 Semanal' : (c.tipo_frequencia === 'quinzenal' ? '📅 Quinzenal' : '📅 Mensal');
     const vencido = usosRealizados >= totalBanhos;
     const isUltimo = (totalBanhos - usosRealizados) === 1 && !vencido;
     
+    const badgeClass = c.tipo_frequencia;
+    const badgeText = c.tipo_frequencia === 'semanal' ? '📅 Semanal' : (c.tipo_frequencia === 'quinzenal' ? '📅 Quinzenal' : '📅 Mensal');
+    
+    let statusText = '';
+    let statusCor = '';
+    if (vencido) {
+      statusText = '🔴 PACOTE VENCIDO';
+      statusCor = 'rose';
+    } else if (isUltimo) {
+      statusText = '🟡 ÚLTIMO BANHO! Renove esta semana';
+      statusCor = 'gold';
+    } else {
+      statusText = `🟢 ${totalBanhos - usosRealizados} banhos restantes`;
+      statusCor = 'green';
+    }
+    
+    const cardClass = vencido ? 'vencido' : (isUltimo ? 'ultimo' : '');
+    const fillCor = vencido ? 'rose' : (isUltimo ? 'gold' : 'green');
+    
     return `
-      <div class="client-card ${vencido ? 'urgent' : (isUltimo ? 'warning' : '')}">
+      <div class="client-card ${cardClass}">
         <div class="client-header">
           <div class="client-avatar">🐕</div>
           <div class="client-info">
@@ -553,21 +522,19 @@ function renderClientes() {
         </div>
         
         <div class="progress-wrap">
-          <div class="progress-bar"><div class="progress-fill ${stat.cor}" style="width:${percent}%"></div></div>
+          <div class="progress-bar"><div class="progress-fill ${fillCor}" style="width:${percent}%"></div></div>
           <div class="progress-text">${usosRealizados} de ${totalBanhos} banhos usados</div>
         </div>
         
         <div class="client-dates">
           <span>📅 Início: ${formatarData(c.data_inicio || c.data_pagamento)}</span>
-          <span>⏰ ${stat.statusText}</span>
+          <span>⏰ ${statusText}</span>
         </div>
         
         <div class="client-buttons">
-          ${!vencido ? `<button class="btn-checkin" onclick="registrarUso(${c.id})">✅ VEIO HOJE</button>` : `<button class="btn-checkin disabled" disabled>✅ PACOTE VENCIDO</button>`}
-          <button class="btn-call" onclick="ligarCliente('${c.telefone || ''}')">📞 LIGAR</button>
+          ${!vencido ? `<button class="btn-checkin" onclick="registrarPresenca(${c.id})">✅ VEIO HOJE</button>` : `<button class="btn-renew" onclick="renovarPacote(${c.id})">💰 RENOVAR</button>`}
           <button class="btn-history" onclick="verHistorico(${c.id})">📜 HISTÓRICO</button>
         </div>
-        ${vencido ? `<div style="margin-top:12px"><button class="btn-renew" onclick="renovarPacote(${c.id})">💰 RENOVAR PACOTE</button></div>` : ''}
       </div>
     `;
   }).join('');
@@ -581,7 +548,7 @@ async function salvarPacote() {
   const pagamento = document.getElementById('newDataPagamento').value;
   const frequencia = document.getElementById('newFrequencia').value;
   
-  if (!nome) { toast('Nome do tutor é obrigatório', 'err'); return; }
+  if (!nome) { toast('Nome é obrigatório', 'err'); return; }
   if (!pagamento) { toast('Data de pagamento é obrigatória', 'err'); return; }
   
   let diaSemana = null;
@@ -616,12 +583,12 @@ async function salvarPacote() {
     
     if (error) throw error;
     
-    toast(`✅ ${nome} cadastrado com sucesso!`, 'ok');
+    toast(`✅ ${nome} cadastrado!`, 'ok');
     closeNewModal();
     carregarDados();
   } catch (e) {
     console.error(e);
-    toast('Erro ao salvar: ' + e.message, 'err');
+    toast('Erro: ' + e.message, 'err');
   }
 }
 
@@ -646,42 +613,33 @@ function atualizarStats() {
 }
 
 // ============================================
-// ATUALIZAR BANNER DE ALERTAS
+// ALERTAS
 // ============================================
 function atualizarAlertas() {
-  const vencidos = clientes.filter(c => (c.usos_realizados || 0) >= (c.total_banhos || 4));
   const ultimo = clientes.filter(c => ((c.total_banhos || 4) - (c.usos_realizados || 0)) === 1 && (c.usos_realizados || 0) < (c.total_banhos || 4));
   
-  const temAlertas = vencidos.length > 0 || ultimo.length > 0;
+  const temAlertas = ultimo.length > 0;
   document.getElementById('alertBanner').style.display = temAlertas ? 'block' : 'none';
   
   if (temAlertas) {
     let html = '';
-    ultimo.slice(0, 2).forEach(c => {
-      html += `<div class="alert-item"><div class="alert-icon">🟡</div><div class="alert-info"><div class="alert-name">${escapeHtml(c.pet_nome || c.cliente_nome)}</div><div class="alert-desc">Último banho! Renove esta semana</div></div><button class="alert-btn" onclick="ligarCliente('${c.telefone || ''}')">📞 LIGAR</button></div>`;
+    ultimo.slice(0, 3).forEach(c => {
+      html += `<div class="alert-item"><div class="alert-name">🐕 ${c.pet_nome || c.cliente_nome}</div><div class="alert-desc">Último banho! Renove esta semana</div></div>`;
     });
-    if (vencidos.length && ultimo.length < 2) {
-      vencidos.slice(0, 2 - ultimo.length).forEach(c => {
-        html += `<div class="alert-item"><div class="alert-icon">🔴</div><div class="alert-info"><div class="alert-name">${escapeHtml(c.pet_nome || c.cliente_nome)}</div><div class="alert-desc">Pacote vencido! Cliente precisa renovar</div></div><button class="alert-btn" onclick="ligarCliente('${c.telefone || ''}')">📞 LIGAR</button></div>`;
-      });
-    }
     document.getElementById('alertList').innerHTML = html;
   }
 }
 
-// ============================================
-// CENTRAL DE ALERTAS (MODAL)
-// ============================================
 function openAlertsModal() {
-  const vencidos = clientes.filter(c => (c.usos_realizados || 0) >= (c.total_banhos || 4));
   const ultimo = clientes.filter(c => ((c.total_banhos || 4) - (c.usos_realizados || 0)) === 1 && (c.usos_realizados || 0) < (c.total_banhos || 4));
+  const vencidos = clientes.filter(c => (c.usos_realizados || 0) >= (c.total_banhos || 4));
   
   let html = '';
   
   if (ultimo.length) {
     html += `<div style="margin-bottom:20px"><div style="font-size:11px;color:var(--gold);margin-bottom:12px;font-weight:700">🟡 ÚLTIMO BANHO — ${ultimo.length}</div>`;
     ultimo.forEach(c => {
-      html += `<div class="alert-item"><div class="alert-icon">🟡</div><div class="alert-info"><div class="alert-name">${escapeHtml(c.pet_nome || c.cliente_nome)}</div><div class="alert-desc">${escapeHtml(c.cliente_nome)} · ${c.telefone || 'sem telefone'}</div></div><button class="alert-btn" onclick="ligarCliente('${c.telefone || ''}')">📞 LIGAR</button></div>`;
+      html += `<div class="alert-item" style="justify-content:space-between"><div><div class="alert-name">${escapeHtml(c.pet_nome || c.cliente_nome)}</div><div class="alert-desc">${escapeHtml(c.cliente_nome)}</div></div></div>`;
     });
     html += `</div>`;
   }
@@ -689,7 +647,7 @@ function openAlertsModal() {
   if (vencidos.length) {
     html += `<div><div style="font-size:11px;color:var(--rose);margin-bottom:12px;font-weight:700">🔴 VENCIDOS — ${vencidos.length}</div>`;
     vencidos.forEach(c => {
-      html += `<div class="alert-item"><div class="alert-icon">🔴</div><div class="alert-info"><div class="alert-name">${escapeHtml(c.pet_nome || c.cliente_nome)}</div><div class="alert-desc">${escapeHtml(c.cliente_nome)} · renovação pendente</div></div><button class="alert-btn" onclick="ligarCliente('${c.telefone || ''}')">📞 LIGAR</button></div>`;
+      html += `<div class="alert-item" style="justify-content:space-between"><div><div class="alert-name">${escapeHtml(c.pet_nome || c.cliente_nome)}</div><div class="alert-desc">${escapeHtml(c.cliente_nome)}</div></div></div>`;
     });
     html += `</div>`;
   }
@@ -703,80 +661,51 @@ function openAlertsModal() {
 }
 
 // ============================================
-// EXPORTAR RELATÓRIO
+// EXPORTAR
 // ============================================
 function exportarRelatorio() {
-  if (!clientes.length) {
-    toast('Nenhum cliente para exportar', 'err');
-    return;
-  }
+  if (!clientes.length) { toast('Nenhum cliente', 'err'); return; }
   
   const wsData = [['Cliente', 'Pet', 'Telefone', 'Tipo', 'Usos', 'Total', 'Status', 'Pagamento', 'Valor']];
   clientes.forEach(c => {
     wsData.push([
-      c.cliente_nome,
-      c.pet_nome || '',
-      c.telefone || '',
-      c.tipo_frequencia,
-      c.usos_realizados || 0,
-      c.total_banhos || 4,
+      c.cliente_nome, c.pet_nome || '', c.telefone || '', c.tipo_frequencia,
+      c.usos_realizados || 0, c.total_banhos || 4,
       (c.usos_realizados || 0) >= (c.total_banhos || 4) ? 'VENCIDO' : 'ATIVO',
-      c.data_pagamento,
-      c.valor_pago || 0
+      c.data_pagamento, c.valor_pago || 0
     ]);
   });
   
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet(wsData);
-  ws['!cols'] = [{wch:20},{wch:15},{wch:15},{wch:12},{wch:8},{wch:8},{wch:10},{wch:12},{wch:12}];
   XLSX.utils.book_append_sheet(wb, ws, 'pacotes');
   XLSX.writeFile(wb, `pacotes_${new Date().toISOString().slice(0,10)}.xlsx`);
   toast('Relatório exportado!', 'ok');
 }
 
-// ============================================
-// EXPORTAR HISTÓRICO
-// ============================================
 function exportarHistorico() {
   if (!currentHistoryId) return;
   const cliente = clientes.find(c => c.id === currentHistoryId);
   if (!cliente) return;
   
-  const hist = historico.filter(h => h.cliente_id === currentHistoryId);
-  if (!hist.length) {
-    toast('Nenhum histórico para exportar', 'err');
-    return;
-  }
+  const hist = historico.filter(h => h.cliente_id === currentHistoryId && h.tipo_evento === 'presenca');
+  if (!hist.length) { toast('Sem histórico', 'err'); return; }
   
-  const eventLabels = { 'presenca': 'VEIO', 'falta': 'FALTOU', 'renovacao': 'RENOVOU' };
-  const wsData = [['Data', 'Evento']];
-  hist.forEach(h => {
-    wsData.push([h.data_evento, eventLabels[h.tipo_evento] || h.tipo_evento]);
-  });
+  const wsData = [['Data', 'Usos Restantes']];
+  hist.forEach(h => { wsData.push([h.data_evento, h.usos_restantes]); });
   
   const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.aoa_to_sheet(wsData);
-  XLSX.utils.book_append_sheet(wb, ws, `historico_${cliente.pet_nome || cliente.cliente_nome}`);
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(wsData), 'historico');
   XLSX.writeFile(wb, `historico_${cliente.pet_nome || cliente.cliente_nome}_${new Date().toISOString().slice(0,10)}.xlsx`);
   toast('Histórico exportado!', 'ok');
 }
 
-// ============================================
-// SINCRONIZAR
-// ============================================
 function syncNow() { carregarDados(); toast('🔄 Sincronizando...', 'ok'); }
-
 function atualizarBadge() {
   const vencidos = clientes.filter(c => (c.usos_realizados || 0) >= (c.total_banhos || 4)).length;
-  const ultimo = clientes.filter(c => ((c.total_banhos || 4) - (c.usos_realizados || 0)) === 1).length;
   const el = document.getElementById('bkpBadge');
-  if (vencidos > 0 || ultimo > 0) {
-    el.className = 'bkp warn';
-    el.textContent = `⚠️ ${vencidos + ultimo}`;
-  } else {
-    el.className = 'bkp ok';
-    el.textContent = '💾 ok';
-  }
+  if (vencidos > 0) { el.className = 'bkp warn'; el.textContent = `⚠️ ${vencidos}`; }
+  else { el.className = 'bkp ok'; el.textContent = '💾 ok'; }
 }
 
 // ============================================
@@ -787,7 +716,6 @@ function openNewModal() {
   document.getElementById('newDataPagamento').value = new Date().toISOString().slice(0, 10);
   document.getElementById('newNome').focus();
 }
-
 function closeNewModal() {
   document.getElementById('newModal').classList.remove('show');
   document.getElementById('newNome').value = '';
@@ -795,20 +723,12 @@ function closeNewModal() {
   document.getElementById('newTelefone').value = '';
   document.getElementById('newValor').value = '';
   document.getElementById('newObs').value = '';
-  document.getElementById('newDiaMes').value = '';
 }
-
-function closeHistoryModal() {
-  document.getElementById('historyModal').classList.remove('show');
-  currentHistoryId = null;
-}
-
-function closeAlertsModal() {
-  document.getElementById('alertsModal').classList.remove('show');
-}
+function closeHistoryModal() { document.getElementById('historyModal').classList.remove('show'); currentHistoryId = null; }
+function closeAlertsModal() { document.getElementById('alertsModal').classList.remove('show'); }
 
 // ============================================
-// EVENT LISTENERS
+// EVENTOS
 // ============================================
 document.getElementById('searchInput').addEventListener('input', renderClientes);
 document.getElementById('btnNewPacote').addEventListener('click', openNewModal);
@@ -839,11 +759,8 @@ document.querySelectorAll('#diasSemana .dia-btn').forEach(btn => {
   });
 });
 
-// Inicializar com sexta selecionada
-document.querySelector('#diasSemana .dia-btn[data-dia="sexta"]')?.classList.add('selected');
-
 // ============================================
-// INICIALIZAR
+// INICIAR
 // ============================================
 carregarDados();
 </script>
