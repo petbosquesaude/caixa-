@@ -118,6 +118,18 @@ body{font-family:var(--body);color:var(--text);background:var(--bg);min-height:1
 .btn-checkin:active,.btn-history:active,.btn-renew:active{transform:scale(.96)}
 .btn-checkin.disabled{opacity:0.5;cursor:not-allowed}
 
+/* Penúltimo banho animation */
+@keyframes pulsePenultimo {
+  0% { background-color: rgba(249,194,36,0); border-left-color: var(--gold); }
+  50% { background-color: rgba(249,194,36,0.15); border-left-color: var(--gold); }
+  100% { background-color: rgba(249,194,36,0); border-left-color: var(--gold); }
+}
+.history-item.penultimo {
+  animation: pulsePenultimo 1s ease-in-out 3;
+  border-left: 3px solid var(--gold);
+  background: linear-gradient(90deg, rgba(249,194,36,0.05), transparent);
+}
+
 /* Empty state */
 .empty{text-align:center;padding:60px 20px;color:var(--muted)}
 .empty-icon{font-size:48px;opacity:.3;margin-bottom:12px}
@@ -153,7 +165,7 @@ body{font-family:var(--body);color:var(--text);background:var(--bg);min-height:1
 .dia-btn{padding:10px 14px;border-radius:10px;border:1.5px solid var(--border2);background:var(--s1);color:var(--muted);cursor:pointer;font-size:12px;font-weight:600}
 .dia-btn.selected{border-color:var(--gold);background:rgba(249,194,36,.15);color:var(--gold)}
 
-/* History items */
+/* History items (base) */
 .history-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border2)}
 .history-date{font-family:var(--mono);font-size:12px}
 .history-rest{font-size:11px;color:var(--muted)}
@@ -384,33 +396,31 @@ function calcularStatus(cliente) {
 }
 
 // ============================================
-// ORDENAÇÃO ESPECIAL: quem tem banho nesta semana (último restante) no topo
+// ORDENAÇÃO: últimos banhos primeiro
 // ============================================
 function ordenarClientes(lista) {
-  const hoje = new Date();
   return [...lista].sort((a, b) => {
     const restantesA = a.total_banhos - a.usos_realizados;
     const restantesB = b.total_banhos - b.usos_realizados;
     
-    // 1. Vencidos vão para o fim (mas com renovação visível)
+    // Vencidos vão para o fim
     if (restantesA <= 0 && restantesB > 0) return 1;
     if (restantesB <= 0 && restantesA > 0) return -1;
     
-    // 2. Último banho (restantes === 1) no topo
+    // Último banho (restantes === 1) no topo
     if (restantesA === 1 && restantesB !== 1) return -1;
     if (restantesB === 1 && restantesA !== 1) return 1;
     
-    // 3. Depois, ordenar por quem tem agendamento mais próximo?
-    // Vamos usar uma lógica simples: quem tem menos usos restantes primeiro
+    // Depois, por número de restantes (menos primeiro)
     if (restantesA !== restantesB) return restantesA - restantesB;
     
-    // 4. Por nome
+    // Por nome
     return a.cliente_nome.localeCompare(b.cliente_nome);
   });
 }
 
 // ============================================
-// RENDERIZAR LISTA DE CLIENTES (MINIMALISTA + EXPANSÃO NO 3º BANHO)
+// RENDERIZAR LISTA DE CLIENTES (com botão alterar data)
 // ============================================
 function renderClientes() {
   const search = document.getElementById('searchInput').value.toLowerCase();
@@ -419,7 +429,6 @@ function renderClientes() {
     (c.pet_nome && c.pet_nome.toLowerCase().includes(search))
   );
   
-  // Aplica ordenação especial
   filtrados = ordenarClientes(filtrados);
   
   const container = document.getElementById('clientList');
@@ -432,13 +441,7 @@ function renderClientes() {
     const usosRestantes = c.total_banhos - c.usos_realizados;
     const vencido = usosRestantes <= 0;
     const isUltimo = usosRestantes === 1;
-    // "Terceiro banho" - consideramos quando usos_realizados >= 3 (para pacote de 4) ou quando restam <=2? Vamos usar: mostrar detalhes se já usou 3 ou mais (ou seja, falta 1 ou 0). 
-    // Mas o pedido: "expanda quando chegar no terceiro banho" – então se usos_realizados >= 3 (para 4), ou se for quinzenal (total=2), nunca expande. Ajuste:
-    const totalBanhos = c.total_banhos;
-    const usosFeitos = c.usos_realizados;
-    const expandirDetalhes = (totalBanhos === 4 && usosFeitos >= 3) || (totalBanhos === 2 && usosFeitos >= 1); // quinzenal mostra sempre? Vou só para 3º de 4
-    // Mas para não complicar, vou usar: expandir se usosRestantes <= 2 (ou seja, já usou a maioria)
-    const mostrarProgresso = (usosRestantes <= 2 && !vencido) || (usosRestantes === 1);
+    const mostrarProgresso = (usosRestantes <= 2 && !vencido); // mostra barra se restam 2 ou menos
     
     const badgeClass = c.tipo_frequencia;
     const badgeText = c.tipo_frequencia === 'semanal' ? '📅 Semanal' : (c.tipo_frequencia === 'quinzenal' ? '📅 Quinzenal' : '📅 Mensal');
@@ -458,7 +461,6 @@ function renderClientes() {
     
     const cardClass = vencido ? 'urgent' : (isUltimo ? 'warning' : '');
     
-    // Montagem do card minimalista (sempre mostra nome, pet, telefone, data pagamento, último uso)
     let html = `
       <div class="client-card ${cardClass}">
         <div class="client-header">
@@ -476,7 +478,6 @@ function renderClientes() {
         </div>
     `;
     
-    // Se for vencido, mostra apenas renovação e não mostra progresso nem botão de check-in
     if (vencido) {
       html += `
         <div class="client-buttons" style="margin-top:12px">
@@ -485,7 +486,6 @@ function renderClientes() {
         </div>
       `;
     } else {
-      // Se não vencido e estiver no terceiro banho (ou restam <=2), mostra progresso e detalhes
       if (mostrarProgresso) {
         const percent = (c.usos_realizados / c.total_banhos) * 100;
         html += `
@@ -498,19 +498,15 @@ function renderClientes() {
           </div>
         `;
       } else {
-        // Minimalista: só mostra quantos restam de forma resumida (opcional, mas pedido "fechado só com nome, data pagamento e último banho")
-        // Vamos mostrar apenas um texto discreto
-        html += `
-          <div style="margin-top:8px; font-size:10px; color:var(--muted); text-align:right">
-            ${usosRestantes} banhos restantes
-          </div>
-        `;
+        html += `<div style="margin-top:8px; font-size:10px; color:var(--muted); text-align:right">${usosRestantes} banhos restantes</div>`;
       }
       
-      // Botões
       html += `
         <div class="client-buttons" style="margin-top:12px">
-          <button class="btn-checkin" onclick="registrarUso(${c.id})">✅ VEIO HOJE</button>
+          <div style="display:flex; gap:6px; flex:2">
+            <button class="btn-checkin" style="flex:3" onclick="registrarUso(${c.id})">✅ VEIO HOJE</button>
+            <button class="btn-checkin" style="flex:1; background:rgba(77,166,255,.2); color:var(--blue)" onclick="abrirAlterarData(${c.id})">📅</button>
+          </div>
           <button class="btn-history" onclick="verHistorico(${c.id})">📜 HISTÓRICO</button>
         </div>
       `;
@@ -532,18 +528,30 @@ function escapeHtml(text) {
 }
 
 // ============================================
-// REGISTRAR USO (CHECK-IN) COM PREVENÇÃO DE DUPLICATA
+// ALTERAR DATA (botão 📅)
 // ============================================
-async function registrarUso(id) {
+function abrirAlterarData(id) {
+  const dataStr = prompt("Digite a data do banho (formato AAAA-MM-DD):", new Date().toISOString().slice(0,10));
+  if (dataStr && /^\d{4}-\d{2}-\d{2}$/.test(dataStr)) {
+    registrarUso(id, dataStr);
+  } else if (dataStr) {
+    toast("Data inválida. Use AAAA-MM-DD", "err");
+  }
+}
+
+// ============================================
+// REGISTRAR USO (CHECK-IN) com data opcional
+// ============================================
+async function registrarUso(id, dataEscolhida = null) {
   const cliente = clientes.find(c => c.id === id);
   if (!cliente) return;
   
-  const hoje = new Date().toISOString().slice(0, 10);
+  const hoje = dataEscolhida || new Date().toISOString().slice(0, 10);
   
-  // Verifica se já registrou presença hoje
+  // Verifica se já registrou presença nesta data
   const jaRegistrouHoje = historico.some(h => h.cliente_id === id && h.data_uso === hoje);
   if (jaRegistrouHoje) {
-    toast(`⚠️ ${cliente.pet_nome || cliente.cliente_nome} já registrou presença hoje!`, 'warn');
+    toast(`⚠️ ${cliente.pet_nome || cliente.cliente_nome} já registrou presença em ${formatarData(hoje)}!`, 'warn');
     return;
   }
   
@@ -568,7 +576,6 @@ async function registrarUso(id) {
     
     if (updateError) throw updateError;
     
-    // Registrar no histórico
     const { error: histError } = await supabaseClient
       .from('app_pacotes_historico')
       .insert({
@@ -582,7 +589,7 @@ async function registrarUso(id) {
     
     if (histError) console.warn('Erro ao salvar histórico:', histError);
     
-    toast(`✅ ${cliente.pet_nome || cliente.cliente_nome} - banho registrado!`, 'ok');
+    toast(`✅ ${cliente.pet_nome || cliente.cliente_nome} - banho registrado em ${formatarData(hoje)}!`, 'ok');
     carregarDados();
   } catch (e) {
     console.error(e);
@@ -632,32 +639,68 @@ async function renovarPacote(id) {
 }
 
 // ============================================
-// VER HISTÓRICO DO CLIENTE
+// VER HISTÓRICO (agrupado por ciclos)
 // ============================================
 async function verHistorico(id) {
   currentHistoryId = id;
   const cliente = clientes.find(c => c.id === id);
-  const hist = historico.filter(h => h.cliente_id === id);
+  // Obter todos registros do cliente, ordenados por data crescente
+  let todos = historico.filter(h => h.cliente_id === id).sort((a,b) => new Date(a.data_uso) - new Date(b.data_uso));
   
-  document.getElementById('historyTitle').innerHTML = `📜 ${cliente.pet_nome || cliente.cliente_nome}`;
+  // Separar em ciclos usando registros com "Renovação" como marcadores
+  const ciclos = [];
+  let cicloAtual = [];
+  for (let i = 0; i < todos.length; i++) {
+    const reg = todos[i];
+    if (reg.observacao && reg.observacao.includes("Renovação")) {
+      if (cicloAtual.length > 0) {
+        ciclos.push(cicloAtual);
+        cicloAtual = [];
+      }
+      continue; // não adiciona o marcador como uso
+    }
+    cicloAtual.push(reg);
+  }
+  if (cicloAtual.length > 0) ciclos.push(cicloAtual);
   
-  if (!hist.length) {
+  // Ciclos mais recentes primeiro
+  ciclos.reverse();
+  
+  if (ciclos.length === 0) {
     document.getElementById('historyBody').innerHTML = '<div class="empty"><div class="empty-icon">📭</div><p>Nenhum registro ainda</p></div>';
   } else {
-    document.getElementById('historyBody').innerHTML = `
+    let html = `
       <div style="margin-bottom:16px;padding:12px;background:rgba(90,106,138,.08);border-radius:12px">
         <div><strong>${escapeHtml(cliente.cliente_nome)}</strong> · ${cliente.pet_nome ? escapeHtml(cliente.pet_nome) : ''}</div>
         <div style="font-size:12px;color:var(--muted);margin-top:4px">📞 ${cliente.telefone || '—'} | 📦 ${cliente.tipo_frequencia}</div>
       </div>
-      <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:12px">🔽 HISTÓRICO DE USOS</div>
-      ${hist.map(h => `
-        <div class="history-item">
-          <span class="history-date">✅ ${formatarData(h.data_uso)}</span>
-          <span class="history-rest">restantes: ${h.usos_restantes}</span>
-          <span class="history-badge">${h.tipo_pacote}</span>
-        </div>
-      `).join('')}
     `;
+    
+    ciclos.forEach((ciclo, idx) => {
+      const primeiro = ciclo[0];
+      const ultimo = ciclo[ciclo.length-1];
+      const dataInicio = formatarData(primeiro.data_uso);
+      const dataFim = formatarData(ultimo.data_uso);
+      const totalUsos = ciclo.length;
+      const isOpen = idx === 0 ? 'open' : ''; // abre apenas o mais recente
+      html += `
+        <details ${isOpen} style="margin-bottom: 16px; background: var(--s1); border-radius: 12px; padding: 8px;">
+          <summary style="font-size: 12px; font-weight: 700; color: var(--gold); padding: 8px; cursor: pointer; list-style: none;">
+            📦 Pacote ${ciclos.length - idx} · ${dataInicio} a ${dataFim} (${totalUsos} usos)
+          </summary>
+          <div style="margin-top: 8px;">
+            ${ciclo.map(h => `
+              <div class="history-item ${h.usos_restantes === 1 ? 'penultimo' : ''}">
+                <span class="history-date">✅ ${formatarData(h.data_uso)}</span>
+                <span class="history-rest">restantes: ${h.usos_restantes}</span>
+                <span class="history-badge">${h.tipo_pacote}</span>
+              </div>
+            `).join('')}
+          </div>
+        </details>
+      `;
+    });
+    document.getElementById('historyBody').innerHTML = html;
   }
   
   document.getElementById('historyModal').classList.add('show');
@@ -741,7 +784,7 @@ function atualizarStats() {
 }
 
 // ============================================
-// ATUALIZAR BANNER DE ALERTAS (SEM BOTÃO LIGAR)
+// ALERTAS (sem botão ligar)
 // ============================================
 function atualizarAlertas() {
   const urgentes = clientes.filter(c => (c.total_banhos - c.usos_realizados) === 1 && c.status !== 'vencido');
@@ -764,9 +807,6 @@ function atualizarAlertas() {
   }
 }
 
-// ============================================
-// CENTRAL DE ALERTAS (SEM BOTÃO LIGAR)
-// ============================================
 function openAlertsModal() {
   const urgentes = clientes.filter(c => (c.total_banhos - c.usos_realizados) === 1 && c.status !== 'vencido');
   const vencidos = clientes.filter(c => c.usos_realizados >= c.total_banhos);
@@ -774,7 +814,7 @@ function openAlertsModal() {
   let html = '';
   
   if (urgentes.length) {
-    html += `<div style="margin-bottom:20px"><div style="font-size:11px;color:var(--gold margin-bottom:12px;font-weight:700">🟡 ÚLTIMO BANHO (URGENTE) — ${urgentes.length}</div>`;
+    html += `<div style="margin-bottom:20px"><div style="font-size:11px;color:var(--gold);margin-bottom:12px;font-weight:700">🟡 ÚLTIMO BANHO (URGENTE) — ${urgentes.length}</div>`;
     urgentes.forEach(c => {
       html += `<div class="alert-item"><div class="alert-icon">🟡</div><div class="alert-info"><div class="alert-name">${escapeHtml(c.pet_nome || c.cliente_nome)}</div><div class="alert-desc">${escapeHtml(c.cliente_nome)} · ${c.telefone || 'sem telefone'}</div></div></div>`;
     });
@@ -798,7 +838,7 @@ function openAlertsModal() {
 }
 
 // ============================================
-// EXPORTAR RELATÓRIO
+// EXPORTAÇÃO
 // ============================================
 function exportarRelatorio() {
   if (!clientes.length) {
@@ -831,9 +871,6 @@ function exportarRelatorio() {
   toast('Relatório exportado!', 'ok');
 }
 
-// ============================================
-// EXPORTAR HISTÓRICO DO CLIENTE
-// ============================================
 function exportarHistorico() {
   if (!currentHistoryId) return;
   const cliente = clientes.find(c => c.id === currentHistoryId);
@@ -857,9 +894,6 @@ function exportarHistorico() {
   toast('Histórico exportado!', 'ok');
 }
 
-// ============================================
-// SINCRONIZAR
-// ============================================
 function syncNow() {
   carregarDados();
   toast('🔄 Sincronizando...', 'ok');
