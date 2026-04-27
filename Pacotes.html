@@ -1,0 +1,628 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Loja 3 — Pacotes</title>
+
+<!-- PWA -->
+<meta name="application-name" content="Loja 3 Pacotes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pacotes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#07080D">
+
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+:root{
+  --bg:#07080D;
+  --s1:#0E1018;
+  --s2:#141620;
+  --border:#222840;
+  --border2:#2D3450;
+  --gold:#F9C224;
+  --goldd:#C4901A;
+  --goldf:rgba(249,194,36,.13);
+  --teal:#00E5B0;
+  --tealf:rgba(0,229,176,.1);
+  --rose:#FF2D55;
+  --rosef:rgba(255,45,85,.12);
+  --blue:#4DA6FF;
+  --bluef:rgba(77,166,255,.1);
+  --purple:#C48FFF;
+  --purplef:rgba(196,143,255,.1);
+  --green:#1DB954;
+  --greenf:rgba(29,185,84,.1);
+  --orange:#FF7A20;
+  --orangef:rgba(255,122,32,.1);
+  --text:#EEF2FF;
+  --muted:#5A6A8A;
+  --muted2:#2E3A52;
+  --title:'Bebas Neue',cursive;
+  --body:'DM Sans',sans-serif;
+  --mono:'DM Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:var(--body);color:var(--text);background:var(--bg);min-height:100vh;overflow-x:hidden}
+.app{max-width:430px;margin:0 auto;min-height:100vh;padding-bottom:100px;position:relative;z-index:1}
+
+/* Header */
+.hdr{padding:24px 20px 0;display:flex;align-items:center;justify-content:space-between}
+.hdr-brand{display:flex;align-items:center;gap:12px}
+.hdr-paw{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,var(--gold),var(--goldd));display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 0 28px rgba(249,194,36,.35)}
+.hdr-title{font-family:var(--title);font-size:28px;background:linear-gradient(135deg,#fff 30%,var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hdr-sub{font-size:10px;color:var(--muted);margin-top:2px}
+.bkp{padding:7px 12px;border-radius:20px;font-size:10px;font-family:var(--mono);font-weight:600;border:1.5px solid;cursor:pointer}
+.bkp.ok{background:var(--greenf);border-color:rgba(29,185,84,.35);color:var(--green)}
+.bkp.warn{background:rgba(249,194,36,.1);border-color:rgba(249,194,36,.4);color:var(--gold);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.55}}
+
+/* Alert Banner */
+.alert-banner{background:linear-gradient(135deg,rgba(255,45,85,.12),rgba(255,45,85,.03));border:1px solid rgba(255,45,85,.3);border-radius:14px;margin:16px 16px 0;padding:14px}
+.alert-title{font-size:9px;text-transform:uppercase;letter-spacing:2px;color:var(--rose);font-weight:700;margin-bottom:10px}
+.alert-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,45,85,.15)}
+.alert-item:last-child{border-bottom:none}
+.alert-icon{font-size:20px}
+.alert-info{flex:1}
+.alert-name{font-size:13px;font-weight:700}
+.alert-desc{font-size:9px;color:var(--muted);margin-top:2px}
+.alert-btn{padding:6px 12px;border-radius:8px;border:none;background:rgba(255,45,85,.2);color:var(--rose);font-size:10px;font-weight:600;cursor:pointer}
+
+/* Stats Row */
+.stats-row{display:flex;gap:8px;margin:16px 16px 0}
+.stat-card{flex:1;background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center}
+.stat-val{font-size:20px;font-weight:700;font-family:var(--mono)}
+.stat-label{font-size:8px;text-transform:uppercase;color:var(--muted);margin-top:4px;letter-spacing:.5px}
+.stat-card.green .stat-val{color:var(--green)}
+.stat-card.rose .stat-val{color:var(--rose)}
+.stat-card.gold .stat-val{color:var(--gold)}
+
+/* Search */
+.search-wrap{margin:16px 16px 8px}
+.search-input{width:100%;background:var(--s1);border:1.5px solid var(--border);border-radius:14px;padding:14px 16px;color:var(--text);font-family:var(--body);font-size:14px;outline:none}
+.search-input:focus{border-color:var(--gold)}
+
+/* Client List */
+.sec{margin:16px 16px 8px;font-size:9px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);display:flex;align-items:center;gap:8px}
+.sec::after{content:'';flex:1;height:1px;background:var(--border2)}
+
+.client-card{background:var(--s1);border:1.5px solid var(--border);border-radius:14px;margin:8px 16px;padding:16px;transition:all .15s}
+.client-card:active{transform:scale(.98)}
+.client-card.urgent{border-color:var(--rose);background:rgba(255,45,85,.05)}
+.client-card.warning{border-color:var(--gold);background:rgba(249,194,36,.05)}
+.client-header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.client-avatar{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--purple),var(--blue));display:flex;align-items:center;justify-content:center;font-size:22px}
+.client-info{flex:1}
+.client-name{font-size:15px;font-weight:700}
+.client-pet{font-size:11px;color:var(--muted);margin-top:2px}
+.client-badge{padding:4px 8px;border-radius:8px;font-size:9px;font-weight:700;background:rgba(90,106,138,.15)}
+.client-badge.semanal{background:rgba(77,166,255,.15);color:var(--blue)}
+.client-badge.quinzenal{background:rgba(0,229,176,.15);color:var(--teal)}
+.client-badge.mensal{background:rgba(249,194,36,.15);color:var(--gold)}
+.progress-wrap{margin:10px 0}
+.progress-bar{height:6px;background:var(--muted2);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;transition:width .3s}
+.progress-fill.green{background:var(--green)}
+.progress-fill.gold{background:var(--gold)}
+.progress-fill.rose{background:var(--rose)}
+.progress-text{font-size:10px;color:var(--muted);margin-top:4px}
+.client-dates{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin:8px 0}
+.client-buttons{display:flex;gap:8px;margin-top:12px}
+.btn-checkin{flex:2;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--green),#138A40);color:#000;font-weight:700;font-size:13px;cursor:pointer}
+.btn-call{flex:1;padding:12px;border-radius:10px;border:1.5px solid var(--border2);background:transparent;color:var(--text);font-size:13px;cursor:pointer}
+.btn-history{flex:1;padding:12px;border-radius:10px;border:1.5px solid var(--border2);background:transparent;color:var(--text);font-size:13px;cursor:pointer}
+.btn-checkin:active,.btn-call:active,.btn-history:active{transform:scale(.96)}
+
+/* Empty state */
+.empty{text-align:center;padding:60px 20px;color:var(--muted)}
+.empty-icon{font-size:48px;opacity:.3;margin-bottom:12px}
+
+/* Bottom Bar */
+.bottom-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;display:flex;gap:8px;padding:12px 16px 28px;background:linear-gradient(to top,var(--bg) 70%,transparent);z-index:50}
+.bottom-btn{flex:1;padding:14px;border-radius:12px;border:none;font-weight:700;font-size:12px;cursor:pointer;transition:all .15s}
+.bottom-btn:active{transform:scale(.96)}
+.btn-new{background:linear-gradient(135deg,var(--purple),#7B4ECC);color:#fff}
+.btn-report{background:rgba(0,229,176,.1);border:1.5px solid rgba(0,229,176,.3);color:var(--teal)}
+.btn-alerts{background:rgba(249,194,36,.1);border:1.5px solid rgba(249,194,36,.3);color:var(--gold);position:relative}
+
+/* Modal */
+.modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+.modal.show{display:flex}
+.modal-content{background:var(--s1);border:1px solid var(--border);border-radius:20px;width:100%;max-width:380px;max-height:85vh;overflow-y:auto}
+.modal-header{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.modal-title{font-size:16px;font-weight:700}
+.modal-close{background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer}
+.modal-body{padding:20px}
+.modal-footer{padding:16px 20px;border-top:1px solid var(--border);display:flex;gap:10px}
+
+/* Form */
+.form-group{margin-bottom:16px}
+.form-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700;margin-bottom:6px;display:block}
+.form-input,.form-select{width:100%;background:var(--bg);border:1.5px solid var(--border2);border-radius:10px;padding:12px 14px;color:var(--text);font-family:var(--body);font-size:14px;outline:none}
+.form-input:focus,.form-select:focus{border-color:var(--gold)}
+.form-row{display:flex;gap:10px}
+.form-row .form-group{flex:1}
+
+/* Toast */
+.toast{position:fixed;top:22px;left:50%;z-index:999;transform:translateX(-50%) translateY(-90px);padding:11px 20px;border-radius:24px;font-size:13px;font-weight:700;border:1px solid;transition:transform .3s;backdrop-filter:blur(12px)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.ok{background:rgba(29,185,84,.15);border-color:rgba(29,185,84,.4);color:var(--green)}
+.toast.err{background:rgba(255,45,85,.15);border-color:rgba(255,45,85,.4);color:var(--rose)}
+.toast.warn{background:rgba(249,194,36,.12);border-color:rgba(249,194,36,.4);color:var(--gold)}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="hdr">
+  <div class="hdr-brand">
+    <div class="hdr-paw">🐾</div>
+    <div>
+      <div class="hdr-title">PACOTES</div>
+      <div class="hdr-sub">controle de clientes</div>
+    </div>
+  </div>
+  <div class="bkp ok" id="bkpBadge" onclick="syncNow()">💾 ok</div>
+</div>
+
+<!-- Alert Banner -->
+<div id="alertBanner" style="display:none">
+  <div class="alert-banner">
+    <div class="alert-title">⚠️ PRECISAM DE ATENÇÃO</div>
+    <div id="alertList"></div>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-row">
+  <div class="stat-card green"><div class="stat-val" id="statAtivos">0</div><div class="stat-label">ATIVOS</div></div>
+  <div class="stat-card"><div class="stat-val" id="statUsos">0</div><div class="stat-label">USOS/MÊS</div></div>
+  <div class="stat-card gold"><div class="stat-val" id="statRenovar">0</div><div class="stat-label">RENOVAR</div></div>
+  <div class="stat-card rose"><div class="stat-val" id="statVencidos">0</div><div class="stat-label">VENCIDOS</div></div>
+</div>
+
+<!-- Search -->
+<div class="search-wrap">
+  <input type="text" class="search-input" id="searchInput" placeholder="🔎 Buscar cliente ou pet...">
+</div>
+
+<div class="sec">🐕 CLIENTES COM PACOTE ATIVO</div>
+<div id="clientList"></div>
+
+<!-- Bottom Bar -->
+<div class="bottom-bar">
+  <button class="bottom-btn btn-new" onclick="openNewModal()">➕ NOVO</button>
+  <button class="bottom-btn btn-report" onclick="exportarRelatorio()">📊 RELATÓRIO</button>
+  <button class="bottom-btn btn-alerts" onclick="openAlertsModal()">🔔 ALERTAS</button>
+</div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Modal Novo Pacote -->
+<div id="newModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <span class="modal-title">📝 NOVO PACOTE</span>
+      <button class="modal-close" onclick="closeNewModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">NOME DO TUTOR</label><input type="text" id="newNome" class="form-input" placeholder="Ex: João Silva"></div>
+      <div class="form-group"><label class="form-label">NOME DO PET</label><input type="text" id="newPet" class="form-input" placeholder="Ex: Rex"></div>
+      <div class="form-group"><label class="form-label">TELEFONE</label><input type="tel" id="newTelefone" class="form-input" placeholder="(11) 99999-9999"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">TIPO</label><select id="newTipo" class="form-select"><option value="semanal">📅 Semanal (4 banhos)</option><option value="quinzenal">📅 Quinzenal (2 banhos)</option><option value="mensal">📅 Mensal (4 banhos)</option></select></div>
+        <div class="form-group"><label class="form-label">VALOR (R$)</label><input type="number" id="newValor" class="form-input" placeholder="120,00" step="10"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">DATA INÍCIO</label><input type="date" id="newInicio" class="form-input"></div>
+      </div>
+      <div class="form-group"><label class="form-label">OBSERVAÇÃO</label><input type="text" id="newObs" class="form-input" placeholder="Raça, alergias, etc."></div>
+    </div>
+    <div class="modal-footer">
+      <button class="bottom-btn btn-new" style="flex:1;background:linear-gradient(135deg,var(--green),#138A40);color:#000" onclick="salvarPacote()">💾 SALVAR</button>
+      <button class="bottom-btn" style="flex:1;background:transparent;border:1.5px solid var(--border2)" onclick="closeNewModal()">CANCELAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Histórico -->
+<div id="historyModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <span class="modal-title" id="historyTitle">📜 HISTÓRICO</span>
+      <button class="modal-close" onclick="closeHistoryModal()">✕</button>
+    </div>
+    <div class="modal-body" id="historyBody"></div>
+    <div class="modal-footer">
+      <button class="bottom-btn btn-report" style="flex:1" onclick="exportarHistorico()">📤 EXPORTAR</button>
+      <button class="bottom-btn" style="flex:1;background:transparent;border:1.5px solid var(--border2)" onclick="closeHistoryModal()">FECHAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Alertas -->
+<div id="alertsModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <span class="modal-title">🔔 CENTRAL DE ALERTAS</span>
+      <button class="modal-close" onclick="closeAlertsModal()">✕</button>
+    </div>
+    <div class="modal-body" id="alertsBody"></div>
+    <div class="modal-footer">
+      <button class="bottom-btn btn-new" style="flex:1" onclick="marcarTodosLidos()">✅ MARCAR TODOS</button>
+      <button class="bottom-btn" style="flex:1;background:transparent;border:1.5px solid var(--border2)" onclick="closeAlertsModal()">FECHAR</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Supabase config
+const SUPA_URL = "https://wyibsreqdvnllzuzjvgr.supabase.co";
+const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind5aWJzcmVxZHZubGx6dXpqdmdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1NTc5MzEsImV4cCI6MjA5MjEzMzkzMX0.AbK_8f8NKvwHbDgvDJthibFKrUW8fFJmR2YGnjq7ovs";
+const supabase = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+let clientes = [];
+let historico = [];
+let currentHistoryId = null;
+
+// Toast
+function toast(msg, type = 'ok') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast ' + type + ' show';
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// Carregar dados
+async function carregarDados() {
+  try {
+    const { data, error } = await supabase.from('pacotes_clientes').select('*').order('cliente_nome');
+    if (error) throw error;
+    clientes = data || [];
+    
+    const { data: hist, error: histErr } = await supabase.from('pacotes_historico').select('*').order('data_uso', { ascending: false });
+    if (!histErr) historico = hist || [];
+    
+    renderClientes();
+    atualizarStats();
+    atualizarAlertas();
+    atualizarBadge();
+  } catch (e) {
+    console.error(e);
+    toast('Erro ao carregar dados', 'err');
+  }
+}
+
+// Calcular status do pacote
+function calcularStatus(cliente) {
+  const hoje = new Date();
+  const usosRestantes = cliente.total_banhos - cliente.usos_realizados;
+  const ultimoUso = cliente.ultimo_uso ? new Date(cliente.ultimo_uso) : new Date(cliente.data_inicio);
+  let status = 'ok';
+  let statusText = '';
+  let cor = 'green';
+  
+  if (usosRestantes <= 0) {
+    status = 'vencido';
+    statusText = '🔴 PACOTE VENCIDO';
+    cor = 'rose';
+  } else if (usosRestantes === 1) {
+    status = 'urgent';
+    statusText = '🟡 ÚLTIMO BANHO! Renove esta semana';
+    cor = 'gold';
+  } else {
+    statusText = `🟢 ${usosRestantes} banhos restantes`;
+    cor = 'green';
+  }
+  
+  // Calcular próximo uso baseado no tipo
+  let proximoUso = null;
+  if (cliente.tipo_pacote === 'semanal' && cliente.ultimo_uso) {
+    proximoUso = new Date(cliente.ultimo_uso);
+    proximoUso.setDate(proximoUso.getDate() + 7);
+  } else if (cliente.tipo_pacote === 'quinzenal' && cliente.ultimo_uso) {
+    proximoUso = new Date(cliente.ultimo_uso);
+    proximoUso.setDate(proximoUso.getDate() + 15);
+  }
+  
+  return { status, statusText, cor, usosRestantes, proximoUso };
+}
+
+// Renderizar lista
+function renderClientes() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const filtrados = clientes.filter(c => 
+    c.cliente_nome.toLowerCase().includes(search) || 
+    (c.pet_nome && c.pet_nome.toLowerCase().includes(search))
+  );
+  
+  const container = document.getElementById('clientList');
+  if (!filtrados.length) {
+    container.innerHTML = `<div class="empty"><div class="empty-icon">🐕</div><p>Nenhum cliente encontrado</p></div>`;
+    return;
+  }
+  
+  container.innerHTML = filtrados.map(c => {
+    const stat = calcularStatus(c);
+    const percent = (c.usos_realizados / c.total_banhos) * 100;
+    const badgeClass = c.tipo_pacote === 'semanal' ? 'semanal' : (c.tipo_pacote === 'quinzenal' ? 'quinzenal' : 'mensal');
+    const badgeText = c.tipo_pacote === 'semanal' ? '📅 Semanal' : (c.tipo_pacote === 'quinzenal' ? '📅 Quinzenal' : '📅 Mensal');
+    
+    return `
+      <div class="client-card ${stat.status === 'urgent' ? 'warning' : (stat.status === 'vencido' ? 'urgent' : '')}">
+        <div class="client-header">
+          <div class="client-avatar">🐕</div>
+          <div class="client-info">
+            <div class="client-name">${c.cliente_nome}</div>
+            <div class="client-pet">${c.pet_nome || 'Pet não informado'} • ${c.telefone || 'sem telefone'}</div>
+          </div>
+          <div class="client-badge ${badgeClass}">${badgeText}</div>
+        </div>
+        
+        <div class="progress-wrap">
+          <div class="progress-bar"><div class="progress-fill ${stat.cor}" style="width:${percent}%"></div></div>
+          <div class="progress-text">${c.usos_realizados} de ${c.total_banhos} banhos usados</div>
+        </div>
+        
+        <div class="client-dates">
+          <span>📅 Início: ${formatarData(c.data_inicio)}</span>
+          <span>⏰ ${stat.statusText}</span>
+        </div>
+        
+        <div class="client-buttons">
+          <button class="btn-checkin" onclick="registrarUso(${c.id})">✅ VEIO HOJE</button>
+          <button class="btn-call" onclick="ligarCliente('${c.telefone}')">📞 LIGAR</button>
+          <button class="btn-history" onclick="verHistorico(${c.id})">📜 HISTÓRICO</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Registrar uso (check-in)
+async function registrarUso(id) {
+  const cliente = clientes.find(c => c.id === id);
+  if (!cliente) return;
+  
+  const hoje = new Date().toISOString().slice(0,10);
+  const novosUsos = cliente.usos_realizados + 1;
+  const vencido = novosUsos >= cliente.total_banhos;
+  
+  try {
+    const { error } = await supabase.from('pacotes_clientes')
+      .update({
+        usos_realizados: novosUsos,
+        ultimo_uso: hoje,
+        status: vencido ? 'vencido' : 'ativo',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id);
+    
+    if (error) throw error;
+    
+    // Registrar no histórico
+    await supabase.from('pacotes_historico').insert({
+      cliente_id: id,
+      cliente_nome: cliente.cliente_nome,
+      pet_nome: cliente.pet_nome,
+      data_uso: hoje,
+      tipo_pacote: cliente.tipo_pacote,
+      usos_restantes: cliente.total_banhos - novosUsos
+    });
+    
+    toast(`✅ ${cliente.pet_nome || cliente.cliente_nome} - banho registrado!`, 'ok');
+    carregarDados();
+  } catch (e) {
+    console.error(e);
+    toast('Erro ao registrar uso', 'err');
+  }
+}
+
+// Ver histórico
+async function verHistorico(id) {
+  currentHistoryId = id;
+  const cliente = clientes.find(c => c.id === id);
+  const hist = historico.filter(h => h.cliente_id === id);
+  
+  document.getElementById('historyTitle').innerHTML = `📜 ${cliente.pet_nome || cliente.cliente_nome}`;
+  
+  if (!hist.length) {
+    document.getElementById('historyBody').innerHTML = '<div class="empty"><div class="empty-icon">📭</div><p>Nenhum registro ainda</p></div>';
+  } else {
+    document.getElementById('historyBody').innerHTML = `
+      <div style="margin-bottom:16px;padding:12px;background:rgba(90,106,138,.08);border-radius:12px">
+        <div><strong>${cliente.cliente_nome}</strong> · ${cliente.pet_nome || ''}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">📞 ${cliente.telefone || '—'} | 📦 ${cliente.tipo_pacote}</div>
+      </div>
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:12px">🔽 HISTÓRICO DE USOS</div>
+      ${hist.map(h => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border2)">
+          <span>✅ ${formatarData(h.data_uso)}</span>
+          <span style="font-size:11px;color:var(--muted)">restantes: ${h.usos_restantes}</span>
+        </div>
+      `).join('')}
+    `;
+  }
+  
+  document.getElementById('historyModal').classList.add('show');
+}
+
+// Salvar novo pacote
+async function salvarPacote() {
+  const nome = document.getElementById('newNome').value.trim();
+  const pet = document.getElementById('newPet').value.trim();
+  const telefone = document.getElementById('newTelefone').value.trim();
+  const tipo = document.getElementById('newTipo').value;
+  const valor = parseFloat(document.getElementById('newValor').value) || 0;
+  const inicio = document.getElementById('newInicio').value;
+  const obs = document.getElementById('newObs').value;
+  
+  if (!nome) { toast('Nome do tutor é obrigatório', 'err'); return; }
+  if (!inicio) { toast('Data de início é obrigatória', 'err'); return; }
+  
+  const totalBanhos = tipo === 'semanal' ? 4 : (tipo === 'quinzenal' ? 2 : 4);
+  
+  try {
+    const { data, error } = await supabase.from('pacotes_clientes').insert({
+      cliente_nome: nome,
+      pet_nome: pet,
+      telefone: telefone,
+      tipo_pacote: tipo,
+      total_banhos: totalBanhos,
+      usos_realizados: 0,
+      data_inicio: inicio,
+      valor_mensal: valor,
+      observacao: obs,
+      status: 'ativo'
+    }).select();
+    
+    if (error) throw error;
+    
+    toast(`✅ ${pet || nome} cadastrado com sucesso!`, 'ok');
+    closeNewModal();
+    carregarDados();
+  } catch (e) {
+    console.error(e);
+    toast('Erro ao salvar', 'err');
+  }
+}
+
+// Atualizar estatísticas
+function atualizarStats() {
+  const ativos = clientes.filter(c => c.status === 'ativo' && c.usos_realizados < c.total_banhos).length;
+  const vencidos = clientes.filter(c => c.usos_realizados >= c.total_banhos).length;
+  const renovar = clientes.filter(c => (c.total_banhos - c.usos_realizados) === 1).length;
+  const usosMes = historico.filter(h => {
+    const data = new Date(h.data_uso);
+    const hoje = new Date();
+    return data.getMonth() === hoje.getMonth() && data.getFullYear() === hoje.getFullYear();
+  }).length;
+  
+  document.getElementById('statAtivos').textContent = ativos;
+  document.getElementById('statUsos').textContent = usosMes;
+  document.getElementById('statRenovar').textContent = renovar;
+  document.getElementById('statVencidos').textContent = vencidos;
+}
+
+// Atualizar alertas
+function atualizarAlertas() {
+  const urgentes = clientes.filter(c => (c.total_banhos - c.usos_realizados) === 1 && c.status !== 'vencido');
+  const vencidos = clientes.filter(c => c.usos_realizados >= c.total_banhos);
+  
+  const temAlertas = urgentes.length > 0 || vencidos.length > 0;
+  document.getElementById('alertBanner').style.display = temAlertas ? 'block' : 'none';
+  
+  if (temAlertas) {
+    let html = '';
+    urgentes.forEach(c => {
+      html += `<div class="alert-item"><div class="alert-icon">🟡</div><div class="alert-info"><div class="alert-name">${c.pet_nome || c.cliente_nome}</div><div class="alert-desc">Último banho! Renove esta semana</div></div><button class="alert-btn" onclick="ligarCliente('${c.telefone}')">📞 LIGAR</button></div>`;
+    });
+    vencidos.slice(0, 2).forEach(c => {
+      html += `<div class="alert-item"><div class="alert-icon">🔴</div><div class="alert-info"><div class="alert-name">${c.pet_nome || c.cliente_nome}</div><div class="alert-desc">Pacote vencido! Cliente precisa renovar</div></div><button class="alert-btn" onclick="ligarCliente('${c.telefone}')">📞 LIGAR</button></div>`;
+    });
+    document.getElementById('alertList').innerHTML = html;
+  }
+}
+
+// Central de alertas (modal)
+function openAlertsModal() {
+  const urgentes = clientes.filter(c => (c.total_banhos - c.usos_realizados) === 1 && c.status !== 'vencido');
+  const vencidos = clientes.filter(c => c.usos_realizados >= c.total_banhos);
+  const proximos = clientes.filter(c => {
+    if (!c.ultimo_uso || c.status === 'vencido') return false;
+    const prox = new Date(c.ultimo_uso);
+    if (c.tipo_pacote === 'semanal') prox.setDate(prox.getDate() + 7);
+    else if (c.tipo_pacote === 'quinzenal') prox.setDate(prox.getDate() + 15);
+    const diasRestantes = Math.ceil((prox - new Date()) / (1000*60*60*24));
+    return diasRestantes <= 3 && diasRestantes > 0;
+  });
+  
+  let html = '';
+  if (urgentes.length) {
+    html += `<div style="margin-bottom:16px"><div style="font-size:11px;color:var(--gold);margin-bottom:8px">🟡 ÚLTIMO BANHO (URGENTE)</div>`;
+    urgentes.forEach(c => {
+      html += `<div class="alert-item"><div class="alert-icon">🟡</div><div class="alert-info"><div class="alert-name">${c.pet_nome || c.cliente_nome}</div><div class="alert-desc">${c.cliente_nome} · ${c.telefone || 'sem telefone'}</div></div><button class="alert-btn" onclick="ligarCliente('${c.telefone}')">📞 LIGAR</button></div>`;
+    });
+    html += `</div>`;
+  }
+  if (proximos.length) {
+    html += `<div style="margin-bottom:16px"><div style="font-size:11px;color:var(--teal);margin-bottom:8px">🔵 PRÓXIMOS DIAS</div>`;
+    proximos.forEach(c => {
+      html += `<div class="alert-item"><div class="alert-icon">🔵</div><div class="alert-info"><div class="alert-name">${c.pet_nome || c.cliente_nome}</div><div class="alert-desc">${c.cliente_nome} · vence em breve</div></div><button class="alert-btn" onclick="ligarCliente('${c.telefone}')">📞 LIGAR</button></div>`;
+    });
+    html += `</div>`;
+  }
+  if (vencidos.length) {
+    html += `<div><div style="font-size:11px;color:var(--rose);margin-bottom:8px">🔴 VENCIDOS</div>`;
+    vencidos.forEach(c => {
+      html += `<div class="alert-item"><div class="alert-icon">🔴</div><div class="alert-info"><div class="alert-name">${c.pet_nome || c.cliente_nome}</div><div class="alert-desc">${c.cliente_nome} · renovação pendente</div></div><button class="alert-btn" onclick="ligarCliente('${c.telefone}')">📞 LIGAR</button></div>`;
+    });
+    html += `</div>`;
+  }
+  if (!urgentes.length && !proximos.length && !vencidos.length) {
+    html = '<div class="empty"><div class="empty-icon">✅</div><p>Nenhum alerta no momento</p></div>';
+  }
+  
+  document.getElementById('alertsBody').innerHTML = html;
+  document.getElementById('alertsModal').classList.add('show');
+}
+
+// Exportar relatório
+function exportarRelatorio() {
+  const wsData = [['Cliente', 'Pet', 'Telefone', 'Tipo', 'Usos', 'Total', 'Status', 'Início', 'Último Uso']];
+  clientes.forEach(c => {
+    wsData.push([
+      c.cliente_nome,
+      c.pet_nome || '',
+      c.telefone || '',
+      c.tipo_pacote,
+      c.usos_realizados,
+      c.total_banhos,
+      c.usos_realizados >= c.total_banhos ? 'VENCIDO' : 'ATIVO',
+      c.data_inicio,
+      c.ultimo_uso || ''
+    ]);
+  });
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  XLSX.utils.book_append_sheet(wb, ws, 'pacotes');
+  XLSX.writeFile(wb, `pacotes_${new Date().toISOString().slice(0,10)}.xlsx`);
+  toast('Relatório exportado!', 'ok');
+}
+
+// Exportar histórico do cliente
+function exportarHistorico() {
+  if (!currentHistoryId) return;
+  const hist = historico.filter(h => h.cliente_id === currentHistoryId);
+  const cliente = clientes.find(c => c.id === currentHistoryId);
+  const wsData = [['Data do Banho', 'Usos Restantes', 'Tipo Pacote']];
+  hist.forEach(h => {
+    wsData.push([h.data_uso, h.usos_restantes, h.tipo_pacote]);
+  });
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  XLSX.utils.book_append_sheet(wb, ws, `historico_${cliente?.pet_nome || cliente?.cliente_nome}`);
+  XLSX.writeFile(wb, `historico_${cliente?.pet_nome || cliente?.cliente_nome}_${new Date().toISOString().slice(0,10)}.xlsx`);
+  toast('Histórico exportado!', 'ok');
+}
+
+function ligarCliente(telefone) { if (telefone) window.location.href = `tel:${telefone}`; else toast('Telefone não cadastrado', 'err'); }
+function formatarData(data) { if (!data) return '—'; const d = new Date(data); return `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}`; }
+function marcarTodosLidos() { closeAlertsModal(); toast('Alertas marcados como lidos', 'ok'); }
+function syncNow() { carregarDados(); toast('Sincronizando...', 'ok'); }
+function atualizarBadge() { const vencidos = clientes.filter(c => c.usos_realizados >= c.total_banhos).length; const el = document.getElementById('bkpBadge'); if (vencidos > 0) { el.className = 'bkp warn'; el.textContent = `⚠️ ${vencidos}`; } else { el.className = 'bkp ok'; el.textContent = '💾 ok'; } }
+function openNewModal() { document.getElementById('newModal').classList.add('show'); document.getElementById('newInicio').value = new Date().toISOString().slice(0,10); }
+function closeNewModal() { document.getElementById('newModal').classList.remove('show'); document.getElementById('newNome').value = ''; document.getElementById('newPet').value = ''; document.getElementById('newTelefone').value = ''; document.getElementById('newValor').value = ''; document.getElementById('newObs').value = ''; }
+function closeHistoryModal() { document.getElementById('historyModal').classList.remove('show'); currentHistoryId = null; }
+function closeAlertsModal() { document.getElementById('alertsModal').classList.remove('show'); }
+document.getElementById('searchInput').addEventListener('input', renderClientes);
+carregarDados();
+</script>
+</body>
+</html>
