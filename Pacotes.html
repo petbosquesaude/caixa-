@@ -26,11 +26,19 @@
   --border2:#2D3450;
   --gold:#F9C224;
   --goldd:#C4901A;
+  --goldf:rgba(249,194,36,.13);
   --teal:#00E5B0;
+  --tealf:rgba(0,229,176,.1);
   --rose:#FF2D55;
+  --rosef:rgba(255,45,85,.12);
   --blue:#4DA6FF;
+  --bluef:rgba(77,166,255,.1);
   --purple:#C48FFF;
+  --purplef:rgba(196,143,255,.1);
   --green:#1DB954;
+  --greenf:rgba(29,185,84,.1);
+  --orange:#FF7A20;
+  --orangef:rgba(255,122,32,.1);
   --text:#EEF2FF;
   --muted:#5A6A8A;
   --muted2:#2E3A52;
@@ -49,9 +57,9 @@ body{font-family:var(--body);color:var(--text);background:var(--bg);min-height:1
 .hdr-title{font-family:var(--title);font-size:28px;background:linear-gradient(135deg,#fff 30%,var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .hdr-sub{font-size:10px;color:var(--muted);margin-top:2px}
 .bkp{padding:7px 12px;border-radius:20px;font-size:10px;font-family:var(--mono);font-weight:600;border:1.5px solid;cursor:pointer}
-.bkp.ok{background:rgba(29,185,84,.15);border-color:rgba(29,185,84,.35);color:var(--green)}
+.bkp.ok{background:var(--greenf);border-color:rgba(29,185,84,.35);color:var(--green)}
 .bkp.warn{background:rgba(249,194,36,.1);border-color:rgba(249,194,36,.4);color:var(--gold);animation:blink 2s infinite}
-.bkp.bad{background:rgba(255,45,85,.15);border-color:rgba(255,45,85,.4);color:var(--rose)}
+.bkp.bad{background:var(--rosef);border-color:rgba(255,45,85,.4);color:var(--rose)}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.55}}
 
 /* Alert Banner */
@@ -61,6 +69,7 @@ body{font-family:var(--body);color:var(--text);background:var(--bg);min-height:1
 .alert-item:last-child{padding-bottom:0}
 .alert-name{font-size:13px;font-weight:700;color:var(--gold)}
 .alert-desc{font-size:9px;color:var(--muted);margin-top:2px}
+.alert-btn{padding:6px 12px;border-radius:8px;border:none;background:rgba(249,194,36,.2);color:var(--gold);font-size:10px;font-weight:600;cursor:pointer}
 
 /* Stats Row */
 .stats-row{display:flex;gap:8px;margin:16px 16px 0}
@@ -82,8 +91,9 @@ body{font-family:var(--body);color:var(--text);background:var(--bg);min-height:1
 .sec::after{content:'';flex:1;height:1px;background:var(--border2)}
 
 .client-card{background:var(--s1);border:1.5px solid var(--border);border-radius:14px;margin:8px 16px;padding:16px;transition:all .15s}
-.client-card.vencido{border-color:var(--rose);background:rgba(255,45,85,.05)}
-.client-card.ultimo{border-color:var(--gold);background:rgba(249,194,36,.05)}
+.client-card:active{transform:scale(.98)}
+.client-card.urgent{border-color:var(--rose);background:rgba(255,45,85,.05)}
+.client-card.warning{border-color:var(--gold);background:rgba(249,194,36,.05)}
 .client-header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
 .client-avatar{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--purple),var(--blue));display:flex;align-items:center;justify-content:center;font-size:22px}
 .client-info{flex:1}
@@ -102,10 +112,11 @@ body{font-family:var(--body);color:var(--text);background:var(--bg);min-height:1
 .progress-text{font-size:10px;color:var(--muted);margin-top:4px}
 .client-dates{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin:8px 0}
 .client-buttons{display:flex;gap:8px;margin-top:12px}
-.btn-checkin{flex:1;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--green),#138A40);color:#000;font-weight:700;font-size:13px;cursor:pointer}
+.btn-checkin{flex:2;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--green),#138A40);color:#000;font-weight:700;font-size:13px;cursor:pointer}
 .btn-history{flex:1;padding:12px;border-radius:10px;border:1.5px solid var(--border2);background:transparent;color:var(--text);font-size:13px;cursor:pointer}
 .btn-renew{flex:1;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--gold),var(--goldd));color:#000;font-weight:700;font-size:13px;cursor:pointer}
 .btn-checkin:active,.btn-history:active,.btn-renew:active{transform:scale(.96)}
+.btn-checkin.disabled{opacity:0.5;cursor:not-allowed}
 
 /* Empty state */
 .empty{text-align:center;padding:60px 20px;color:var(--muted)}
@@ -117,7 +128,7 @@ body{font-family:var(--body);color:var(--text);background:var(--bg);min-height:1
 .bottom-btn:active{transform:scale(.96)}
 .btn-new{background:linear-gradient(135deg,var(--purple),#7B4ECC);color:#fff}
 .btn-report{background:rgba(0,229,176,.1);border:1.5px solid rgba(0,229,176,.3);color:var(--teal)}
-.btn-alerts{background:rgba(249,194,36,.1);border:1.5px solid rgba(249,194,36,.3);color:var(--gold)}
+.btn-alerts{background:rgba(249,194,36,.1);border:1.5px solid rgba(249,194,36,.3);color:var(--gold);position:relative}
 
 /* Modal */
 .modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
@@ -146,6 +157,7 @@ body{font-family:var(--body);color:var(--text);background:var(--bg);min-height:1
 .history-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border2)}
 .history-date{font-family:var(--mono);font-size:12px}
 .history-rest{font-size:11px;color:var(--muted)}
+.history-badge{padding:2px 8px;border-radius:6px;font-size:9px;background:rgba(0,229,176,.1);color:var(--teal)}
 
 /* Toast */
 .toast{position:fixed;top:22px;left:50%;z-index:999;transform:translateX(-50%) translateY(-90px);padding:11px 20px;border-radius:24px;font-size:13px;font-weight:700;border:1px solid;transition:transform .3s;backdrop-filter:blur(12px);white-space:nowrap}
@@ -166,7 +178,7 @@ body{font-family:var(--body);color:var(--text);background:var(--bg);min-height:1
       <div class="hdr-sub">controle de clientes</div>
     </div>
   </div>
-  <div class="bkp ok" id="bkpBadge" onclick="syncNow()">💾 sinc</div>
+  <div class="bkp ok" id="bkpBadge" onclick="syncNow()">💾 sincronizar</div>
 </div>
 
 <!-- Alert Banner -->
@@ -181,7 +193,7 @@ body{font-family:var(--body);color:var(--text);background:var(--bg);min-height:1
 <div class="stats-row">
   <div class="stat-card green"><div class="stat-val" id="statAtivos">0</div><div class="stat-label">ATIVOS</div></div>
   <div class="stat-card blue"><div class="stat-val" id="statUsos">0</div><div class="stat-label">USOS/MÊS</div></div>
-  <div class="stat-card gold"><div class="stat-val" id="statUltimo">0</div><div class="stat-label">ÚLTIMO BANHO</div></div>
+  <div class="stat-card gold"><div class="stat-val" id="statRenovar">0</div><div class="stat-label">ÚLTIMO BANHO</div></div>
   <div class="stat-card rose"><div class="stat-val" id="statVencidos">0</div><div class="stat-label">VENCIDOS</div></div>
 </div>
 
@@ -295,6 +307,9 @@ let historico = [];
 let currentHistoryId = null;
 let selectedDiaSemana = 'sexta';
 
+// ============================================
+// UTILITÁRIOS
+// ============================================
 function toast(msg, type = 'ok') {
   const el = document.getElementById('toast');
   el.textContent = msg;
@@ -309,7 +324,7 @@ function formatarData(data) {
 }
 
 // ============================================
-// CARREGAR DADOS
+// CARREGAR DADOS DO SUPABASE
 // ============================================
 async function carregarDados() {
   try {
@@ -324,7 +339,7 @@ async function carregarDados() {
     const { data: historicoData, error: historicoError } = await supabaseClient
       .from('app_pacotes_historico')
       .select('*')
-      .order('data_evento', { ascending: false });
+      .order('data_uso', { ascending: false });
     
     if (!historicoError) historico = historicoData || [];
 
@@ -337,52 +352,157 @@ async function carregarDados() {
       toast(`✅ ${clientes.length} clientes carregados`, 'ok');
     }
   } catch (e) {
-    console.error(e);
-    toast('Erro ao carregar dados', 'err');
-    document.getElementById('clientList').innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><p>Erro de conexão</p></div>`;
+    console.error('Erro ao carregar:', e);
+    toast('Erro ao carregar dados do servidor', 'err');
+    document.getElementById('clientList').innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><p>Erro de conexão com o servidor<br>Verifique sua internet</p></div>`;
   }
 }
 
 // ============================================
-// REGISTRAR PRESENÇA (SÓ ISSO VAI PARA O HISTÓRICO)
+// CALCULAR STATUS DO PACOTE
 // ============================================
-async function registrarPresenca(id) {
+function calcularStatus(cliente) {
+  const usosRestantes = cliente.total_banhos - cliente.usos_realizados;
+  let status = 'ok';
+  let statusText = '';
+  let cor = 'green';
+  
+  if (usosRestantes <= 0) {
+    status = 'vencido';
+    statusText = '🔴 PACOTE VENCIDO';
+    cor = 'rose';
+  } else if (usosRestantes === 1) {
+    status = 'urgent';
+    statusText = '🟡 ÚLTIMO BANHO! Renove esta semana';
+    cor = 'gold';
+  } else {
+    statusText = `🟢 ${usosRestantes} banhos restantes`;
+    cor = 'green';
+  }
+  
+  return { status, statusText, cor, usosRestantes };
+}
+
+// ============================================
+// RENDERIZAR LISTA DE CLIENTES
+// ============================================
+function renderClientes() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const filtrados = clientes.filter(c => 
+    c.cliente_nome.toLowerCase().includes(search) || 
+    (c.pet_nome && c.pet_nome.toLowerCase().includes(search))
+  );
+  
+  const container = document.getElementById('clientList');
+  if (!filtrados.length) {
+    container.innerHTML = `<div class="empty"><div class="empty-icon">🐕</div><p>Nenhum cliente encontrado</p></div>`;
+    return;
+  }
+  
+  container.innerHTML = filtrados.map(c => {
+    const stat = calcularStatus(c);
+    const percent = (c.usos_realizados / c.total_banhos) * 100;
+    const badgeClass = c.tipo_frequencia;
+    const badgeText = c.tipo_frequencia === 'semanal' ? '📅 Semanal' : (c.tipo_frequencia === 'quinzenal' ? '📅 Quinzenal' : '📅 Mensal');
+    const vencido = c.usos_realizados >= c.total_banhos;
+    
+    return `
+      <div class="client-card ${stat.status === 'urgent' ? 'warning' : (stat.status === 'vencido' ? 'urgent' : '')}">
+        <div class="client-header">
+          <div class="client-avatar">🐕</div>
+          <div class="client-info">
+            <div class="client-name">${escapeHtml(c.cliente_nome)}</div>
+            <div class="client-pet">${c.pet_nome ? escapeHtml(c.pet_nome) : 'Pet não informado'} • ${c.telefone || 'sem telefone'}</div>
+          </div>
+          <div class="client-badge ${badgeClass}">${badgeText}</div>
+        </div>
+        
+        <div class="progress-wrap">
+          <div class="progress-bar"><div class="progress-fill ${stat.cor}" style="width:${percent}%"></div></div>
+          <div class="progress-text">${c.usos_realizados} de ${c.total_banhos} banhos usados</div>
+        </div>
+        
+        <div class="client-dates">
+          <span>📅 Início: ${formatarData(c.data_inicio)}</span>
+          <span>📅 Pagamento: ${formatarData(c.data_pagamento) || '—'}</span>
+          <span>⏰ ${stat.statusText}</span>
+        </div>
+        
+        <div class="client-buttons">
+          ${!vencido ? `<button class="btn-checkin" onclick="registrarUso(${c.id})">✅ VEIO HOJE</button>` : `<button class="btn-renew" onclick="renovarPacote(${c.id})">💰 RENOVAR</button>`}
+          <button class="btn-history" onclick="verHistorico(${c.id})">📜 HISTÓRICO</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function escapeHtml(text) {
+  if (!text) return '';
+  return text.replace(/[&<>]/g, function(m) {
+    if (m === '&') return '&amp;';
+    if (m === '<') return '&lt;';
+    if (m === '>') return '&gt;';
+    return m;
+  });
+}
+
+// ============================================
+// REGISTRAR USO (CHECK-IN) COM PREVENÇÃO DE DUPLICATA
+// ============================================
+async function registrarUso(id) {
   const cliente = clientes.find(c => c.id === id);
   if (!cliente) return;
   
   const hoje = new Date().toISOString().slice(0, 10);
-  const novosUsos = (cliente.usos_realizados || 0) + 1;
-  const totalBanhos = cliente.total_banhos || 4;
-  const usosRestantes = totalBanhos - novosUsos;
+  
+  // Verifica se já registrou presença hoje
+  const jaRegistrouHoje = historico.some(h => h.cliente_id === id && h.data_uso === hoje);
+  if (jaRegistrouHoje) {
+    toast(`⚠️ ${cliente.pet_nome || cliente.cliente_nome} já registrou presença hoje!`, 'warn');
+    return;
+  }
+  
+  const novosUsos = cliente.usos_realizados + 1;
+  if (novosUsos > cliente.total_banhos) {
+    toast(`❌ ${cliente.pet_nome || cliente.cliente_nome} já usou todos os banhos. Renove o pacote.`, 'err');
+    return;
+  }
+  
+  const vencido = novosUsos >= cliente.total_banhos;
   
   try {
-    await supabaseClient
+    const { error: updateError } = await supabaseClient
       .from('app_pacotes_clientes')
       .update({
         usos_realizados: novosUsos,
         ultimo_uso: hoje,
-        status: usosRestantes <= 0 ? 'vencido' : 'ativo',
+        status: vencido ? 'vencido' : 'ativo',
         updated_at: new Date().toISOString()
       })
       .eq('id', id);
     
-    // Só registra PRESENÇA no histórico
-    await supabaseClient
+    if (updateError) throw updateError;
+    
+    // Registrar no histórico
+    const { error: histError } = await supabaseClient
       .from('app_pacotes_historico')
       .insert({
         cliente_id: id,
         cliente_nome: cliente.cliente_nome,
         pet_nome: cliente.pet_nome,
-        data_evento: hoje,
-        tipo_evento: 'presenca',
-        usos_restantes: usosRestantes
+        data_uso: hoje,
+        tipo_pacote: cliente.tipo_frequencia,
+        usos_restantes: cliente.total_banhos - novosUsos
       });
+    
+    if (histError) console.warn('Erro ao salvar histórico:', histError);
     
     toast(`✅ ${cliente.pet_nome || cliente.cliente_nome} - banho registrado!`, 'ok');
     carregarDados();
   } catch (e) {
     console.error(e);
-    toast('Erro ao registrar', 'err');
+    toast('Erro ao registrar uso', 'err');
   }
 }
 
@@ -407,16 +527,16 @@ async function renovarPacote(id) {
       })
       .eq('id', id);
     
-    // Registrar renovação no histórico
     await supabaseClient
       .from('app_pacotes_historico')
       .insert({
         cliente_id: id,
         cliente_nome: cliente.cliente_nome,
         pet_nome: cliente.pet_nome,
-        data_evento: hoje,
-        tipo_evento: 'renovacao',
-        observacao: `Renovado - R$ ${cliente.valor_pago || 0}`
+        data_uso: hoje,
+        tipo_pacote: cliente.tipo_frequencia,
+        usos_restantes: totalBanhos,
+        observacao: 'Renovação de pacote'
       });
     
     toast(`💰 ${cliente.pet_nome || cliente.cliente_nome} - pacote renovado!`, 'ok');
@@ -428,28 +548,29 @@ async function renovarPacote(id) {
 }
 
 // ============================================
-// VER HISTÓRICO (SÓ PRESENÇAS)
+// VER HISTÓRICO DO CLIENTE
 // ============================================
 async function verHistorico(id) {
   currentHistoryId = id;
   const cliente = clientes.find(c => c.id === id);
-  const hist = historico.filter(h => h.cliente_id === id && h.tipo_evento === 'presenca');
+  const hist = historico.filter(h => h.cliente_id === id);
   
   document.getElementById('historyTitle').innerHTML = `📜 ${cliente.pet_nome || cliente.cliente_nome}`;
   
   if (!hist.length) {
-    document.getElementById('historyBody').innerHTML = '<div class="empty"><div class="empty-icon">📭</div><p>Nenhuma presença registrada ainda</p></div>';
+    document.getElementById('historyBody').innerHTML = '<div class="empty"><div class="empty-icon">📭</div><p>Nenhum registro ainda</p></div>';
   } else {
     document.getElementById('historyBody').innerHTML = `
       <div style="margin-bottom:16px;padding:12px;background:rgba(90,106,138,.08);border-radius:12px">
         <div><strong>${escapeHtml(cliente.cliente_nome)}</strong> · ${cliente.pet_nome ? escapeHtml(cliente.pet_nome) : ''}</div>
         <div style="font-size:12px;color:var(--muted);margin-top:4px">📞 ${cliente.telefone || '—'} | 📦 ${cliente.tipo_frequencia}</div>
       </div>
-      <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:12px">🔽 HISTÓRICO DE PRESENÇAS</div>
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:12px">🔽 HISTÓRICO DE USOS</div>
       ${hist.map(h => `
         <div class="history-item">
-          <span class="history-date">✅ ${formatarData(h.data_evento)}</span>
-          <span class="history-rest">${h.usos_restantes > 0 ? `restavam ${h.usos_restantes} banhos` : 'ÚLTIMO BANHO!'}</span>
+          <span class="history-date">✅ ${formatarData(h.data_uso)}</span>
+          <span class="history-rest">restantes: ${h.usos_restantes}</span>
+          <span class="history-badge">${h.tipo_pacote}</span>
         </div>
       `).join('')}
     `;
@@ -459,97 +580,19 @@ async function verHistorico(id) {
 }
 
 // ============================================
-// RENDERIZAR LISTA
-// ============================================
-function escapeHtml(text) {
-  if (!text) return '';
-  return text.replace(/[&<>]/g, function(m) {
-    if (m === '&') return '&amp;';
-    if (m === '<') return '&lt;';
-    if (m === '>') return '&gt;';
-    return m;
-  });
-}
-
-function renderClientes() {
-  const search = document.getElementById('searchInput').value.toLowerCase();
-  const filtrados = clientes.filter(c => 
-    c.cliente_nome.toLowerCase().includes(search) || 
-    (c.pet_nome && c.pet_nome.toLowerCase().includes(search))
-  );
-  
-  const container = document.getElementById('clientList');
-  if (!filtrados.length) {
-    container.innerHTML = `<div class="empty"><div class="empty-icon">🐕</div><p>Nenhum cliente encontrado</p></div>`;
-    return;
-  }
-  
-  container.innerHTML = filtrados.map(c => {
-    const usosRealizados = c.usos_realizados || 0;
-    const totalBanhos = c.total_banhos || 4;
-    const percent = (usosRealizados / totalBanhos) * 100;
-    const vencido = usosRealizados >= totalBanhos;
-    const isUltimo = (totalBanhos - usosRealizados) === 1 && !vencido;
-    
-    const badgeClass = c.tipo_frequencia;
-    const badgeText = c.tipo_frequencia === 'semanal' ? '📅 Semanal' : (c.tipo_frequencia === 'quinzenal' ? '📅 Quinzenal' : '📅 Mensal');
-    
-    let statusText = '';
-    let statusCor = '';
-    if (vencido) {
-      statusText = '🔴 PACOTE VENCIDO';
-      statusCor = 'rose';
-    } else if (isUltimo) {
-      statusText = '🟡 ÚLTIMO BANHO! Renove esta semana';
-      statusCor = 'gold';
-    } else {
-      statusText = `🟢 ${totalBanhos - usosRealizados} banhos restantes`;
-      statusCor = 'green';
-    }
-    
-    const cardClass = vencido ? 'vencido' : (isUltimo ? 'ultimo' : '');
-    const fillCor = vencido ? 'rose' : (isUltimo ? 'gold' : 'green');
-    
-    return `
-      <div class="client-card ${cardClass}">
-        <div class="client-header">
-          <div class="client-avatar">🐕</div>
-          <div class="client-info">
-            <div class="client-name">${escapeHtml(c.cliente_nome)}</div>
-            <div class="client-pet">${c.pet_nome ? escapeHtml(c.pet_nome) : 'Pet não informado'} • ${c.telefone || 'sem telefone'}</div>
-          </div>
-          <div class="client-badge ${badgeClass}">${badgeText}</div>
-        </div>
-        
-        <div class="progress-wrap">
-          <div class="progress-bar"><div class="progress-fill ${fillCor}" style="width:${percent}%"></div></div>
-          <div class="progress-text">${usosRealizados} de ${totalBanhos} banhos usados</div>
-        </div>
-        
-        <div class="client-dates">
-          <span>📅 Início: ${formatarData(c.data_inicio || c.data_pagamento)}</span>
-          <span>⏰ ${statusText}</span>
-        </div>
-        
-        <div class="client-buttons">
-          ${!vencido ? `<button class="btn-checkin" onclick="registrarPresenca(${c.id})">✅ VEIO HOJE</button>` : `<button class="btn-renew" onclick="renovarPacote(${c.id})">💰 RENOVAR</button>`}
-          <button class="btn-history" onclick="verHistorico(${c.id})">📜 HISTÓRICO</button>
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-// ============================================
 // SALVAR NOVO PACOTE
 // ============================================
 async function salvarPacote() {
   const nome = document.getElementById('newNome').value.trim();
-  const pagamento = document.getElementById('newDataPagamento').value;
+  const pet = document.getElementById('newPet').value.trim();
+  const telefone = document.getElementById('newTelefone').value.trim();
+  const dataPagamento = document.getElementById('newDataPagamento').value;
+  const valor = parseFloat(document.getElementById('newValor').value) || 0;
   const frequencia = document.getElementById('newFrequencia').value;
+  const obs = document.getElementById('newObs').value;
   
-  if (!nome) { toast('Nome é obrigatório', 'err'); return; }
-  if (!pagamento) { toast('Data de pagamento é obrigatória', 'err'); return; }
+  if (!nome) { toast('Nome do tutor é obrigatório', 'err'); return; }
+  if (!dataPagamento) { toast('Data de pagamento é obrigatória', 'err'); return; }
   
   let diaSemana = null;
   let diaMes = null;
@@ -561,34 +604,35 @@ async function salvarPacote() {
   }
   
   const totalBanhos = frequencia === 'semanal' ? 4 : (frequencia === 'quinzenal' ? 2 : 4);
+  const dataInicio = dataPagamento;
   
   try {
     const { error } = await supabaseClient
       .from('app_pacotes_clientes')
       .insert({
         cliente_nome: nome,
-        pet_nome: document.getElementById('newPet').value || null,
-        telefone: document.getElementById('newTelefone').value || null,
+        pet_nome: pet || null,
+        telefone: telefone || null,
         tipo_frequencia: frequencia,
         dia_semana: diaSemana,
         dia_mes: diaMes,
         total_banhos: totalBanhos,
         usos_realizados: 0,
-        data_pagamento: pagamento,
-        data_inicio: pagamento,
-        valor_pago: parseFloat(document.getElementById('newValor').value) || 0,
-        observacao: document.getElementById('newObs').value || null,
+        data_pagamento: dataPagamento,
+        data_inicio: dataInicio,
+        valor_mensal: valor,
+        observacao: obs || null,
         status: 'ativo'
       });
     
     if (error) throw error;
     
-    toast(`✅ ${nome} cadastrado!`, 'ok');
+    toast(`✅ ${pet || nome} cadastrado com sucesso!`, 'ok');
     closeNewModal();
     carregarDados();
   } catch (e) {
     console.error(e);
-    toast('Erro: ' + e.message, 'err');
+    toast('Erro ao salvar: ' + e.message, 'err');
   }
 }
 
@@ -596,50 +640,59 @@ async function salvarPacote() {
 // ATUALIZAR ESTATÍSTICAS
 // ============================================
 function atualizarStats() {
-  const ativos = clientes.filter(c => (c.usos_realizados || 0) < (c.total_banhos || 4)).length;
-  const vencidos = clientes.filter(c => (c.usos_realizados || 0) >= (c.total_banhos || 4)).length;
-  const ultimo = clientes.filter(c => ((c.total_banhos || 4) - (c.usos_realizados || 0)) === 1 && (c.usos_realizados || 0) < (c.total_banhos || 4)).length;
+  const ativos = clientes.filter(c => c.status === 'ativo' && c.usos_realizados < c.total_banhos).length;
+  const vencidos = clientes.filter(c => c.usos_realizados >= c.total_banhos).length;
+  const renovar = clientes.filter(c => (c.total_banhos - c.usos_realizados) === 1 && c.status !== 'vencido').length;
   
   const hoje = new Date();
   const usosMes = historico.filter(h => {
-    const data = new Date(h.data_evento);
-    return h.tipo_evento === 'presenca' && data.getMonth() === hoje.getMonth() && data.getFullYear() === hoje.getFullYear();
+    const data = new Date(h.data_uso);
+    return data.getMonth() === hoje.getMonth() && data.getFullYear() === hoje.getFullYear();
   }).length;
   
   document.getElementById('statAtivos').textContent = ativos;
   document.getElementById('statUsos').textContent = usosMes;
-  document.getElementById('statUltimo').textContent = ultimo;
+  document.getElementById('statRenovar').textContent = renovar;
   document.getElementById('statVencidos').textContent = vencidos;
 }
 
 // ============================================
-// ALERTAS
+// ATUALIZAR BANNER DE ALERTAS (SEM BOTÃO LIGAR)
 // ============================================
 function atualizarAlertas() {
-  const ultimo = clientes.filter(c => ((c.total_banhos || 4) - (c.usos_realizados || 0)) === 1 && (c.usos_realizados || 0) < (c.total_banhos || 4));
+  const urgentes = clientes.filter(c => (c.total_banhos - c.usos_realizados) === 1 && c.status !== 'vencido');
+  const vencidos = clientes.filter(c => c.usos_realizados >= c.total_banhos);
   
-  const temAlertas = ultimo.length > 0;
+  const temAlertas = urgentes.length > 0 || vencidos.length > 0;
   document.getElementById('alertBanner').style.display = temAlertas ? 'block' : 'none';
   
   if (temAlertas) {
     let html = '';
-    ultimo.slice(0, 3).forEach(c => {
-      html += `<div class="alert-item"><div class="alert-name">🐕 ${c.pet_nome || c.cliente_nome}</div><div class="alert-desc">Último banho! Renove esta semana</div></div>`;
+    urgentes.slice(0, 3).forEach(c => {
+      html += `<div class="alert-item"><div class="alert-icon">🟡</div><div class="alert-info"><div class="alert-name">${escapeHtml(c.pet_nome || c.cliente_nome)}</div><div class="alert-desc">Último banho! Renove esta semana</div></div></div>`;
     });
+    if (vencidos.length && urgentes.length < 3) {
+      vencidos.slice(0, 3 - urgentes.length).forEach(c => {
+        html += `<div class="alert-item"><div class="alert-icon">🔴</div><div class="alert-info"><div class="alert-name">${escapeHtml(c.pet_nome || c.cliente_nome)}</div><div class="alert-desc">Pacote vencido! Cliente precisa renovar</div></div></div>`;
+      });
+    }
     document.getElementById('alertList').innerHTML = html;
   }
 }
 
+// ============================================
+// CENTRAL DE ALERTAS (SEM BOTÃO LIGAR)
+// ============================================
 function openAlertsModal() {
-  const ultimo = clientes.filter(c => ((c.total_banhos || 4) - (c.usos_realizados || 0)) === 1 && (c.usos_realizados || 0) < (c.total_banhos || 4));
-  const vencidos = clientes.filter(c => (c.usos_realizados || 0) >= (c.total_banhos || 4));
+  const urgentes = clientes.filter(c => (c.total_banhos - c.usos_realizados) === 1 && c.status !== 'vencido');
+  const vencidos = clientes.filter(c => c.usos_realizados >= c.total_banhos);
   
   let html = '';
   
-  if (ultimo.length) {
-    html += `<div style="margin-bottom:20px"><div style="font-size:11px;color:var(--gold);margin-bottom:12px;font-weight:700">🟡 ÚLTIMO BANHO — ${ultimo.length}</div>`;
-    ultimo.forEach(c => {
-      html += `<div class="alert-item" style="justify-content:space-between"><div><div class="alert-name">${escapeHtml(c.pet_nome || c.cliente_nome)}</div><div class="alert-desc">${escapeHtml(c.cliente_nome)}</div></div></div>`;
+  if (urgentes.length) {
+    html += `<div style="margin-bottom:20px"><div style="font-size:11px;color:var(--gold);margin-bottom:12px;font-weight:700">🟡 ÚLTIMO BANHO (URGENTE) — ${urgentes.length}</div>`;
+    urgentes.forEach(c => {
+      html += `<div class="alert-item"><div class="alert-icon">🟡</div><div class="alert-info"><div class="alert-name">${escapeHtml(c.pet_nome || c.cliente_nome)}</div><div class="alert-desc">${escapeHtml(c.cliente_nome)} · ${c.telefone || 'sem telefone'}</div></div></div>`;
     });
     html += `</div>`;
   }
@@ -647,12 +700,12 @@ function openAlertsModal() {
   if (vencidos.length) {
     html += `<div><div style="font-size:11px;color:var(--rose);margin-bottom:12px;font-weight:700">🔴 VENCIDOS — ${vencidos.length}</div>`;
     vencidos.forEach(c => {
-      html += `<div class="alert-item" style="justify-content:space-between"><div><div class="alert-name">${escapeHtml(c.pet_nome || c.cliente_nome)}</div><div class="alert-desc">${escapeHtml(c.cliente_nome)}</div></div></div>`;
+      html += `<div class="alert-item"><div class="alert-icon">🔴</div><div class="alert-info"><div class="alert-name">${escapeHtml(c.pet_nome || c.cliente_nome)}</div><div class="alert-desc">${escapeHtml(c.cliente_nome)} · renovação pendente</div></div></div>`;
     });
     html += `</div>`;
   }
   
-  if (!ultimo.length && !vencidos.length) {
+  if (!urgentes.length && !vencidos.length) {
     html = '<div class="empty"><div class="empty-icon">✅</div><p>Nenhum alerta no momento</p></div>';
   }
   
@@ -661,51 +714,84 @@ function openAlertsModal() {
 }
 
 // ============================================
-// EXPORTAR
+// EXPORTAR RELATÓRIO
 // ============================================
 function exportarRelatorio() {
-  if (!clientes.length) { toast('Nenhum cliente', 'err'); return; }
+  if (!clientes.length) {
+    toast('Nenhum cliente para exportar', 'err');
+    return;
+  }
   
-  const wsData = [['Cliente', 'Pet', 'Telefone', 'Tipo', 'Usos', 'Total', 'Status', 'Pagamento', 'Valor']];
+  const wsData = [['Cliente', 'Pet', 'Telefone', 'Frequência', 'Usos', 'Total', 'Status', 'Data Pagamento', 'Início', 'Valor', 'Observação']];
   clientes.forEach(c => {
     wsData.push([
-      c.cliente_nome, c.pet_nome || '', c.telefone || '', c.tipo_frequencia,
-      c.usos_realizados || 0, c.total_banhos || 4,
-      (c.usos_realizados || 0) >= (c.total_banhos || 4) ? 'VENCIDO' : 'ATIVO',
-      c.data_pagamento, c.valor_pago || 0
+      c.cliente_nome,
+      c.pet_nome || '',
+      c.telefone || '',
+      c.tipo_frequencia,
+      c.usos_realizados,
+      c.total_banhos,
+      c.usos_realizados >= c.total_banhos ? 'VENCIDO' : 'ATIVO',
+      c.data_pagamento || '',
+      c.data_inicio,
+      c.valor_mensal || 0,
+      c.observacao || ''
     ]);
   });
   
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet(wsData);
+  ws['!cols'] = [{wch:20},{wch:15},{wch:15},{wch:12},{wch:8},{wch:8},{wch:10},{wch:12},{wch:12},{wch:10},{wch:25}];
   XLSX.utils.book_append_sheet(wb, ws, 'pacotes');
   XLSX.writeFile(wb, `pacotes_${new Date().toISOString().slice(0,10)}.xlsx`);
   toast('Relatório exportado!', 'ok');
 }
 
+// ============================================
+// EXPORTAR HISTÓRICO DO CLIENTE
+// ============================================
 function exportarHistorico() {
   if (!currentHistoryId) return;
   const cliente = clientes.find(c => c.id === currentHistoryId);
   if (!cliente) return;
   
-  const hist = historico.filter(h => h.cliente_id === currentHistoryId && h.tipo_evento === 'presenca');
-  if (!hist.length) { toast('Sem histórico', 'err'); return; }
+  const hist = historico.filter(h => h.cliente_id === currentHistoryId);
+  if (!hist.length) {
+    toast('Nenhum histórico para exportar', 'err');
+    return;
+  }
   
-  const wsData = [['Data', 'Usos Restantes']];
-  hist.forEach(h => { wsData.push([h.data_evento, h.usos_restantes]); });
+  const wsData = [['Data do Banho', 'Usos Restantes', 'Tipo Pacote']];
+  hist.forEach(h => {
+    wsData.push([h.data_uso, h.usos_restantes, h.tipo_pacote]);
+  });
   
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(wsData), 'historico');
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  XLSX.utils.book_append_sheet(wb, ws, `historico_${cliente.pet_nome || cliente.cliente_nome}`);
   XLSX.writeFile(wb, `historico_${cliente.pet_nome || cliente.cliente_nome}_${new Date().toISOString().slice(0,10)}.xlsx`);
   toast('Histórico exportado!', 'ok');
 }
 
-function syncNow() { carregarDados(); toast('🔄 Sincronizando...', 'ok'); }
+// ============================================
+// SINCRONIZAR
+// ============================================
+function syncNow() {
+  carregarDados();
+  toast('🔄 Sincronizando...', 'ok');
+}
+
 function atualizarBadge() {
-  const vencidos = clientes.filter(c => (c.usos_realizados || 0) >= (c.total_banhos || 4)).length;
+  const vencidos = clientes.filter(c => c.usos_realizados >= c.total_banhos).length;
+  const urgentes = clientes.filter(c => (c.total_banhos - c.usos_realizados) === 1).length;
   const el = document.getElementById('bkpBadge');
-  if (vencidos > 0) { el.className = 'bkp warn'; el.textContent = `⚠️ ${vencidos}`; }
-  else { el.className = 'bkp ok'; el.textContent = '💾 ok'; }
+  if (vencidos > 0 || urgentes > 0) {
+    el.className = 'bkp warn';
+    el.textContent = `⚠️ ${urgentes + vencidos}`;
+  } else {
+    el.className = 'bkp ok';
+    el.textContent = '💾 ok';
+  }
 }
 
 // ============================================
@@ -716,6 +802,7 @@ function openNewModal() {
   document.getElementById('newDataPagamento').value = new Date().toISOString().slice(0, 10);
   document.getElementById('newNome').focus();
 }
+
 function closeNewModal() {
   document.getElementById('newModal').classList.remove('show');
   document.getElementById('newNome').value = '';
@@ -723,12 +810,25 @@ function closeNewModal() {
   document.getElementById('newTelefone').value = '';
   document.getElementById('newValor').value = '';
   document.getElementById('newObs').value = '';
+  document.getElementById('newDiaMes').value = '';
 }
-function closeHistoryModal() { document.getElementById('historyModal').classList.remove('show'); currentHistoryId = null; }
-function closeAlertsModal() { document.getElementById('alertsModal').classList.remove('show'); }
+
+function closeHistoryModal() {
+  document.getElementById('historyModal').classList.remove('show');
+  currentHistoryId = null;
+}
+
+function closeAlertsModal() {
+  document.getElementById('alertsModal').classList.remove('show');
+}
+
+function marcarTodosLidos() {
+  closeAlertsModal();
+  toast('Alertas marcados como visualizados', 'ok');
+}
 
 // ============================================
-// EVENTOS
+// EVENT LISTENERS
 // ============================================
 document.getElementById('searchInput').addEventListener('input', renderClientes);
 document.getElementById('btnNewPacote').addEventListener('click', openNewModal);
@@ -742,6 +842,7 @@ document.getElementById('btnFecharHistorico').addEventListener('click', closeHis
 document.getElementById('btnExportarHistorico').addEventListener('click', exportarHistorico);
 document.getElementById('closeAlertsModalBtn').addEventListener('click', closeAlertsModal);
 document.getElementById('btnFecharAlertasModal').addEventListener('click', closeAlertsModal);
+document.getElementById('btnMarcarLidos').addEventListener('click', marcarTodosLidos);
 
 // Frequência change
 document.getElementById('newFrequencia').addEventListener('change', (e) => {
@@ -759,8 +860,11 @@ document.querySelectorAll('#diasSemana .dia-btn').forEach(btn => {
   });
 });
 
+// Inicializar com sexta selecionada
+document.querySelector('#diasSemana .dia-btn[data-dia="sexta"]')?.classList.add('selected');
+
 // ============================================
-// INICIAR
+// INICIALIZAR
 // ============================================
 carregarDados();
 </script>
