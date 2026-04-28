@@ -198,12 +198,24 @@ body{font-family:var(--body);color:var(--text);background:var(--bg);min-height:1
       <div class="form-group"><label class="form-label">NOME DO TUTOR *</label><input type="text" id="newNome" class="form-input" placeholder="Ex: João Silva"></div>
       <div class="form-group"><label class="form-label">NOME DO PET</label><input type="text" id="newPet" class="form-input" placeholder="Ex: Rex"></div>
       <div class="form-group"><label class="form-label">TELEFONE</label><input type="tel" id="newTelefone" class="form-input" placeholder="(11) 99999-9999"></div>
+      
       <div class="form-row"><div class="form-group"><label class="form-label">📅 DATA PAGAMENTO *</label><input type="date" id="newDataPagamento" class="form-input"></div><div class="form-group"><label class="form-label">💰 VALOR (R$)</label><input type="number" id="newValor" class="form-input" placeholder="120,00" step="10"></div></div>
       <div class="form-group"><label class="form-label">📅 DATA DO PRIMEIRO BANHO *</label><input type="date" id="newDataPrimeiroBanho" class="form-input" placeholder="(pode ser diferente do pagamento)"></div>
       
-      <div class="form-group"><label class="form-label">🔄 FREQUÊNCIA</label><select id="newFrequencia" class="form-select"><option value="semanal">Semanal (vem 1x por semana)</option><option value="quinzenal">Quinzenal (vem a cada 15 dias)</option><option value="mensal">Mensal (vem 1x por mês)</option></select></div>
+      <div class="form-group"><label class="form-label">🔄 FREQUÊNCIA</label>
+        <select id="newFrequencia" class="form-select">
+          <option value="semanal">Semanal (vem 1x por semana)</option>
+          <option value="quinzenal">Quinzenal (vem a cada 15 dias)</option>
+          <option value="mensal_fixo">Mensal (com dia fixo - ex: todo dia 15)</option>
+          <option value="mensal_livre">Mensal (sem dia fixo - cliente agenda quando quer)</option>
+        </select>
+      </div>
+      
       <div class="form-group" id="diaSemanaGroup" style="display:none"><label class="form-label">📆 DIA DA SEMANA *</label><div class="dias-wrap" id="diasSemana"><div class="dia-btn" data-dia="segunda">SEG</div><div class="dia-btn" data-dia="terca">TER</div><div class="dia-btn" data-dia="quarta">QUA</div><div class="dia-btn" data-dia="quinta">QUI</div><div class="dia-btn" data-dia="sexta">SEX</div><div class="dia-btn" data-dia="sabado">SÁB</div></div></div>
+      
       <div class="form-group" id="diaMesGroup" style="display:none"><label class="form-label">📆 DIA DO MÊS *</label><input type="number" id="newDiaMes" class="form-input" placeholder="Ex: 15" min="1" max="31"></div>
+      
+      <div class="form-group" id="registroAutoGroup" style="display:none; margin-top:8px;"><label class="form-label" style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="newRegistroAuto" checked> 🔄 Registrar presença automaticamente no dia agendado</label><div style="font-size:9px; color:var(--muted); margin-left:24px;">(se não houver clique, sistema marca como "VEIO" no dia seguinte)</div></div>
       
       <!-- SEÇÃO EXPANSÍVEL: HISTÓRICO ANTERIOR (MIGRAÇÃO) -->
       <details style="margin-top:16px; background:rgba(90,106,138,.08); border-radius:12px; padding:8px;">
@@ -240,16 +252,21 @@ let selectedDiaSemana = 'sexta';
 
 function toast(msg, type='ok'){ let e=document.getElementById('toast'); e.textContent=msg; e.className='toast '+type+' show'; setTimeout(()=>e.classList.remove('show'),2500); }
 function formatarData(data){ if(!data) return '—'; let d=new Date(data); return `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}`; }
+function formatarDataInput(data){ if(!data) return ''; let d=new Date(data); return d.toISOString().slice(0,10); }
 function escapeHtml(t){ if(!t) return ''; return t.replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
 
 // ============================================
 // LÓGICA DE AGENDAMENTO (usa data_primeiro_banho)
 // ============================================
-function proximoAgendamento(cliente) {
+function proximoAgendamento(cliente, dataReferencia = null) {
   if (!cliente || cliente.status === 'vencido') return null;
-  const hoje = new Date();
-  // Usa data_primeiro_banho como referência inicial, se existir
-  const dataReferencia = cliente.data_primeiro_banho ? new Date(cliente.data_primeiro_banho) : (cliente.ultimo_uso ? new Date(cliente.ultimo_uso) : new Date(cliente.data_inicio));
+  const hoje = dataReferencia ? new Date(dataReferencia) : new Date();
+  
+  // Mensal sem dia fixo: não tem agendamento
+  if (cliente.tipo_frequencia === 'mensal_livre') return null;
+  
+  // Usa data_primeiro_banho como referência inicial
+  const dataBase = cliente.data_primeiro_banho ? new Date(cliente.data_primeiro_banho) : (cliente.ultimo_uso ? new Date(cliente.ultimo_uso) : new Date(cliente.data_inicio));
   
   if (cliente.tipo_frequencia === 'semanal' && cliente.dia_semana) {
     const dias = { 'segunda':1, 'terca':2, 'quarta':3, 'quinta':4, 'sexta':5, 'sabado':6 };
@@ -259,19 +276,73 @@ function proximoAgendamento(cliente) {
     return prox.toISOString().slice(0,10);
   }
   if (cliente.tipo_frequencia === 'quinzenal') {
-    let base = cliente.ultimo_uso ? new Date(cliente.ultimo_uso) : dataReferencia;
+    let base = cliente.ultimo_uso ? new Date(cliente.ultimo_uso) : dataBase;
     let prox = new Date(base);
     prox.setDate(prox.getDate() + 15);
     while (prox < hoje) prox.setDate(prox.getDate() + 15);
     return prox.toISOString().slice(0,10);
   }
-  if (cliente.tipo_frequencia === 'mensal' && cliente.dia_mes) {
+  if (cliente.tipo_frequencia === 'mensal_fixo' && cliente.dia_mes) {
     let prox = new Date(hoje);
     prox.setDate(cliente.dia_mes);
     if (prox < hoje) prox.setMonth(prox.getMonth() + 1);
     return prox.toISOString().slice(0,10);
   }
   return null;
+}
+
+// ============================================
+// REGISTRO AUTOMÁTICO (para dias agendados de ONTEM)
+// ============================================
+async function registrarAutomatico() {
+  const ontem = new Date();
+  ontem.setDate(ontem.getDate() - 1);
+  const ontemStr = ontem.toISOString().slice(0,10);
+  const hojeStr = new Date().toISOString().slice(0,10);
+  
+  for (const cliente of clientes) {
+    // Verifica se cliente tem registro automático ativado
+    if (!cliente.registro_automatico) continue;
+    if (cliente.status === 'vencido') continue;
+    if (cliente.tipo_frequencia === 'mensal_livre') continue; // mensal sem dia fixo não tem automático
+    
+    const agendadoPara = proximoAgendamento(cliente, ontemStr);
+    if (agendadoPara !== ontemStr) continue;
+    
+    // Verifica se já existe registro para ontem
+    const jaRegistrou = historico.some(h => h.cliente_id === cliente.id && h.data_uso === ontemStr);
+    if (jaRegistrou) continue;
+    
+    // Verifica se já usou todos os banhos
+    if (cliente.usos_realizados >= cliente.total_banhos) continue;
+    
+    // Registra automaticamente
+    const novosUsos = cliente.usos_realizados + 1;
+    const vencido = novosUsos >= cliente.total_banhos;
+    
+    try {
+      await supabaseClient.from('app_pacotes_clientes').update({
+        usos_realizados: novosUsos,
+        ultimo_uso: ontemStr,
+        status: vencido ? 'vencido' : 'ativo',
+        updated_at: new Date().toISOString()
+      }).eq('id', cliente.id);
+      
+      await supabaseClient.from('app_pacotes_historico').insert({
+        cliente_id: cliente.id,
+        cliente_nome: cliente.cliente_nome,
+        pet_nome: cliente.pet_nome,
+        data_uso: ontemStr,
+        tipo_pacote: cliente.tipo_frequencia === 'mensal_fixo' ? 'mensal' : cliente.tipo_frequencia,
+        usos_restantes: cliente.total_banhos - novosUsos,
+        observacao: 'Registro automático'
+      });
+      
+      console.log(`🔄 Registro automático: ${cliente.pet_nome || cliente.cliente_nome} em ${ontemStr}`);
+    } catch(e) {
+      console.error('Erro no registro automático:', e);
+    }
+  }
 }
 
 // ============================================
@@ -284,6 +355,16 @@ async function carregarDados() {
     clientes = c || [];
     const { data:h, error:he } = await supabaseClient.from('app_pacotes_historico').select('*').order('data_uso',{ascending:false});
     if(!he) historico = h || [];
+    
+    // Executa registro automático para ontem
+    await registrarAutomatico();
+    
+    // Recarrega dados após registro automático
+    const { data:c2, error:ce2 } = await supabaseClient.from('app_pacotes_clientes').select('*').order('cliente_nome');
+    if(!ce2) clientes = c2 || [];
+    const { data:h2, error:he2 } = await supabaseClient.from('app_pacotes_historico').select('*').order('data_uso',{ascending:false});
+    if(!he2) historico = h2 || [];
+    
     renderClientes(); atualizarStats(); atualizarAlertas(); atualizarBadge();
   } catch(e){ toast('Erro ao carregar','err'); }
 }
@@ -295,6 +376,7 @@ function renderClientes() {
   const search = document.getElementById('searchInput').value.toLowerCase();
   let filtrados = clientes.filter(c => c.cliente_nome.toLowerCase().includes(search) || (c.pet_nome && c.pet_nome.toLowerCase().includes(search)));
   const hojeStr = new Date().toISOString().slice(0,10);
+  
   filtrados.sort((a,b)=>{
     const ra = a.total_banhos - a.usos_realizados;
     const rb = b.total_banhos - b.usos_realizados;
@@ -302,15 +384,33 @@ function renderClientes() {
     if(ra===1 && rb!==1) return -1; if(rb===1 && ra!==1) return 1;
     return ra - rb;
   });
+  
   const container = document.getElementById('clientList');
   if(!filtrados.length){ container.innerHTML='<div class="empty"><div class="empty-icon">🐕</div><p>Nenhum cliente encontrado</p></div>'; return; }
+  
   container.innerHTML = filtrados.map(c => {
     const restantes = c.total_banhos - c.usos_realizados;
     const vencido = restantes <= 0;
     const isUltimo = restantes === 1;
-    const expandirPorAgenda = (proximoAgendamento(c) === hojeStr) && !vencido;
-    const badgeClass = c.tipo_frequencia;
-    const badgeText = c.tipo_frequencia==='semanal'?'📅 Semanal':(c.tipo_frequencia==='quinzenal'?'📅 Quinzenal':'📅 Mensal');
+    
+    // Determina se é mensal livre (sem dia fixo) - botão sempre visível
+    const isMensalLivre = c.tipo_frequencia === 'mensal_livre';
+    
+    // Para mensal livre, sempre expande (botão VEIO HOJE sempre visível)
+    // Para outros, só expande se for dia agendado
+    const agendadoParaHoje = proximoAgendamento(c) === hojeStr;
+    const expandirPorAgenda = isMensalLivre || (agendadoParaHoje && !vencido);
+    
+    const badgeClass = c.tipo_frequencia === 'mensal_fixo' ? 'mensal' : (c.tipo_frequencia === 'mensal_livre' ? 'mensal' : c.tipo_frequencia);
+    let badgeText = '';
+    if(c.tipo_frequencia === 'semanal') badgeText = '📅 Semanal';
+    else if(c.tipo_frequencia === 'quinzenal') badgeText = '📅 Quinzenal';
+    else if(c.tipo_frequencia === 'mensal_fixo') badgeText = '📅 Mensal (c/ dia)';
+    else badgeText = '📅 Mensal (livre)';
+    
+    // Ícone de registro automático
+    const autoIcon = (c.registro_automatico && !isMensalLivre) ? '<span style="font-size:9px; margin-left:4px;">🔄</span>' : '';
+    
     const mostrarProgresso = (restantes <= 2 && !vencido);
     const percent = (c.usos_realizados / c.total_banhos)*100;
     let fillCor = vencido ? 'rose' : (isUltimo ? 'gold' : 'green');
@@ -320,6 +420,7 @@ function renderClientes() {
     const pagto = formatarData(c.data_pagamento);
     const primeiroBanho = formatarData(c.data_primeiro_banho || c.data_inicio);
     const ultimoUso = formatarData(c.ultimo_uso);
+    
     let html = `<div class="client-card ${cardClass}" data-id="${c.id}">
       <div class="card-header" onclick="toggleCardBody(${c.id})">
         <div class="client-avatar">🐕</div>
@@ -327,7 +428,7 @@ function renderClientes() {
           <div class="client-name">${escapeHtml(c.cliente_nome)}${alertIcon}</div>
           <div class="client-pet">${c.pet_nome ? escapeHtml(c.pet_nome) : 'Pet não informado'} • ${c.telefone || 'sem telefone'}</div>
         </div>
-        <div class="client-badge ${badgeClass}">${badgeText}</div>
+        <div class="client-badge ${badgeClass}">${badgeText}${autoIcon}</div>
         <div class="expand-icon">▼</div>
       </div>
       <div class="client-dates">
@@ -338,13 +439,17 @@ function renderClientes() {
     if(mostrarProgresso){
       html += `<div class="progress-wrap"><div class="progress-bar"><div class="progress-fill ${fillCor}" style="width:${percent}%"></div></div><div class="progress-text">${c.usos_realizados} de ${c.total_banhos} banhos usados</div></div>
                <div class="client-dates"><span>⏰ ${statusText}</span></div>`;
-    } else if(!vencido){
+    } else if(!vencido && !isMensalLivre){
       html += `<div style="margin-top:8px; font-size:10px; color:var(--muted); text-align:right">${restantes} banhos restantes</div>`;
+    } else if(isMensalLivre && !vencido){
+      html += `<div style="margin-top:8px; font-size:10px; color:var(--teal); text-align:right">📌 Sem dia fixo - cliente agenda quando quiser</div>`;
     }
+    
     let bodyHtml = `<div class="card-body" id="cardBody-${c.id}" style="display:${expandirPorAgenda ? 'block' : 'none'}">`;
     if(vencido){
       bodyHtml += `<div class="client-buttons"><button class="btn-renew" onclick="renovarPacote(${c.id})">💰 RENOVAR</button><button class="btn-history" onclick="verHistorico(${c.id})">📜 HISTÓRICO</button></div>`;
     } else {
+      // Para mensal livre ou dia agendado, mostra botão VEIO HOJE
       if(expandirPorAgenda){
         bodyHtml += `<div class="client-buttons">
           <div style="display:flex; gap:6px; flex:2"><button class="btn-checkin" style="flex:3" onclick="registrarUso(${c.id})">✅ VEIO HOJE</button>
@@ -380,7 +485,7 @@ async function registrarUso(id, dataEscolhida=null){
   const vencido = novosUsos >= cliente.total_banhos;
   try{
     await supabaseClient.from('app_pacotes_clientes').update({ usos_realizados:novosUsos, ultimo_uso:hoje, status:vencido?'vencido':'ativo', updated_at:new Date().toISOString() }).eq('id',id);
-    await supabaseClient.from('app_pacotes_historico').insert({ cliente_id:id, cliente_nome:cliente.cliente_nome, pet_nome:cliente.pet_nome, data_uso:hoje, tipo_pacote:cliente.tipo_frequencia, usos_restantes:cliente.total_banhos-novosUsos });
+    await supabaseClient.from('app_pacotes_historico').insert({ cliente_id:id, cliente_nome:cliente.cliente_nome, pet_nome:cliente.pet_nome, data_uso:hoje, tipo_pacote:cliente.tipo_frequencia === 'mensal_fixo' ? 'mensal' : (cliente.tipo_frequencia === 'mensal_livre' ? 'mensal' : cliente.tipo_frequencia), usos_restantes:cliente.total_banhos-novosUsos });
     toast(`✅ ${cliente.pet_nome||cliente.cliente_nome} - banho em ${formatarData(hoje)}`,'ok');
     carregarDados();
   }catch(e){ toast('Erro ao registrar','err'); }
@@ -396,17 +501,20 @@ async function renovarPacote(id){
   const c = clientes.find(c=>c.id===id);
   if(!c) return;
   const hoje = new Date().toISOString().slice(0,10);
-  const total = c.tipo_frequencia==='semanal'?4:(c.tipo_frequencia==='quinzenal'?2:4);
+  let total = 4;
+  if(c.tipo_frequencia === 'semanal') total = 4;
+  else if(c.tipo_frequencia === 'quinzenal') total = 2;
+  else if(c.tipo_frequencia === 'mensal_fixo' || c.tipo_frequencia === 'mensal_livre') total = 4;
   try{
     await supabaseClient.from('app_pacotes_clientes').update({ usos_realizados:0, status:'ativo', data_pagamento:hoje, updated_at:new Date().toISOString() }).eq('id',id);
-    await supabaseClient.from('app_pacotes_historico').insert({ cliente_id:id, cliente_nome:c.cliente_nome, pet_nome:c.pet_nome, data_uso:hoje, tipo_pacote:c.tipo_frequencia, usos_restantes:total, observacao:'Renovação de pacote' });
+    await supabaseClient.from('app_pacotes_historico').insert({ cliente_id:id, cliente_nome:c.cliente_nome, pet_nome:c.pet_nome, data_uso:hoje, tipo_pacote:c.tipo_frequencia === 'mensal_fixo' ? 'mensal' : (c.tipo_frequencia === 'mensal_livre' ? 'mensal' : c.tipo_frequencia), usos_restantes:total, observacao:'Renovação de pacote' });
     toast(`💰 ${c.pet_nome||c.cliente_nome} - pacote renovado!`,'ok');
     carregarDados();
   }catch(e){ toast('Erro ao renovar','err'); }
 }
 
 // ============================================
-// HISTÓRICO AGRUPADO (COM RENOVAÇÃO VISÍVEL)
+// HISTÓRICO AGRUPADO
 // ============================================
 async function verHistorico(id){
   currentHistoryId = id;
@@ -424,7 +532,7 @@ async function verHistorico(id){
   }
   if(cicloAtual.length) ciclos.push(cicloAtual);
   ciclos.reverse();
-  let html = `<div style="margin-bottom:16px;padding:12px;background:rgba(90,106,138,.08);border-radius:12px"><div><strong>${escapeHtml(cliente.cliente_nome)}</strong> · ${cliente.pet_nome?escapeHtml(cliente.pet_nome):''}</div><div style="font-size:12px;color:var(--muted)">📞 ${cliente.telefone||'—'} | 📦 ${cliente.tipo_frequencia}</div></div>`;
+  let html = `<div style="margin-bottom:16px;padding:12px;background:rgba(90,106,138,.08);border-radius:12px"><div><strong>${escapeHtml(cliente.cliente_nome)}</strong> · ${cliente.pet_nome?escapeHtml(cliente.pet_nome):''}</div><div style="font-size:12px;color:var(--muted)">📞 ${cliente.telefone||'—'} | 📦 ${cliente.tipo_frequencia === 'mensal_fixo' ? 'Mensal c/ dia' : (cliente.tipo_frequencia === 'mensal_livre' ? 'Mensal livre' : cliente.tipo_frequencia)}</div></div>`;
   ciclos.forEach((ciclo,idx)=>{
     const primeiro = ciclo[0];
     const ultimo = ciclo[ciclo.length-1];
@@ -443,19 +551,35 @@ async function verHistorico(id){
 }
 
 // ============================================
-// SALVAR NOVO PACOTE (COM DATA PRIMEIRO BANHO E MIGRAÇÃO)
+// SALVAR NOVO PACOTE
 // ============================================
 async function salvarPacote(){
   const nome = document.getElementById('newNome').value.trim();
   const pagamento = document.getElementById('newDataPagamento').value;
   const primeiroBanho = document.getElementById('newDataPrimeiroBanho').value;
-  const freq = document.getElementById('newFrequencia').value;
+  const freqSelect = document.getElementById('newFrequencia').value;
+  let freq = freqSelect;
+  let diaSemana = null;
+  let diaMes = null;
+  let registroAuto = true;
+  
   if(!nome || !pagamento || !primeiroBanho){ toast('Nome, data de pagamento e data do primeiro banho são obrigatórios','err'); return; }
   
-  let diaSemana=null, diaMes=null;
-  if(freq==='semanal') diaSemana = selectedDiaSemana;
-  if(freq==='mensal') diaMes = parseInt(document.getElementById('newDiaMes').value)||15;
-  const totalBanhos = freq==='semanal'?4:(freq==='quinzenal'?2:4);
+  if(freq === 'semanal'){
+    diaSemana = selectedDiaSemana;
+    if(!diaSemana){ toast('Selecione o dia da semana','err'); return; }
+    registroAuto = document.getElementById('newRegistroAuto')?.checked ?? true;
+  } else if(freq === 'quinzenal'){
+    registroAuto = document.getElementById('newRegistroAuto')?.checked ?? true;
+  } else if(freq === 'mensal_fixo'){
+    diaMes = parseInt(document.getElementById('newDiaMes').value);
+    if(!diaMes || diaMes < 1 || diaMes > 31){ toast('Informe o dia do mês (1-31)','err'); return; }
+    registroAuto = document.getElementById('newRegistroAuto')?.checked ?? true;
+  } else if(freq === 'mensal_livre'){
+    registroAuto = false; // mensal livre nunca tem registro automático
+  }
+  
+  const totalBanhos = (freq === 'semanal' || freq === 'mensal_fixo' || freq === 'mensal_livre') ? 4 : 2;
   
   // Dados de migração (histórico anterior)
   const usosAnteriores = parseInt(document.getElementById('newUsosAnteriores').value) || 0;
@@ -466,14 +590,14 @@ async function salvarPacote(){
   }
   
   try {
-    // Inserir cliente
     const { data: novoCliente, error: insertError } = await supabaseClient.from('app_pacotes_clientes').insert({
       cliente_nome:nome, pet_nome:document.getElementById('newPet').value||null, telefone:document.getElementById('newTelefone').value||null,
       tipo_frequencia:freq, dia_semana:diaSemana, dia_mes:diaMes, total_banhos:totalBanhos,
       usos_realizados:usosAnteriores, data_pagamento:pagamento, data_primeiro_banho:primeiroBanho,
       data_inicio:primeiroBanho, valor_mensal:parseFloat(document.getElementById('newValor').value)||0,
       observacao:document.getElementById('newObs').value||null, status:usosAnteriores >= totalBanhos ? 'vencido' : 'ativo',
-      ultimo_uso: datasAnteriores.length > 0 ? datasAnteriores[datasAnteriores.length-1] : null
+      ultimo_uso: datasAnteriores.length > 0 ? datasAnteriores[datasAnteriores.length-1] : null,
+      registro_automatico: registroAuto
     }).select();
     
     if(insertError) throw insertError;
@@ -485,7 +609,7 @@ async function salvarPacote(){
       const usosRestantes = totalBanhos - (i+1);
       await supabaseClient.from('app_pacotes_historico').insert({
         cliente_id:clienteId, cliente_nome:nome, pet_nome:document.getElementById('newPet').value||null,
-        data_uso:dataUso, tipo_pacote:freq, usos_restantes:usosRestantes
+        data_uso:dataUso, tipo_pacote:freq === 'mensal_fixo' ? 'mensal' : (freq === 'mensal_livre' ? 'mensal' : freq), usos_restantes:usosRestantes
       });
     }
     
@@ -544,8 +668,8 @@ function openAlertsModal(){
 }
 function exportarRelatorio(){
   if(!clientes.length){ toast('Nenhum cliente','err'); return; }
-  let ws=[['Cliente','Pet','Telefone','Frequência','Usos','Total','Status','Pagamento','Primeiro Banho','Valor']];
-  clientes.forEach(c=>ws.push([c.cliente_nome,c.pet_nome||'',c.telefone||'',c.tipo_frequencia,c.usos_realizados,c.total_banhos,c.usos_realizados>=c.total_banhos?'VENCIDO':'ATIVO',c.data_pagamento||'',c.data_primeiro_banho||c.data_inicio||'',c.valor_mensal||0]));
+  let ws=[['Cliente','Pet','Telefone','Frequência','Usos','Total','Status','Pagamento','Primeiro Banho','Auto','Valor']];
+  clientes.forEach(c=>ws.push([c.cliente_nome,c.pet_nome||'',c.telefone||'',c.tipo_frequencia,c.usos_realizados,c.total_banhos,c.usos_realizados>=c.total_banhos?'VENCIDO':'ATIVO',c.data_pagamento||'',c.data_primeiro_banho||c.data_inicio||'',c.registro_automatico?'SIM':'NÃO',c.valor_mensal||0]));
   let wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(ws),'pacotes'); XLSX.writeFile(wb,`pacotes_${new Date().toISOString().slice(0,10)}.xlsx`); toast('Relatório exportado!','ok');
 }
 function exportarHistorico(){
@@ -564,7 +688,17 @@ function atualizarBadge(){
   let el = document.getElementById('bkpBadge');
   if(v+u>0){ el.className='bkp warn'; el.innerText=`⚠️ ${v+u}`; } else { el.className='bkp ok'; el.innerText='💾 ok'; }
 }
-function closeNewModal(){ document.getElementById('newModal').classList.remove('show'); document.getElementById('newNome').value=''; document.getElementById('newPet').value=''; document.getElementById('newTelefone').value=''; document.getElementById('newValor').value=''; document.getElementById('newObs').value=''; document.getElementById('newDiaMes').value=''; document.getElementById('newUsosAnteriores').value='0'; document.getElementById('datasAnterioresContainer').innerHTML=''; }
+function closeNewModal(){ 
+  document.getElementById('newModal').classList.remove('show'); 
+  document.getElementById('newNome').value=''; 
+  document.getElementById('newPet').value=''; 
+  document.getElementById('newTelefone').value=''; 
+  document.getElementById('newValor').value=''; 
+  document.getElementById('newObs').value=''; 
+  document.getElementById('newDiaMes').value=''; 
+  document.getElementById('newUsosAnteriores').value='0'; 
+  document.getElementById('datasAnterioresContainer').innerHTML=''; 
+}
 function openNewModal(){ 
   document.getElementById('newModal').classList.add('show'); 
   const hoje = new Date().toISOString().slice(0,10);
@@ -574,14 +708,18 @@ function openNewModal(){
   const freqSelect = document.getElementById('newFrequencia');
   const freqVal = freqSelect.value;
   document.getElementById('diaSemanaGroup').style.display = (freqVal === 'semanal') ? 'block' : 'none';
-  document.getElementById('diaMesGroup').style.display = (freqVal === 'mensal') ? 'block' : 'none';
+  document.getElementById('diaMesGroup').style.display = (freqVal === 'mensal_fixo') ? 'block' : 'none';
+  document.getElementById('registroAutoGroup').style.display = (freqVal !== 'mensal_livre') ? 'block' : 'none';
+  document.getElementById('newRegistroAuto').checked = true;
   document.getElementById('newUsosAnteriores').value='0';
   document.getElementById('datasAnterioresContainer').innerHTML='';
 }
 function closeHistoryModal(){ document.getElementById('historyModal').classList.remove('show'); currentHistoryId=null; }
 function closeAlertsModal(){ document.getElementById('alertsModal').classList.remove('show'); }
 
-// Eventos
+// ============================================
+// EVENT LISTENERS
+// ============================================
 document.getElementById('searchInput').addEventListener('input', renderClientes);
 document.getElementById('btnNewPacote').addEventListener('click', openNewModal);
 document.getElementById('btnRelatorio').addEventListener('click', exportarRelatorio);
@@ -599,8 +737,11 @@ document.getElementById('newUsosAnteriores').addEventListener('input', atualizar
 // Frequência change
 document.getElementById('newFrequencia').addEventListener('change',(e)=>{
   let v=e.target.value;
-  document.getElementById('diaSemanaGroup').style.display = v==='semanal'?'block':'none';
-  document.getElementById('diaMesGroup').style.display = v==='mensal'?'block':'none';
+  document.getElementById('diaSemanaGroup').style.display = (v === 'semanal') ? 'block' : 'none';
+  document.getElementById('diaMesGroup').style.display = (v === 'mensal_fixo') ? 'block' : 'none';
+  document.getElementById('registroAutoGroup').style.display = (v !== 'mensal_livre') ? 'block' : 'none';
+  if(v === 'mensal_livre') document.getElementById('newRegistroAuto').checked = false;
+  else document.getElementById('newRegistroAuto').checked = true;
 });
 
 // Dias da semana - seleção
@@ -612,7 +753,9 @@ document.querySelectorAll('#diasSemana .dia-btn').forEach(btn=>{
 });
 document.querySelector('#diasSemana .dia-btn[data-dia="sexta"]')?.classList.add('selected');
 
-// Inicializar
+// ============================================
+// INICIALIZAR
+// ============================================
 carregarDados();
 </script>
 </body>
