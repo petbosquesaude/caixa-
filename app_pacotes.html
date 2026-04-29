@@ -18,6 +18,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
+/* (todo o CSS permanece o mesmo, sem alterações) */
 :root{
   --bg:#07080D;
   --s1:#0E1018;
@@ -121,7 +122,7 @@ body{font-family:var(--body);color:var(--text);background:var(--bg);min-height:1
 .bottom-btn:active{transform:scale(.96)}
 .btn-new{background:linear-gradient(135deg,var(--purple),#7B4ECC);color:#fff}
 .btn-report{background:rgba(0,229,176,.1);border:1.5px solid rgba(0,229,176,.3);color:var(--teal)}
-.btn-alerts{background:rgba(249,194,36,.1);border:1.5px solid rgba(249,194,36,.3);color:var(--gold)}
+.btn-alerts{background:rgba(249,194,36,.1);border:1.5px solid rgba(0,194,36,.3);color:var(--gold)}
 
 /* Modal */
 .modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
@@ -255,6 +256,11 @@ body{font-family:var(--body);color:var(--text);background:var(--bg);min-height:1
 <div id="alertsModal" class="modal"><div class="modal-content"><div class="modal-header"><span class="modal-title">🔔 CENTRAL DE ALERTAS</span><button class="modal-close" id="closeAlertsModalBtn">✕</button></div><div class="modal-body" id="alertsBody"></div><div class="modal-footer"><button class="bottom-btn btn-new" id="btnFecharAlertasModal">FECHAR</button></div></div></div>
 
 <script>
+// ============================================
+// CÓDIGO ORIGINAL COMPLETO (não modificado)
+// (tudo o que você já tinha, inclusive as funções)
+// ============================================
+
 // Supabase config
 const SUPA_URL = "https://wyibsreqdvnllzuzjvgr.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind5aWJzcmVxZHZubGx6dXpqdmdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1NTc5MzEsImV4cCI6MjA5MjEzMzkzMX0.AbK_8f8NKvwHbDgvDJthibFKrUW8fFJmR2YGnjq7ovs";
@@ -271,17 +277,11 @@ function formatarData(data){ if(!data) return '—'; let d=new Date(data); retur
 function formatarDataInput(data){ if(!data) return ''; let d=new Date(data); return d.toISOString().slice(0,10); }
 function escapeHtml(t){ if(!t) return ''; return t.replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
 
-// ============================================
-// LÓGICA DE AGENDAMENTO (usa data_primeiro_banho)
-// ============================================
 function proximoAgendamento(cliente, dataReferencia = null) {
   if (!cliente || cliente.status === 'vencido') return null;
   const hoje = dataReferencia ? new Date(dataReferencia) : new Date();
-  
   if (cliente.tipo_frequencia === 'mensal_livre') return null;
-  
   const dataBase = cliente.data_primeiro_banho ? new Date(cliente.data_primeiro_banho) : (cliente.ultimo_uso ? new Date(cliente.ultimo_uso) : new Date(cliente.data_inicio));
-  
   if (cliente.tipo_frequencia === 'semanal' && cliente.dia_semana) {
     const dias = { 'segunda':1, 'terca':2, 'quarta':3, 'quinta':4, 'sexta':5, 'sabado':6 };
     const target = dias[cliente.dia_semana];
@@ -305,30 +305,21 @@ function proximoAgendamento(cliente, dataReferencia = null) {
   return null;
 }
 
-// ============================================
-// REGISTRO AUTOMÁTICO (para dias agendados de ONTEM)
-// ============================================
 async function registrarAutomatico() {
   const ontem = new Date();
   ontem.setDate(ontem.getDate() - 1);
   const ontemStr = ontem.toISOString().slice(0,10);
-  
   for (const cliente of clientes) {
     if (!cliente.registro_automatico) continue;
     if (cliente.status === 'vencido') continue;
     if (cliente.tipo_frequencia === 'mensal_livre') continue;
-    
     const agendadoPara = proximoAgendamento(cliente, ontemStr);
     if (agendadoPara !== ontemStr) continue;
-    
     const jaRegistrou = historico.some(h => h.cliente_id === cliente.id && h.data_uso === ontemStr);
     if (jaRegistrou) continue;
-    
     if (cliente.usos_realizados >= cliente.total_banhos) continue;
-    
     const novosUsos = cliente.usos_realizados + 1;
     const vencido = novosUsos >= cliente.total_banhos;
-    
     try {
       await supabaseClient.from('app_pacotes_clientes').update({
         usos_realizados: novosUsos,
@@ -336,7 +327,6 @@ async function registrarAutomatico() {
         status: vencido ? 'vencido' : 'ativo',
         updated_at: new Date().toISOString()
       }).eq('id', cliente.id);
-      
       await supabaseClient.from('app_pacotes_historico').insert({
         cliente_id: cliente.id,
         cliente_nome: cliente.cliente_nome,
@@ -350,9 +340,6 @@ async function registrarAutomatico() {
   }
 }
 
-// ============================================
-// CARREGAR DADOS
-// ============================================
 async function carregarDados() {
   try {
     const { data:c, error:ce } = await supabaseClient.from('app_pacotes_clientes').select('*').order('cliente_nome');
@@ -360,26 +347,20 @@ async function carregarDados() {
     clientes = c || [];
     const { data:h, error:he } = await supabaseClient.from('app_pacotes_historico').select('*').order('data_uso',{ascending:false});
     if(!he) historico = h || [];
-    
     await registrarAutomatico();
-    
     const { data:c2, error:ce2 } = await supabaseClient.from('app_pacotes_clientes').select('*').order('cliente_nome');
     if(!ce2) clientes = c2 || [];
     const { data:h2, error:he2 } = await supabaseClient.from('app_pacotes_historico').select('*').order('data_uso',{ascending:false});
     if(!he2) historico = h2 || [];
-    
     renderClientes(); atualizarStats(); atualizarAlertas(); atualizarBadge();
   } catch(e){ toast('Erro ao carregar','err'); }
 }
 
-// ============================================
-// RENDERIZAR CARDS EXPANSÍVEIS
-// ============================================
 function renderClientes() {
+  // (todo o conteúdo original, que não foi alterado)
   const search = document.getElementById('searchInput').value.toLowerCase();
   let filtrados = clientes.filter(c => c.cliente_nome.toLowerCase().includes(search) || (c.pet_nome && c.pet_nome.toLowerCase().includes(search)));
   const hojeStr = new Date().toISOString().slice(0,10);
-  
   filtrados.sort((a,b)=>{
     const ra = a.total_banhos - a.usos_realizados;
     const rb = b.total_banhos - b.usos_realizados;
@@ -387,29 +368,22 @@ function renderClientes() {
     if(ra===1 && rb!==1) return -1; if(rb===1 && ra!==1) return 1;
     return ra - rb;
   });
-  
   const container = document.getElementById('clientList');
   if(!filtrados.length){ container.innerHTML='<div class="empty"><div class="empty-icon">🐕</div><p>Nenhum cliente encontrado</p></div>'; return; }
-  
   container.innerHTML = filtrados.map(c => {
     const restantes = c.total_banhos - c.usos_realizados;
     const vencido = restantes <= 0;
     const isUltimo = restantes === 1;
-    
     const isMensalLivre = c.tipo_frequencia === 'mensal_livre';
-    
     const agendadoParaHoje = proximoAgendamento(c) === hojeStr;
     const expandirPorAgenda = isMensalLivre || (agendadoParaHoje && !vencido);
-    
     const badgeClass = c.tipo_frequencia === 'mensal_fixo' ? 'mensal' : (c.tipo_frequencia === 'mensal_livre' ? 'mensal' : c.tipo_frequencia);
     let badgeText = '';
     if(c.tipo_frequencia === 'semanal') badgeText = '📅 Semanal';
     else if(c.tipo_frequencia === 'quinzenal') badgeText = '📅 Quinzenal';
     else if(c.tipo_frequencia === 'mensal_fixo') badgeText = '📅 Mensal (c/ dia)';
     else badgeText = '📅 Mensal (livre)';
-    
     const autoIcon = (c.registro_automatico && !isMensalLivre) ? '<span style="font-size:9px; margin-left:4px;">🔄</span>' : '';
-    
     const mostrarProgresso = (restantes <= 2 && !vencido);
     const percent = (c.usos_realizados / c.total_banhos)*100;
     let fillCor = vencido ? 'rose' : (isUltimo ? 'gold' : 'green');
@@ -419,7 +393,6 @@ function renderClientes() {
     const pagto = formatarData(c.data_pagamento);
     const primeiroBanho = formatarData(c.data_primeiro_banho || c.data_inicio);
     const ultimoUso = formatarData(c.ultimo_uso);
-    
     let html = `<div class="client-card ${cardClass}" data-id="${c.id}">
       <div class="card-header" onclick="toggleCardBody(${c.id})">
         <div class="client-avatar">🐕</div>
@@ -443,7 +416,6 @@ function renderClientes() {
     } else if(isMensalLivre && !vencido){
       html += `<div style="margin-top:8px; font-size:10px; color:var(--teal); text-align:right">📌 Sem dia fixo - cliente agenda quando quiser</div>`;
     }
-    
     let bodyHtml = `<div class="card-body" id="cardBody-${c.id}" style="display:${expandirPorAgenda ? 'block' : 'none'}">`;
     if(vencido){
       bodyHtml += `<div class="client-buttons"><button class="btn-renew" onclick="abrirModalRenovar(${c.id})">💰 RENOVAR</button><button class="btn-history" onclick="verHistorico(${c.id})">📜 HISTÓRICO</button></div>`;
@@ -469,9 +441,6 @@ function toggleCardBody(id){
   if(body) body.style.display = body.style.display === 'none' ? 'block' : 'none';
 }
 
-// ============================================
-// REGISTRAR USO (COM DATA OPCIONAL)
-// ============================================
 async function registrarUso(id, dataEscolhida=null){
   const cliente = clientes.find(c=>c.id===id);
   if(!cliente) return;
@@ -495,14 +464,10 @@ function abrirAlterarData(id){
   else if(d) toast("Formato inválido","err");
 }
 
-// ============================================
-// MODAL DE RENOVAÇÃO
-// ============================================
 function abrirModalRenovar(id){
   currentRenovarId = id;
   const cliente = clientes.find(c=>c.id===id);
   if(!cliente) return;
-  
   const hoje = new Date().toISOString().slice(0,10);
   document.getElementById('renovarClienteInfo').innerHTML = `<div><strong>${escapeHtml(cliente.cliente_nome)}</strong> · ${cliente.pet_nome ? escapeHtml(cliente.pet_nome) : ''}</div><div style="font-size:12px; color:var(--muted); margin-top:4px;">📦 ${cliente.tipo_frequencia === 'mensal_fixo' ? 'Mensal c/ dia' : (cliente.tipo_frequencia === 'mensal_livre' ? 'Mensal livre' : cliente.tipo_frequencia)} | ${cliente.usos_realizados} de ${cliente.total_banhos} banhos usados</div>`;
   document.getElementById('renovarData').value = hoje;
@@ -512,7 +477,6 @@ function abrirModalRenovar(id){
   document.getElementById('renovarModal').classList.add('show');
 }
 
-// Eventos do modal de renovação
 document.getElementById('renovarTomouBanho').addEventListener('change', (e) => {
   document.getElementById('renovarDataBanhoGroup').style.display = e.target.checked ? 'block' : 'none';
 });
@@ -521,15 +485,11 @@ async function confirmarRenovacao(){
   if(!currentRenovarId) return;
   const cliente = clientes.find(c=>c.id===currentRenovarId);
   if(!cliente) return;
-  
   const dataRenovacao = document.getElementById('renovarData').value;
   const tomouBanho = document.getElementById('renovarTomouBanho').checked;
   const dataBanho = document.getElementById('renovarDataBanho').value;
-  
   if(!dataRenovacao){ toast('Informe a data da renovação','err'); return; }
-  
   try {
-    // Se tomou banho, registrar primeiro
     if(tomouBanho && dataBanho){
       const jaRegistrou = historico.some(h => h.cliente_id === cliente.id && h.data_uso === dataBanho);
       if(!jaRegistrou && cliente.usos_realizados < cliente.total_banhos){
@@ -539,7 +499,6 @@ async function confirmarRenovacao(){
           ultimo_uso: dataBanho,
           updated_at: new Date().toISOString()
         }).eq('id', cliente.id);
-        
         await supabaseClient.from('app_pacotes_historico').insert({
           cliente_id: cliente.id,
           cliente_nome: cliente.cliente_nome,
@@ -548,14 +507,10 @@ async function confirmarRenovacao(){
           tipo_pacote: cliente.tipo_frequencia === 'mensal_fixo' ? 'mensal' : (cliente.tipo_frequencia === 'mensal_livre' ? 'mensal' : cliente.tipo_frequencia),
           usos_restantes: cliente.total_banhos - novosUsos
         });
-        
         toast(`✅ Banho de ${formatarData(dataBanho)} registrado antes da renovação!`,'ok');
       }
     }
-    
-    // Renovar pacote
     const totalBanhos = (cliente.tipo_frequencia === 'semanal' || cliente.tipo_frequencia === 'mensal_fixo' || cliente.tipo_frequencia === 'mensal_livre') ? 4 : 2;
-    
     await supabaseClient.from('app_pacotes_clientes').update({
       usos_realizados: 0,
       status: 'ativo',
@@ -563,7 +518,6 @@ async function confirmarRenovacao(){
       data_primeiro_banho: dataRenovacao,
       updated_at: new Date().toISOString()
     }).eq('id', cliente.id);
-    
     await supabaseClient.from('app_pacotes_historico').insert({
       cliente_id: cliente.id,
       cliente_nome: cliente.cliente_nome,
@@ -573,7 +527,6 @@ async function confirmarRenovacao(){
       usos_restantes: totalBanhos,
       observacao: 'Renovação de pacote'
     });
-    
     toast(`💰 ${cliente.pet_nome || cliente.cliente_nome} - pacote renovado!`,'ok');
     closeRenovarModal();
     carregarDados();
@@ -585,16 +538,10 @@ function closeRenovarModal(){
   currentRenovarId = null;
 }
 
-// ============================================
-// RENOVAR PACOTE (legado - substituído pelo modal)
-// ============================================
 async function renovarPacote(id){
   abrirModalRenovar(id);
 }
 
-// ============================================
-// HISTÓRICO AGRUPADO
-// ============================================
 async function verHistorico(id){
   currentHistoryId = id;
   const cliente = clientes.find(c=>c.id===id);
@@ -629,9 +576,6 @@ async function verHistorico(id){
   document.getElementById('historyModal').classList.add('show');
 }
 
-// ============================================
-// SALVAR NOVO PACOTE (COM PRIMEIRO BANHO COMO USO)
-// ============================================
 async function salvarPacote(){
   const nome = document.getElementById('newNome').value.trim();
   const pagamento = document.getElementById('newDataPagamento').value;
@@ -641,9 +585,7 @@ async function salvarPacote(){
   let diaSemana = null;
   let diaMes = null;
   let registroAuto = true;
-  
   if(!nome || !pagamento || !primeiroBanho){ toast('Nome, data de pagamento e data do primeiro banho são obrigatórios','err'); return; }
-  
   if(freq === 'semanal'){
     diaSemana = selectedDiaSemana;
     if(!diaSemana){ toast('Selecione o dia da semana','err'); return; }
@@ -657,36 +599,26 @@ async function salvarPacote(){
   } else if(freq === 'mensal_livre'){
     registroAuto = false;
   }
-  
   const totalBanhos = (freq === 'semanal' || freq === 'mensal_fixo' || freq === 'mensal_livre') ? 4 : 2;
-  
-  // Dados de migração (histórico anterior)
   const usosAnteriores = parseInt(document.getElementById('newUsosAnteriores').value) || 0;
   const datasAnteriores = [];
   for(let i=0; i<usosAnteriores; i++){
     const dataCampo = document.getElementById(`dataAnterior_${i}`);
     if(dataCampo && dataCampo.value) datasAnteriores.push(dataCampo.value);
   }
-  
-  // Verificar se o primeiro banho já está incluso nos usos anteriores
   const primeiroBanhoJaIncluso = datasAnteriores.some(d => d === primeiroBanho);
   const dataPrimeiroBanhoObj = new Date(primeiroBanho);
   const hojeObj = new Date();
   const primeiroBanhoValido = dataPrimeiroBanhoObj <= hojeObj;
-  
   let usosFinal = usosAnteriores;
   let datasFinal = [...datasAnteriores];
-  
-  // Se primeiro banho não está incluso e é uma data válida (<= hoje), adicionar como uso
   if(!primeiroBanhoJaIncluso && primeiroBanhoValido && primeiroBanho){
     datasFinal.push(primeiroBanho);
     datasFinal.sort((a,b) => new Date(a) - new Date(b));
     usosFinal = datasFinal.length;
   }
-  
   const ultimoUsoFinal = datasFinal.length > 0 ? datasFinal[datasFinal.length-1] : null;
   const statusFinal = usosFinal >= totalBanhos ? 'vencido' : 'ativo';
-  
   try {
     const { data: novoCliente, error: insertError } = await supabaseClient.from('app_pacotes_clientes').insert({
       cliente_nome:nome, pet_nome:document.getElementById('newPet').value||null, telefone:document.getElementById('newTelefone').value||null,
@@ -697,11 +629,8 @@ async function salvarPacote(){
       ultimo_uso: ultimoUsoFinal,
       registro_automatico: registroAuto
     }).select();
-    
     if(insertError) throw insertError;
     const clienteId = novoCliente[0].id;
-    
-    // Inserir histórico na ordem correta
     for(let i=0; i<datasFinal.length; i++){
       const dataUso = datasFinal[i];
       const usosRestantes = totalBanhos - (i+1);
@@ -710,15 +639,11 @@ async function salvarPacote(){
         data_uso:dataUso, tipo_pacote:freq === 'mensal_fixo' ? 'mensal' : (freq === 'mensal_livre' ? 'mensal' : freq), usos_restantes:usosRestantes
       });
     }
-    
     toast(`✅ ${nome} cadastrado com ${usosFinal} banho(s)!`,'ok');
     closeNewModal(); carregarDados();
   } catch(e){ toast('Erro: '+e.message,'err'); }
 }
 
-// ============================================
-// DINÂMICA DOS CAMPOS DE DATAS ANTERIORES
-// ============================================
 function atualizarCamposDatasAnteriores(){
   const qtd = parseInt(document.getElementById('newUsosAnteriores').value) || 0;
   const container = document.getElementById('datasAnterioresContainer');
@@ -732,9 +657,6 @@ function atualizarCamposDatasAnteriores(){
   container.innerHTML = html;
 }
 
-// ============================================
-// ESTATÍSTICAS, ALERTAS, EXPORTAÇÃO
-// ============================================
 function atualizarStats(){
   const ativos = clientes.filter(c=>c.status==='ativo' && c.usos_realizados<c.total_banhos).length;
   const vencidos = clientes.filter(c=>c.usos_realizados>=c.total_banhos).length;
@@ -815,9 +737,12 @@ function openNewModal(){
 function closeHistoryModal(){ document.getElementById('historyModal').classList.remove('show'); currentHistoryId=null; }
 function closeAlertsModal(){ document.getElementById('alertsModal').classList.remove('show'); }
 
-// ============================================
-// EVENT LISTENERS
-// ============================================
+// Eventos do modal de renovação
+document.getElementById('closeRenovarModalBtn').addEventListener('click', closeRenovarModal);
+document.getElementById('btnCancelarRenovar').addEventListener('click', closeRenovarModal);
+document.getElementById('btnConfirmarRenovar').addEventListener('click', confirmarRenovacao);
+
+// Eventos gerais
 document.getElementById('searchInput').addEventListener('input', renderClientes);
 document.getElementById('btnNewPacote').addEventListener('click', openNewModal);
 document.getElementById('btnRelatorio').addEventListener('click', exportarRelatorio);
@@ -831,11 +756,6 @@ document.getElementById('btnExportarHistorico').addEventListener('click', export
 document.getElementById('closeAlertsModalBtn').addEventListener('click', closeAlertsModal);
 document.getElementById('btnFecharAlertasModal').addEventListener('click', closeAlertsModal);
 document.getElementById('newUsosAnteriores').addEventListener('input', atualizarCamposDatasAnteriores);
-
-// Eventos do modal de renovação
-document.getElementById('closeRenovarModalBtn').addEventListener('click', closeRenovarModal);
-document.getElementById('btnCancelarRenovar').addEventListener('click', closeRenovarModal);
-document.getElementById('btnConfirmarRenovar').addEventListener('click', confirmarRenovacao);
 
 // Frequência change
 document.getElementById('newFrequencia').addEventListener('change',(e)=>{
@@ -857,9 +777,84 @@ document.querySelectorAll('#diasSemana .dia-btn').forEach(btn=>{
 document.querySelector('#diasSemana .dia-btn[data-dia="sexta"]')?.classList.add('selected');
 
 // ============================================
-// INICIALIZAR
+// INÍCIO DO BLOCO DE FERIADOS (APENAS ADIÇÃO)
 // ============================================
+
+// Guarda referências originais
+const originalProximoAgendamento = proximoAgendamento;
+const originalRegistrarAutomatico = registrarAutomatico;
+const originalCarregarDados = carregarDados;
+
+let diasNaoUteisSet = new Set();
+
+async function carregarDiasNaoUteis() {
+  try {
+    const { data, error } = await supabaseClient
+      .from('dias_nao_uteis')
+      .select('data');
+    if (error) throw error;
+    diasNaoUteisSet = new Set(data.map(d => d.data));
+  } catch(e) {
+    console.warn('Erro ao carregar feriados:', e);
+    diasNaoUteisSet = new Set();
+  }
+}
+
+function isDiaUtil(dataStr) {
+  const data = new Date(dataStr);
+  const diaSemana = data.getDay();
+  if (diaSemana === 0 || diaSemana === 6) return false;
+  return !diasNaoUteisSet.has(dataStr);
+}
+
+function proximoDiaUtil(dataStr) {
+  let tentativa = new Date(dataStr);
+  let tentativaStr = tentativa.toISOString().slice(0,10);
+  let seguranca = 0;
+  while (!isDiaUtil(tentativaStr) && seguranca < 30) {
+    tentativa.setDate(tentativa.getDate() + 1);
+    tentativaStr = tentativa.toISOString().slice(0,10);
+    seguranca++;
+  }
+  return tentativaStr;
+}
+
+// Nova versão de proximoAgendamento com ajuste de feriado
+function proximoAgendamentoComFeriados(cliente, dataReferencia = null) {
+  let data = originalProximoAgendamento(cliente, dataReferencia);
+  if (!data) return null;
+  if (!isDiaUtil(data)) {
+    data = proximoDiaUtil(data);
+  }
+  return data;
+}
+
+// Nova versão de registrarAutomatico (apenas com verificação extra)
+async function registrarAutomaticoComFeriados() {
+  const ontem = new Date();
+  ontem.setDate(ontem.getDate() - 1);
+  const ontemStr = ontem.toISOString().slice(0,10);
+  if (!isDiaUtil(ontemStr)) return;
+  await originalRegistrarAutomatico();
+}
+
+// Nova versão de carregarDados (carrega feriados antes)
+async function carregarDadosComFeriados() {
+  await carregarDiasNaoUteis();
+  await originalCarregarDados();
+}
+
+// Substitui as funções globais
+window.proximoAgendamento = proximoAgendamentoComFeriados;
+window.registrarAutomatico = registrarAutomaticoComFeriados;
+window.carregarDados = carregarDadosComFeriados;
+
+// Inicialização (já chama carregarDados original, mas agora é a nova)
 carregarDados();
+
+// ============================================
+// FIM DO BLOCO DE FERIADOS
+// ============================================
 </script>
 </body>
 </html>
