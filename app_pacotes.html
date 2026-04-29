@@ -18,7 +18,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
-/* (todo o CSS permanece o mesmo, sem alterações) */
+/* ===== ESTILOS ORIGINAIS (mesmo do app funcional) ===== */
 :root{
   --bg:#07080D;
   --s1:#0E1018;
@@ -122,7 +122,7 @@ body{font-family:var(--body);color:var(--text);background:var(--bg);min-height:1
 .bottom-btn:active{transform:scale(.96)}
 .btn-new{background:linear-gradient(135deg,var(--purple),#7B4ECC);color:#fff}
 .btn-report{background:rgba(0,229,176,.1);border:1.5px solid rgba(0,229,176,.3);color:var(--teal)}
-.btn-alerts{background:rgba(249,194,36,.1);border:1.5px solid rgba(0,194,36,.3);color:var(--gold)}
+.btn-alerts{background:rgba(249,194,36,.1);border:1.5px solid rgba(249,194,36,.3);color:var(--gold)}
 
 /* Modal */
 .modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
@@ -258,7 +258,6 @@ body{font-family:var(--body);color:var(--text);background:var(--bg);min-height:1
 <script>
 // ============================================
 // CÓDIGO ORIGINAL COMPLETO (não modificado)
-// (tudo o que você já tinha, inclusive as funções)
 // ============================================
 
 // Supabase config
@@ -357,7 +356,6 @@ async function carregarDados() {
 }
 
 function renderClientes() {
-  // (todo o conteúdo original, que não foi alterado)
   const search = document.getElementById('searchInput').value.toLowerCase();
   let filtrados = clientes.filter(c => c.cliente_nome.toLowerCase().includes(search) || (c.pet_nome && c.pet_nome.toLowerCase().includes(search)));
   const hojeStr = new Date().toISOString().slice(0,10);
@@ -738,9 +736,9 @@ function closeHistoryModal(){ document.getElementById('historyModal').classList.
 function closeAlertsModal(){ document.getElementById('alertsModal').classList.remove('show'); }
 
 // Eventos do modal de renovação
-document.getElementById('closeRenovarModalBtn').addEventListener('click', closeRenovarModal);
-document.getElementById('btnCancelarRenovar').addEventListener('click', closeRenovarModal);
-document.getElementById('btnConfirmarRenovar').addEventListener('click', confirmarRenovacao);
+document.getElementById('closeRenovarModalBtn')?.addEventListener('click', closeRenovarModal);
+document.getElementById('btnCancelarRenovar')?.addEventListener('click', closeRenovarModal);
+document.getElementById('btnConfirmarRenovar')?.addEventListener('click', confirmarRenovacao);
 
 // Eventos gerais
 document.getElementById('searchInput').addEventListener('input', renderClientes);
@@ -777,10 +775,10 @@ document.querySelectorAll('#diasSemana .dia-btn').forEach(btn=>{
 document.querySelector('#diasSemana .dia-btn[data-dia="sexta"]')?.classList.add('selected');
 
 // ============================================
-// INÍCIO DO BLOCO DE FERIADOS (APENAS ADIÇÃO)
+// BLOCO DE FERIADOS E GERENCIAMENTO (ADIÇÃO SEM ALTERAR)
 // ============================================
 
-// Guarda referências originais
+// Referências originais
 const originalProximoAgendamento = proximoAgendamento;
 const originalRegistrarAutomatico = registrarAutomatico;
 const originalCarregarDados = carregarDados;
@@ -819,7 +817,6 @@ function proximoDiaUtil(dataStr) {
   return tentativaStr;
 }
 
-// Nova versão de proximoAgendamento com ajuste de feriado
 function proximoAgendamentoComFeriados(cliente, dataReferencia = null) {
   let data = originalProximoAgendamento(cliente, dataReferencia);
   if (!data) return null;
@@ -829,7 +826,6 @@ function proximoAgendamentoComFeriados(cliente, dataReferencia = null) {
   return data;
 }
 
-// Nova versão de registrarAutomatico (apenas com verificação extra)
 async function registrarAutomaticoComFeriados() {
   const ontem = new Date();
   ontem.setDate(ontem.getDate() - 1);
@@ -838,23 +834,134 @@ async function registrarAutomaticoComFeriados() {
   await originalRegistrarAutomatico();
 }
 
-// Nova versão de carregarDados (carrega feriados antes)
 async function carregarDadosComFeriados() {
   await carregarDiasNaoUteis();
   await originalCarregarDados();
 }
 
-// Substitui as funções globais
 window.proximoAgendamento = proximoAgendamentoComFeriados;
 window.registrarAutomatico = registrarAutomaticoComFeriados;
 window.carregarDados = carregarDadosComFeriados;
 
-// Inicialização (já chama carregarDados original, mas agora é a nova)
-carregarDados();
+// ============================================
+// BOTÃO "📅 Dias?" E MODAL DE GERENCIAMENTO
+// ============================================
+const bottomBarDias = document.querySelector('.bottom-bar');
+const diasBtn = document.createElement('button');
+diasBtn.className = 'bottom-btn';
+diasBtn.id = 'btnDias';
+diasBtn.innerHTML = '📅 Dias?';
+bottomBarDias.appendChild(diasBtn);
 
-// ============================================
-// FIM DO BLOCO DE FERIADOS
-// ============================================
+// Criar modal de gerenciamento (se não existir)
+let feriadosModal = document.getElementById('feriadosModal');
+if (!feriadosModal) {
+  feriadosModal = document.createElement('div');
+  feriadosModal.id = 'feriadosModal';
+  feriadosModal.className = 'modal';
+  feriadosModal.innerHTML = `
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="modal-title">📅 Gerenciar dias não úteis (feriados/fechamentos)</span>
+        <button class="modal-close" id="closeFeriadosModalBtn">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom:20px; border-bottom:1px solid var(--border2); padding-bottom:16px;">
+          <label class="form-label">➕ Adicionar novo dia não útil</label>
+          <div class="form-row">
+            <input type="date" id="novaDataFeriado" class="form-input" style="flex:2">
+            <input type="text" id="novaDescFeriado" class="form-input" placeholder="Motivo (ex: feriado, reforma)" style="flex:2">
+            <button id="btnAdicionarFeriado" class="bottom-btn" style="flex:1; background:var(--green); color:#000">+</button>
+          </div>
+        </div>
+        <div id="listaFeriados" style="max-height:300px; overflow-y:auto;"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="bottom-btn" id="btnFecharFeriadosModal" style="flex:1">FECHAR</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(feriadosModal);
+}
+
+async function carregarListaFeriados() {
+  const { data, error } = await supabaseClient
+    .from('app_pacotes_dias_nao_uteis')
+    .select('*')
+    .order('data', { ascending: true });
+  if (error) { console.error(error); return; }
+  const container = document.getElementById('listaFeriados');
+  if (!container) return;
+  if (!data || data.length === 0) {
+    container.innerHTML = '<div style="text-align:center; color:var(--muted); padding:12px;">Nenhum dia bloqueado cadastrado</div>';
+    return;
+  }
+  container.innerHTML = data.map(d => `
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border2);">
+      <div>
+        <span style="font-family:var(--mono); font-size:14px;">📅 ${formatarData(d.data)}</span>
+        <br><span style="font-size:10px; color:var(--muted);">${d.descricao || '—'}</span>
+      </div>
+      <button class="btn-desbloquear-feriado" data-id="${d.id}" data-data="${d.data}" style="background:rgba(255,122,32,.2); border:none; padding:6px 14px; border-radius:8px; color:var(--orange); font-weight:600; cursor:pointer;">🔓 Desbloquear</button>
+    </div>
+  `).join('');
+
+  // Eventos para botões "Desbloquear"
+  document.querySelectorAll('.btn-desbloquear-feriado').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-id');
+      const dataRemover = btn.getAttribute('data-data');
+      if (confirm(`Deseja remover ${formatarData(dataRemover)} da lista de dias não úteis?`)) {
+        await supabaseClient.from('app_pacotes_dias_nao_uteis').delete().eq('id', id);
+        await carregarListaFeriados();
+        await carregarDiasNaoUteis(); // atualiza o Set global
+        toast(`✅ ${formatarData(dataRemover)} agora é um dia útil!`, 'ok');
+        carregarDados(); // recarrega os cards
+      }
+    });
+  });
+}
+
+diasBtn.addEventListener('click', async () => {
+  await carregarListaFeriados();
+  feriadosModal.classList.add('show');
+});
+
+document.getElementById('closeFeriadosModalBtn')?.addEventListener('click', () => feriadosModal.classList.remove('show'));
+document.getElementById('btnFecharFeriadosModal')?.addEventListener('click', () => feriadosModal.classList.remove('show'));
+
+document.getElementById('btnAdicionarFeriado')?.addEventListener('click', async () => {
+  const data = document.getElementById('novaDataFeriado').value;
+  const desc = document.getElementById('novaDescFeriado').value;
+  if (!data) { toast('Selecione uma data', 'err'); return; }
+  // Verificar se já existe
+  const { data: existente } = await supabaseClient
+    .from('app_pacotes_dias_nao_uteis')
+    .select('id')
+    .eq('data', data)
+    .maybeSingle();
+  if (existente) {
+    toast('⚠️ Esta data já está na lista', 'warn');
+    return;
+  }
+  const { error } = await supabaseClient
+    .from('app_pacotes_dias_nao_uteis')
+    .insert({ data, descricao: desc || 'Bloqueio manual' });
+  if (error) { toast('Erro: ' + error.message, 'err'); return; }
+  document.getElementById('novaDataFeriado').value = '';
+  document.getElementById('novaDescFeriado').value = '';
+  await carregarListaFeriados();
+  await carregarDiasNaoUteis(); // atualiza o Set
+  toast(`✅ ${formatarData(data)} adicionado como dia não útil!`, 'ok');
+  carregarDados(); // recarrega os cards
+});
+
+// Remove botão antigo "FECHADO" se existir (para não duplicar)
+const oldFechadoBtn = document.getElementById('btnFechado');
+if (oldFechadoBtn) oldFechadoBtn.remove();
+
+// Inicialização (chama a nova carregarDados que já carrega feriados)
+carregarDados();
 </script>
 </body>
 </html>
