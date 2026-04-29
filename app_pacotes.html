@@ -790,7 +790,7 @@ let diasNaoUteisSet = new Set();
 async function carregarDiasNaoUteis() {
   try {
     const { data, error } = await supabaseClient
-      .from('dias_nao_uteis')
+      .from('app_pacotes_dias_nao_uteis')
       .select('data');
     if (error) throw error;
     diasNaoUteisSet = new Set(data.map(d => d.data));
