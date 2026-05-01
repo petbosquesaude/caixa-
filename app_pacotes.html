@@ -248,7 +248,9 @@ body{font-family:var(--body);color:var(--text);background:var(--bg);min-height:1
       <div class="form-group"><label class="form-label">FREQUÊNCIA</label><select id="editFrequencia" class="form-select"><option value="semanal">Semanal (vem 1x por semana)</option><option value="quinzenal">Quinzenal (vem a cada 15 dias)</option><option value="mensal_fixo">Mensal (com dia fixo)</option><option value="mensal_livre">Mensal (sem dia fixo)</option></select></div>
       <div class="form-group" id="editDiaSemanaGroup"><label class="form-label">DIA DA SEMANA</label><div class="dias-wrap" id="editDiasSemana"><div class="dia-btn" data-dia="segunda">SEG</div><div class="dia-btn" data-dia="terca">TER</div><div class="dia-btn" data-dia="quarta">QUA</div><div class="dia-btn" data-dia="quinta">QUI</div><div class="dia-btn" data-dia="sexta">SEX</div><div class="dia-btn" data-dia="sabado">SÁB</div></div></div>
       <div class="form-group" id="editDiaMesGroup" style="display:none"><label class="form-label">DIA DO MÊS</label><input type="number" id="editDiaMes" class="form-input" min="1" max="31"></div>
-      <div class="form-group"><label class="form-label">OBSERVAÇÃO</label><input type="text" id="editObs" class="form-input"></div>
+      <div class="form-group"><label class="form-label">📊 USOS REALIZADOS (migração)</label><input type="number" id="editUsosRealizados" class="form-input" min="0" max="20" value="0"></div>
+      <div id="editDatasUsosContainer" style="margin-top:10px;"></div>
+      <div class="form-group"><label class="form-label">📝 OBSERVAÇÃO</label><input type="text" id="editObs" class="form-input"></div>
     </div>
     <div class="modal-footer"><button class="bottom-btn" id="btnSalvarEdicao" style="flex:1;background:linear-gradient(135deg,var(--green),#138A40);color:#000">💾 SALVAR ALTERAÇÕES</button><button class="bottom-btn" id="btnCancelarEdicao" style="flex:1;background:transparent;border:1.5px solid var(--border2)">CANCELAR</button></div>
   </div>
@@ -267,22 +269,39 @@ let currentRenovarId = null;
 let selectedDiaSemana = 'sexta';
 let editSelectedDiaSemana = 'sexta';
 
+// ============================================
+// FUNÇÕES CORRIGIDAS (SEM BUG DE FUSO)
+// ============================================
 function toast(msg, type='ok'){ let e=document.getElementById('toast'); e.textContent=msg; e.className='toast '+type+' show'; setTimeout(()=>e.classList.remove('show'),2500); }
-function formatarData(data){ if(!data) return '—'; let d=new Date(data); return `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}`; }
+function formatarData(dataStr){
+  if(!dataStr) return '—';
+  const [ano, mes, dia] = dataStr.split('-');
+  return `${dia}/${mes}/${ano}`;
+}
+function hojeLocal(){
+  const d = new Date();
+  const ano = d.getFullYear();
+  const mes = String(d.getMonth() + 1).padStart(2,'0');
+  const dia = String(d.getDate()).padStart(2,'0');
+  return `${ano}-${mes}-${dia}`;
+}
 function escapeHtml(t){ if(!t) return ''; return t.replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
 
+// ============================================
+// FUNÇÃO DE AGENDAMENTO CORRIGIDA
+// ============================================
 function proximoAgendamento(cliente, dataReferencia = null) {
   if (!cliente || cliente.status === 'vencido') return null;
-  const hoje = dataReferencia ? new Date(dataReferencia) : new Date();
+  const hoje = dataReferencia ? new Date(dataReferencia + 'T12:00:00') : new Date();
   if (cliente.tipo_frequencia === 'mensal_livre') return null;
-  const dataBase = cliente.data_primeiro_banho ? new Date(cliente.data_primeiro_banho) : (cliente.ultimo_uso ? new Date(cliente.ultimo_uso) : new Date(cliente.data_inicio));
+  const dataBase = cliente.data_primeiro_banho ? new Date(cliente.data_primeiro_banho + 'T12:00:00') : (cliente.ultimo_uso ? new Date(cliente.ultimo_uso + 'T12:00:00') : new Date(cliente.data_inicio + 'T12:00:00'));
   if ((cliente.tipo_frequencia === 'semanal' || cliente.tipo_frequencia === 'quinzenal') && cliente.dia_semana) {
     const dias = { 'segunda':1, 'terca':2, 'quarta':3, 'quinta':4, 'sexta':5, 'sabado':6 };
     const target = dias[cliente.dia_semana];
     let prox = new Date(hoje);
     prox.setDate(prox.getDate() + ((target - prox.getDay() + 7) % 7));
     if (cliente.tipo_frequencia === 'quinzenal') {
-      let quinzenalBase = cliente.ultimo_uso ? new Date(cliente.ultimo_uso) : dataBase;
+      let quinzenalBase = cliente.ultimo_uso ? new Date(cliente.ultimo_uso + 'T12:00:00') : dataBase;
       let quinzenalProx = new Date(quinzenalBase);
       quinzenalProx.setDate(quinzenalProx.getDate() + 15);
       while (quinzenalProx < hoje) quinzenalProx.setDate(quinzenalProx.getDate() + 15);
@@ -299,6 +318,9 @@ function proximoAgendamento(cliente, dataReferencia = null) {
   return null;
 }
 
+// ============================================
+// REGISTRO AUTOMÁTICO CORRIGIDO
+// ============================================
 async function registrarAutomatico() {
   const ontem = new Date();
   ontem.setDate(ontem.getDate() - 1);
@@ -321,6 +343,9 @@ async function registrarAutomatico() {
   }
 }
 
+// ============================================
+// CARREGAR DADOS
+// ============================================
 async function carregarDados() {
   try {
     const { data:c, error:ce } = await supabaseClient.from('app_pacotes_clientes').select('*').order('cliente_nome');
@@ -337,10 +362,13 @@ async function carregarDados() {
   } catch(e){ toast('Erro ao carregar','err'); }
 }
 
+// ============================================
+// RENDERIZAR CLIENTES
+// ============================================
 function renderClientes() {
   const search = document.getElementById('searchInput').value.toLowerCase();
   let filtrados = clientes.filter(c => c.cliente_nome.toLowerCase().includes(search) || (c.pet_nome && c.pet_nome.toLowerCase().includes(search)));
-  const hojeStr = new Date().toISOString().slice(0,10);
+  const hojeStr = hojeLocal();
   filtrados.sort((a,b)=>{
     const ra = a.total_banhos - a.usos_realizados;
     const rb = b.total_banhos - b.usos_realizados;
@@ -422,10 +450,13 @@ function toggleCardBody(id){
   if(body) body.style.display = body.style.display === 'none' ? 'block' : 'none';
 }
 
+// ============================================
+// REGISTRAR USO CORRIGIDO
+// ============================================
 async function registrarUso(id, dataEscolhida=null){
   const cliente = clientes.find(c=>c.id===id);
   if(!cliente) return;
-  const hoje = dataEscolhida || new Date().toISOString().slice(0,10);
+  const hoje = dataEscolhida || hojeLocal();
   const jaRegistrou = historico.some(h=>h.cliente_id===id && h.data_uso===hoje);
   if(jaRegistrou){ toast(`⚠️ ${cliente.pet_nome||cliente.cliente_nome} já registrado em ${formatarData(hoje)}`,'warn'); return; }
   const novosUsos = cliente.usos_realizados+1;
@@ -440,7 +471,7 @@ async function registrarUso(id, dataEscolhida=null){
 }
 
 function abrirAlterarData(id){
-  let d = prompt("Data (AAAA-MM-DD):", new Date().toISOString().slice(0,10));
+  let d = prompt("Data (AAAA-MM-DD):", hojeLocal());
   if(d && /^\d{4}-\d{2}-\d{2}$/.test(d)) registrarUso(id,d);
   else if(d) toast("Formato inválido","err");
 }
@@ -449,7 +480,7 @@ function abrirModalRenovar(id){
   currentRenovarId = id;
   const cliente = clientes.find(c=>c.id===id);
   if(!cliente) return;
-  const hoje = new Date().toISOString().slice(0,10);
+  const hoje = hojeLocal();
   document.getElementById('renovarClienteInfo').innerHTML = `<div><strong>${escapeHtml(cliente.cliente_nome)}</strong> · ${cliente.pet_nome ? escapeHtml(cliente.pet_nome) : ''}</div><div style="font-size:12px; color:var(--muted); margin-top:4px;">📦 ${cliente.tipo_frequencia === 'mensal_fixo' ? 'Mensal c/ dia' : (cliente.tipo_frequencia === 'mensal_livre' ? 'Mensal livre' : cliente.tipo_frequencia)} | ${cliente.usos_realizados} de ${cliente.total_banhos} banhos usados</div>`;
   document.getElementById('renovarData').value = hoje;
   document.getElementById('renovarTomouBanho').checked = false;
@@ -490,13 +521,15 @@ async function confirmarRenovacao(){
 }
 
 function closeRenovarModal(){ document.getElementById('renovarModal').classList.remove('show'); currentRenovarId=null; }
-
 function renovarPacote(id){ abrirModalRenovar(id); }
 
+// ============================================
+// HISTÓRICO
+// ============================================
 async function verHistorico(id){
   currentHistoryId = id;
   const cliente = clientes.find(c=>c.id===id);
-  let todos = historico.filter(h=>h.cliente_id===id).sort((a,b)=>new Date(a.data_uso)-new Date(b.data_uso));
+  let todos = historico.filter(h=>h.cliente_id===id).sort((a,b)=>a.data_uso.localeCompare(b.data_uso));
   const ciclos = []; let cicloAtual = [];
   for(let reg of todos){
     if(reg.observacao && reg.observacao.includes('Renovação')){
@@ -522,6 +555,9 @@ async function verHistorico(id){
   document.getElementById('historyModal').classList.add('show');
 }
 
+// ============================================
+// SALVAR NOVO PACOTE CORRIGIDO
+// ============================================
 async function salvarPacote(){
   const nome = document.getElementById('newNome').value.trim();
   const pagamento = document.getElementById('newDataPagamento').value;
@@ -548,14 +584,12 @@ async function salvarPacote(){
     if(dataCampo && dataCampo.value) datasAnteriores.push(dataCampo.value);
   }
   const primeiroBanhoJaIncluso = datasAnteriores.some(d => d === primeiroBanho);
-  const dataPrimeiroBanhoObj = new Date(primeiroBanho);
-  const hojeObj = new Date();
-  const primeiroBanhoValido = dataPrimeiroBanhoObj <= hojeObj;
+  const primeiroBanhoValido = primeiroBanho <= hojeLocal();
   let usosFinal = usosAnteriores;
   let datasFinal = [...datasAnteriores];
   if(!primeiroBanhoJaIncluso && primeiroBanhoValido && primeiroBanho){
     datasFinal.push(primeiroBanho);
-    datasFinal.sort((a,b) => new Date(a) - new Date(b));
+    datasFinal.sort();
     usosFinal = datasFinal.length;
   }
   const ultimoUsoFinal = datasFinal.length > 0 ? datasFinal[datasFinal.length-1] : null;
@@ -597,7 +631,7 @@ function atualizarStats(){
   const vencidos = clientes.filter(c=>c.usos_realizados>=c.total_banhos).length;
   const ultimo = clientes.filter(c=>(c.total_banhos-c.usos_realizados)===1 && c.status!=='vencido').length;
   const hoje = new Date();
-  const usosMes = historico.filter(h=>{ let d=new Date(h.data_uso); return d.getMonth()===hoje.getMonth() && d.getFullYear()===hoje.getFullYear(); }).length;
+  const usosMes = historico.filter(h=>{ let data = h.data_uso; return data && data.substring(5,7) === String(hoje.getMonth()+1).padStart(2,'0') && data.substring(0,4) === String(hoje.getFullYear()); }).length;
   document.getElementById('statAtivos').innerText=ativos;
   document.getElementById('statUsos').innerText=usosMes;
   document.getElementById('statRenovar').innerText=ultimo;
@@ -628,7 +662,7 @@ function exportarRelatorio(){
   if(!clientes.length){ toast('Nenhum cliente','err'); return; }
   let ws=[['Cliente','Pet','Telefone','Frequência','Usos','Total','Status','Pagamento','Primeiro Banho','Auto','Valor']];
   clientes.forEach(c=>ws.push([c.cliente_nome,c.pet_nome||'',c.telefone||'',c.tipo_frequencia,c.usos_realizados,c.total_banhos,c.usos_realizados>=c.total_banhos?'VENCIDO':'ATIVO',c.data_pagamento||'',c.data_primeiro_banho||c.data_inicio||'',c.registro_automatico?'SIM':'NÃO',c.valor_mensal||0]));
-  let wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(ws),'pacotes'); XLSX.writeFile(wb,`pacotes_${new Date().toISOString().slice(0,10)}.xlsx`); toast('Relatório exportado!','ok');
+  let wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(ws),'pacotes'); XLSX.writeFile(wb,`pacotes_${hojeLocal()}.xlsx`); toast('Relatório exportado!','ok');
 }
 
 function exportarHistorico(){
@@ -638,7 +672,7 @@ function exportarHistorico(){
   if(!hist.length){ toast('Sem histórico','err'); return; }
   let ws=[['Data','Usos Restantes','Tipo']];
   hist.forEach(h=>ws.push([h.data_uso,h.usos_restantes,h.tipo_pacote]));
-  let wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(ws),'historico'); XLSX.writeFile(wb,`historico_${cliente.pet_nome||cliente.cliente_nome}_${new Date().toISOString().slice(0,10)}.xlsx`); toast('Histórico exportado!','ok');
+  let wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(ws),'historico'); XLSX.writeFile(wb,`historico_${cliente.pet_nome||cliente.cliente_nome}_${hojeLocal()}.xlsx`); toast('Histórico exportado!','ok');
 }
 
 function syncNow(){ carregarDados(); toast('🔄 Sincronizando...','ok'); }
@@ -659,7 +693,7 @@ function closeNewModal(){
 
 function openNewModal(){ 
   document.getElementById('newModal').classList.add('show'); 
-  const hoje = new Date().toISOString().slice(0,10);
+  const hoje = hojeLocal();
   document.getElementById('newDataPagamento').value=hoje; document.getElementById('newDataPrimeiroBanho').value=hoje;
   document.getElementById('newNome').focus(); 
   const freqVal = document.getElementById('newFrequencia').value;
@@ -675,8 +709,19 @@ function closeHistoryModal(){ document.getElementById('historyModal').classList.
 function closeAlertsModal(){ document.getElementById('alertsModal').classList.remove('show'); }
 
 // ============================================
-// EDIÇÃO DE CLIENTE
+// EDIÇÃO COMPLETA (INCLUINDO USOS E DATAS)
 // ============================================
+function atualizarCamposDatasEdicao(){
+  const qtd = parseInt(document.getElementById('editUsosRealizados').value) || 0;
+  const container = document.getElementById('editDatasUsosContainer');
+  if(!container) return;
+  if(qtd <= 0){ container.innerHTML = ''; return; }
+  let html = '<div style="margin-top:8px;"><label class="form-label">📅 DATAS DOS BANHOS ANTERIORES (do mais antigo para o mais recente)</label>';
+  for(let i=0; i<qtd; i++){ html += `<div class="form-group" style="margin-bottom:8px;"><label class="form-label">${i+1}º banho</label><input type="date" id="editDataAnterior_${i}" class="form-input" value=""></div>`; }
+  html += `</div>`;
+  container.innerHTML = html;
+}
+
 async function abrirModalEditar(id){
   const cliente = clientes.find(c=>c.id===id);
   if(!cliente) return;
@@ -688,6 +733,22 @@ async function abrirModalEditar(id){
   document.getElementById('editDataPrimeiroBanho').value = cliente.data_primeiro_banho || cliente.data_inicio || '';
   document.getElementById('editFrequencia').value = cliente.tipo_frequencia || 'mensal_livre';
   document.getElementById('editObs').value = cliente.observacao || '';
+  document.getElementById('editUsosRealizados').value = cliente.usos_realizados || 0;
+  
+  // Carregar as datas dos usos atuais
+  const usosAtuais = historico.filter(h => h.cliente_id === id && h.tipo_evento !== 'renovacao').sort((a,b)=>a.data_uso.localeCompare(b.data_uso));
+  document.getElementById('editUsosRealizados').value = usosAtuais.length;
+  if(usosAtuais.length > 0){
+    let html = '<div style="margin-top:8px;"><label class="form-label">📅 DATAS DOS BANHOS (do mais antigo para o mais recente)</label>';
+    for(let i=0; i<usosAtuais.length; i++){
+      html += `<div class="form-group" style="margin-bottom:8px;"><label class="form-label">${i+1}º banho</label><input type="date" id="editDataAnterior_${i}" class="form-input" value="${usosAtuais[i].data_uso}"></div>`;
+    }
+    html += `</div>`;
+    document.getElementById('editDatasUsosContainer').innerHTML = html;
+  } else {
+    document.getElementById('editDatasUsosContainer').innerHTML = '';
+  }
+  
   const freq = cliente.tipo_frequencia;
   const diaSemanaGroup = document.getElementById('editDiaSemanaGroup');
   const diaMesGroup = document.getElementById('editDiaMesGroup');
@@ -720,14 +781,43 @@ document.getElementById('btnSalvarEdicao')?.addEventListener('click', async () =
   const totalBanhos = (freq === 'semanal' || freq === 'mensal_fixo' || freq === 'mensal_livre') ? 4 : (freq === 'quinzenal' ? 2 : 4);
   const dataPrimeiroBanho = document.getElementById('editDataPrimeiroBanho').value;
   const dataPagamento = document.getElementById('editDataPagamento').value;
+  const usosRealizados = parseInt(document.getElementById('editUsosRealizados').value) || 0;
+  
+  // Coletar as datas dos usos
+  const datasUsos = [];
+  for(let i=0; i<usosRealizados; i++){
+    const dataCampo = document.getElementById(`editDataAnterior_${i}`);
+    if(dataCampo && dataCampo.value) datasUsos.push(dataCampo.value);
+  }
+  datasUsos.sort();
+  const ultimoUso = datasUsos.length > 0 ? datasUsos[datasUsos.length-1] : null;
+  const statusFinal = usosRealizados >= totalBanhos ? 'vencido' : 'ativo';
+  
   try {
+    // Atualizar cliente
     await supabaseClient.from('app_pacotes_clientes').update({
       cliente_nome: nome, pet_nome: document.getElementById('editPet').value || null, telefone: document.getElementById('editTelefone').value || null,
       tipo_frequencia: freq, dia_semana: diaSemana, dia_mes: diaMes, total_banhos: totalBanhos,
-      data_pagamento: dataPagamento || null, data_primeiro_banho: dataPrimeiroBanho || null,
+      usos_realizados: usosRealizados, data_pagamento: dataPagamento || null, data_primeiro_banho: dataPrimeiroBanho || null,
+      ultimo_uso: ultimoUso, status: statusFinal,
       observacao: document.getElementById('editObs').value || null, updated_at: new Date().toISOString()
     }).eq('id', id);
-    toast('✅ Cliente atualizado!', 'ok');
+    
+    // Remover histórico antigo de usos (manter renovações)
+    await supabaseClient.from('app_pacotes_historico').delete().eq('cliente_id', id).neq('tipo_evento', 'renovacao');
+    
+    // Inserir novo histórico de usos
+    for(let i=0; i<datasUsos.length; i++){
+      const dataUso = datasUsos[i];
+      const usosRestantes = totalBanhos - (i+1);
+      await supabaseClient.from('app_pacotes_historico').insert({
+        cliente_id: id, cliente_nome: nome, pet_nome: document.getElementById('editPet').value || null,
+        data_uso: dataUso, tipo_pacote: freq === 'mensal_fixo' ? 'mensal' : (freq === 'mensal_livre' ? 'mensal' : freq),
+        usos_restantes: usosRestantes
+      });
+    }
+    
+    toast('✅ Cliente atualizado com todos os dados!', 'ok');
     document.getElementById('editarModal').classList.remove('show');
     carregarDados();
   } catch(e){ toast('Erro: '+e.message,'err'); }
@@ -735,6 +825,7 @@ document.getElementById('btnSalvarEdicao')?.addEventListener('click', async () =
 
 document.getElementById('closeEditarModalBtn')?.addEventListener('click', () => document.getElementById('editarModal').classList.remove('show'));
 document.getElementById('btnCancelarEdicao')?.addEventListener('click', () => document.getElementById('editarModal').classList.remove('show'));
+document.getElementById('editUsosRealizados')?.addEventListener('input', atualizarCamposDatasEdicao);
 
 document.querySelectorAll('#editDiasSemana .dia-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -781,7 +872,7 @@ document.querySelectorAll('#diasSemana .dia-btn').forEach(btn => {
 document.querySelector('#diasSemana .dia-btn[data-dia="sexta"]')?.classList.add('selected');
 
 // ============================================
-// FERIADOS E MODAL "📅 Dias?" (adicionado anteriormente)
+// FERIADOS E MODAL "📅 Dias?" (CORRIGIDO)
 // ============================================
 let diasNaoUteisSet = new Set();
 async function carregarDiasNaoUteis() {
@@ -792,15 +883,15 @@ async function carregarDiasNaoUteis() {
   } catch(e) { diasNaoUteisSet = new Set(); }
 }
 function isDiaUtil(dataStr) {
-  const data = new Date(dataStr);
+  const data = new Date(dataStr + 'T12:00:00');
   if (data.getDay() === 0 || data.getDay() === 6) return false;
   return !diasNaoUteisSet.has(dataStr);
 }
-const originalProximoAgendamento = proximoAgendamento;
-const originalRegistrarAutomatico = registrarAutomatico;
-const originalCarregarDados = carregarDados;
+const originalProximoAgendamento = window.proximoAgendamento || proximoAgendamento;
+const originalRegistrarAutomatico = window.registrarAutomatico || registrarAutomatico;
+const originalCarregarDados = window.carregarDados || carregarDados;
 function proximoDiaUtil(dataStr) {
-  let tentativa = new Date(dataStr); let seg = 0;
+  let tentativa = new Date(dataStr + 'T12:00:00'); let seg = 0;
   let tStr = tentativa.toISOString().slice(0,10);
   while (!isDiaUtil(tStr) && seg < 30) { tentativa.setDate(tentativa.getDate()+1); tStr = tentativa.toISOString().slice(0,10); seg++; }
   return tStr;
@@ -824,6 +915,7 @@ async function carregarDadosComFeriados() {
 window.proximoAgendamento = proximoAgendamentoComFeriados;
 window.registrarAutomatico = registrarAutomaticoComFeriados;
 window.carregarDados = carregarDadosComFeriados;
+
 const bottomBarDias = document.querySelector('.bottom-bar');
 const diasBtn = document.createElement('button');
 diasBtn.className = 'bottom-btn';
